@@ -1,39 +1,63 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { getAllScreenshots, getExtendedStats } from "@/lib/data";
 
-function AnalyticsSkeleton() {
-    return (
-        <div className="space-y-6">
-            <div className="border-b border-border pb-6">
-                <Skeleton className="h-8 w-40" />
-                <Skeleton className="h-4 w-64 mt-2" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={i}>
-                        <CardHeader>
-                            <Skeleton className="h-5 w-32" />
-                        </CardHeader>
-                        <CardContent>
-                            <Skeleton className="h-20 w-full" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </div>
-    );
-}
+export default async function AnalyticsPage() {
+    const screenshots = getAllScreenshots();
+    const stats = getExtendedStats(screenshots);
 
-export default function AnalyticsPage() {
+    // Helpers to get top item
+    const getTop = (obj: Record<string, number>) =>
+        Object.entries(obj).sort((a, b) => b[1] - a[1])[0] || ["None", 0];
+
+    const topApp = getTop(stats.apps);
+    const topLang = getTop(stats.languages);
+    const topProject = getTop(stats.repos);
+    const topDomain = getTop(stats.domains);
+    const topWorkspace = getTop(stats.workspaceTypes);
+
     const links = [
-        { title: "Apps", href: "/analytics/apps", icon: "💻", description: "Application usage trends" },
-        { title: "Languages", href: "/analytics/languages", icon: "📝", description: "Programming languages used" },
-        { title: "Projects", href: "/analytics/projects", icon: "📁", description: "Project activity analysis" },
-        { title: "Domains", href: "/analytics/domains", icon: "🌐", description: "Web browsing statistics" },
-        { title: "Workspaces", href: "/analytics/workspaces", icon: "🖥️", description: "Workspace environment breakdown" },
+        {
+            title: "Apps",
+            href: "/analytics/apps",
+            icon: "💻",
+            description: "Application usage trends",
+            stat: `Top: ${topApp[0]}`,
+            count: `${topApp[1]} screenshots`
+        },
+        {
+            title: "Languages",
+            href: "/analytics/languages",
+            icon: "📝",
+            description: "Programming languages used",
+            stat: `Top: ${topLang[0]}`,
+            count: `${topLang[1]} screenshots`
+        },
+        {
+            title: "Projects",
+            href: "/analytics/projects",
+            icon: "📁",
+            description: "Project activity analysis",
+            stat: `Top: ${topProject[0]}`,
+            count: `${topProject[1]} screenshots`
+        },
+        {
+            title: "Domains",
+            href: "/analytics/domains",
+            icon: "🌐",
+            description: "Web browsing statistics",
+            stat: `Top: ${topDomain[0]}`,
+            count: `${topDomain[1]} screenshots`
+        },
+        {
+            title: "Workspaces",
+            href: "/analytics/workspaces",
+            icon: "🖥️",
+            description: "Workspace environment breakdown",
+            stat: `Top: ${topWorkspace[0]}`,
+            count: `${topWorkspace[1]} screenshots`
+        },
     ];
 
     return (
@@ -56,12 +80,26 @@ export default function AnalyticsPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    {link.description}
-                                </p>
-                                <Button variant="secondary" className="w-full cursor-pointer group-hover:bg-accent">
-                                    View Analysis
-                                </Button>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">
+                                            {link.description}
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-muted/50 p-3 rounded-md">
+                                        <div className="text-sm font-medium text-foreground truncate">
+                                            {link.stat}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {link.count}
+                                        </div>
+                                    </div>
+
+                                    <Button variant="secondary" className="w-full cursor-pointer group-hover:bg-accent">
+                                        View Analysis
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     </Link>

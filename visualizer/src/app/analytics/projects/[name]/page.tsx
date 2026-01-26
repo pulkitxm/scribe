@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import HourlyChart from "@/components/HourlyChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import RankingTable from "@/components/RankingTable";
+import RecentScreenshots from "@/components/RecentScreenshots";
 
 interface PageProps {
     params: Promise<{
@@ -138,6 +139,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            <RecentScreenshots filter={{ project: decodedName }} />
         </div>
     );
 }

@@ -99,4 +99,5 @@ export interface FilterOptions {
   language?: string;
   workspace?: string;
   text?: string;
+  tag?: string;
 }

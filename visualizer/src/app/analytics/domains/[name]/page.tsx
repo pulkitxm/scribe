@@ -85,11 +85,6 @@ export default async function DomainDetailPage({ params }: PageProps) {
                 </Card>
             </div>
 
-            <RecentScreenshots
-                screenshots={screenshots}
-                viewAllLink={`/gallery?domain=${encodeURIComponent(decodedName)}`}
-            />
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProductivityChart data={dailyStats} title="Productivity Trend" />
                 <HourlyChart data={stats.hourlyDistribution} title="Visit Patterns" />
@@ -111,6 +106,8 @@ export default async function DomainDetailPage({ params }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            <RecentScreenshots filter={{ domain: decodedName }} />
         </div>
     );
 }

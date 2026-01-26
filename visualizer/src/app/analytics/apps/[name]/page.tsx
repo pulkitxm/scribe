@@ -9,6 +9,7 @@ import HourlyChart from "@/components/HourlyChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import CategoryChart from "@/components/CategoryChart";
 import RankingTable from "@/components/RankingTable";
+import RecentScreenshots from "@/components/RecentScreenshots";
 
 interface PageProps {
     params: Promise<{
@@ -124,6 +125,8 @@ export default async function AppDetailPage({ params }: PageProps) {
                     </Card>
                 </div>
             </div>
+
+            <RecentScreenshots filter={{ app: decodedName }} />
         </div>
     );
 }

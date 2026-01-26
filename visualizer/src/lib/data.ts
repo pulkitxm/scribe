@@ -189,6 +189,12 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
                 )
             );
         }
+        if (filters.tag) {
+            const query = filters.tag.toLowerCase();
+            allScreenshots = allScreenshots.filter((s) =>
+                s.data.summary_tags.some((t) => t.toLowerCase() === query)
+            );
+        }
     }
 
     return allScreenshots;

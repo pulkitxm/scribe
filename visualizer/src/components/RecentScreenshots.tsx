@@ -1,60 +1,85 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Screenshot } from "@/types/screenshot";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { getAllScreenshots } from "@/lib/data";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { FilterOptions } from "@/types/screenshot";
 
 interface RecentScreenshotsProps {
-    screenshots: Screenshot[];
-    viewAllLink: string;
+    filter: FilterOptions;
+    title?: string;
+    limit?: number;
+    linkToGallery?: boolean;
 }
 
-export default function RecentScreenshots({ screenshots, viewAllLink }: RecentScreenshotsProps) {
-    if (screenshots.length === 0) return null;
+export default function RecentScreenshots({
+    filter,
+    title = "Recent Screenshots",
+    limit = 8,
+    linkToGallery = true,
+}: RecentScreenshotsProps) {
+    const screenshots = getAllScreenshots(filter)
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, limit);
+
+    if (screenshots.length === 0) {
+        return null;
+    }
+
+    // Construct gallery URL with filters
+    const queryParams = new URLSearchParams();
+    if (filter.project) queryParams.set("project", filter.project);
+    if (filter.app) queryParams.set("app", filter.app);
+    if (filter.workspace) queryParams.set("workspace", filter.workspace);
+    if (filter.domain) queryParams.set("domain", filter.domain);
+    if (filter.language) queryParams.set("language", filter.language);
+
+    // Pass other filters to gallery if needed, but for now specific pages usually filter by one dimension.
+
+    const galleryUrl = `/gallery?${queryParams.toString()}`;
 
     return (
-        <section className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-                <Link href={viewAllLink} className="text-sm text-primary hover:underline">
-                    View All
-                </Link>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {screenshots.slice(0, 4).map((s) => (
-                    <Link key={s.id} href={`/gallery/${s.date}/${s.id}`}>
-                        <Card className="overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group h-full">
+        <Card className="col-span-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-medium">{title}</CardTitle>
+                {linkToGallery && (
+                    <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
+                        <Link href={galleryUrl}>
+                            View All <ArrowRight className="h-3 w-3" />
+                        </Link>
+                    </Button>
+                )}
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {screenshots.map((screenshot) => (
+                        <Link
+                            key={`${screenshot.date}-${screenshot.id}`}
+                            href={`/gallery/${screenshot.date}/${screenshot.id}`}
+                            className="group block overflow-hidden rounded-md border border-border transition-colors hover:border-primary/50"
+                        >
                             <div className="relative aspect-video bg-muted">
                                 <Image
-                                    src={s.imagePath}
-                                    alt={s.data.short_description}
+                                    src={screenshot.imagePath}
+                                    alt={screenshot.data.short_description || "Screenshot"}
                                     fill
-                                    className="object-cover"
+                                    className="object-cover transition-transform group-hover:scale-105"
+                                    sizes="(max-width: 768px) 50vw, 25vw"
                                 />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <div className="text-white font-medium text-xs px-2 text-center">
-                                        {new Date(s.timestamp).toLocaleTimeString()}
-                                    </div>
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <p className="text-[10px] text-white font-medium truncate">
+                                        {screenshot.data.short_description}
+                                    </p>
+                                    <p className="text-[10px] text-white/70">
+                                        {screenshot.timestamp.toLocaleTimeString()}
+                                    </p>
                                 </div>
                             </div>
-                            <CardContent className="p-3">
-                                <div className="text-xs font-medium truncate mb-1">{s.data.short_description}</div>
-                                <div className="flex flex-wrap gap-1">
-                                    {s.data.evidence.web_domains_visible.slice(0, 1).map(d => (
-                                        <Badge key={d} variant="outline" className="text-[10px] h-4 px-1 truncate max-w-full">
-                                            {d}
-                                        </Badge>
-                                    ))}
-                                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
-                                        {s.data.scores.focus_score}
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ))}
-            </div>
-        </section>
+                        </Link>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
     );
 }
