@@ -1,7 +1,25 @@
 import Foundation
 import AppKit
 
+public func getExecutableDir() -> String {
+    let processPath = ProcessInfo.processInfo.arguments[0]
+    return URL(fileURLWithPath: processPath).deletingLastPathComponent().path
+}
+
 public func resolvePath(for tool: String) -> String? {
+    // 1. Try reading from config.json in the executable directory
+    if tool == "node" {
+        let configPath = "\(getExecutableDir())/config.json"
+        if FileManager.default.fileExists(atPath: configPath) {
+            if let data = FileManager.default.contents(atPath: configPath),
+               let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: String],
+               let nodePath = json["nodePath"], !nodePath.isEmpty {
+                return nodePath
+            }
+        }
+    }
+
+    // 2. Try 'which' command
     let task = Process()
     task.launchPath = "/usr/bin/which"
     task.arguments = [tool]
@@ -19,7 +37,7 @@ public func resolvePath(for tool: String) -> String? {
         }
     }
     
-    // Fallback known paths
+    // 3. Fallback known paths
     let commonPaths = [
         "/opt/homebrew/bin/\(tool)",
         "/usr/local/bin/\(tool)",

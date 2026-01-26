@@ -5,19 +5,21 @@ public class Logger {
     var fileHandle: FileHandle?
     
     private init() {
-        let currentDir = FileManager.default.currentDirectoryPath
-        let logsDir = URL(fileURLWithPath: currentDir).appendingPathComponent("logs")
-        let logFile = logsDir.appendingPathComponent("app.log")
-        
-        do {
-            try FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
-            if !FileManager.default.fileExists(atPath: logFile.path) {
-                FileManager.default.createFile(atPath: logFile.path, contents: nil)
+        // Use ~/Library/Logs/com.pulkit.screenshot/app.log
+        if let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first {
+            let logsDir = libraryDir.appendingPathComponent("Logs").appendingPathComponent("com.pulkit.screenshot")
+            let logFile = logsDir.appendingPathComponent("app.log")
+            
+            do {
+                try FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
+                if !FileManager.default.fileExists(atPath: logFile.path) {
+                    FileManager.default.createFile(atPath: logFile.path, contents: nil)
+                }
+                fileHandle = try FileHandle(forWritingTo: logFile)
+                fileHandle?.seekToEndOfFile()
+            } catch {
+                print("Failed to setup logger: \(error)")
             }
-            fileHandle = try FileHandle(forWritingTo: logFile)
-            fileHandle?.seekToEndOfFile()
-        } catch {
-            print("Failed to setup logger: \(error)")
         }
     }
     

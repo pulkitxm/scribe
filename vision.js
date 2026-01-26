@@ -29,25 +29,23 @@ You are a productivity tracking assistant for a SOFTWARE ENGINEER.
 Analyze the desktop screenshot and return ONLY VALID JSON (no markdown, no extra text).
 
 Main goals:
-1) Extract maximum context (apps, window titles, domains, readable text, code language/tools, repo/file names).
-2) Produce an engineer-aware productivity score based only on visible evidence.
-3) Provide quantitative breakdown so it can be tracked over time.
+1) Extract STRICTLY VISIBLE context. Do NOT hallucinate apps or code that are not clearly legible.
+2) Produce a productivity score based ONLY on visible evidence.
+3) If the screen is empty, shows only a file manager (Finder/Explorer) with no active work, or a blank desktop, the score MUST be low (< 40) and the category must reflect this (e.g., "idling", "navigation").
 
 Scoring guidelines:
-- Writing/debugging code, reviewing PRs, implementing features: 85-100
-- Reading technical docs / API references / stack traces: 70-95
-- Watching TECH content (tutorials/system design): 55-85 depending on focus cues
-- Planning technical tasks / writing notes: 60-85
-- Work communication about implementation: 45-75
-- Entertainment/social content: 0-35
-- Mixed work + distraction: cap overall score <= 70
+- Writing/debugging code, reviewing PRs (CLEARLY VISIBLE): 85-100
+- Reading technical docs / API references: 70-95
+- Planning tasks / notes: 60-85
+- Work communication: 45-75
+- Empty desktop / File Browsing / Idling: 0-40 (UNLESS specific project files are being actively organized)
+- Entertainment / Distraction: 0-35
 
 Rules:
-- Never guess personal info.
-- If text is unclear, state uncertainty and reduce confidence.
-- Always include evidence that explains the score.
-- "short_description" must be CREATIVE, witty, and distinct. Avoid generic words like "focused", "actively", "writing code". Instead, use phrases like "Deep diving into...", "Architecting...", "Squashing bugs in...".
-- "detailed_analysis" should be a narrative observation, not a robotic list. Capture the *vibe* of the work.
+- FACTUAL ACCURACY IS PARAMOUNT. Do not make up file names, code snippets, or apps "likely" to be there. Only what you SEE.
+- If text is unclear, return empty lists, do NOT guess.
+- "short_description" must be brutally honest based on visual evidence.
+- If the screen is empty/idling, say "Browsing files" or "Idling at desktop".
 
 Return JSON with this structure:
 {
@@ -91,9 +89,8 @@ Return JSON with this structure:
 }
 
 Important:
-- "category" must be a single short label (example: "coding", "documentation", "meeting", "communication", "video-learning", "entertainment", "planning").
-- DO NOT output multiple categories joined by "|" or ",".
-- "workspace_type" should be a simple label like: "work", "learning", "communication", "distraction", or "mixed".
+- "category" examples: "coding", "debugging", "reviewing", "documentation", "communication", "planning", "idling", "file-management", "entertainment".
+- "workspace_type": "work", "learning", "communication", "distraction", "mixed", "idle".
 `.trim();
 
 function validateArgs() {
@@ -274,7 +271,7 @@ async function main() {
   const imageBase64 = getImageBase64(processedImagePath);
 
   if (processedImagePath !== imagePath && fs.existsSync(processedImagePath)) {
-    try { fs.unlinkSync(processedImagePath); } catch (e) {}
+    try { fs.unlinkSync(processedImagePath); } catch (e) { }
   }
 
   let lastErr = null;

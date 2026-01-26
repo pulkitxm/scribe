@@ -7,20 +7,12 @@ struct Analyzer {
             return
         }
         
-        let currentDir = FileManager.default.currentDirectoryPath
-        let visionScriptPath = "\(currentDir)/vision.js"
+        let executableDir = getExecutableDir()
+        let visionScriptPath = "\(executableDir)/vision.js"
 
         if !FileManager.default.fileExists(atPath: visionScriptPath) {
-            // Fallback: Check if we are in src and vision.js is one level up
-            let parentDir = URL(fileURLWithPath: currentDir).deletingLastPathComponent().path
-            let parentVisionPath = "\(parentDir)/vision.js"
-            if FileManager.default.fileExists(atPath: parentVisionPath) {
-                 runNode(nodePath: nodePath, scriptPath: parentVisionPath, imagePath: path, captureDuration: captureDuration, convertDuration: convertDuration)
-                 return
-            }
-
-            Logger.shared.log("⚠️ vision.js not found.")
-            return
+             Logger.shared.log("⚠️ vision.js not found at: \(visionScriptPath)")
+             return
         }
         
         runNode(nodePath: nodePath, scriptPath: visionScriptPath, imagePath: path, captureDuration: captureDuration, convertDuration: convertDuration)

@@ -37,7 +37,28 @@ cp "$SCRIPT_DIR/../config/Info.plist" "$CONTENTS_DIR/Info.plist"
 
 
 echo "🔨 Compiling screenshot tool..."
-swiftc "$SCRIPT_DIR/../src/screenshot.swift" -o "$MACOS_DIR/screenshot"
+swiftc "$SCRIPT_DIR/../src/main.swift" "$SCRIPT_DIR/../src/Analyzer.swift" "$SCRIPT_DIR/../src/Logger.swift" "$SCRIPT_DIR/../src/ScreenshotManager.swift" "$SCRIPT_DIR/../src/Utils.swift" -o "$MACOS_DIR/screenshot"
+
+
+# ---------------------------------------------------------
+# Fix: Capture Node Path & Copy vision.js
+# ---------------------------------------------------------
+NODE_PATH=$(which node)
+if [ -z "$NODE_PATH" ]; then
+    echo "⚠️  Warning: Node.js not found in PATH. Please ensure it is installed."
+else
+    echo "✅ Found Node.js at: $NODE_PATH"
+fi
+
+# Create config.json with the node path
+CONFIG_FILE="$MACOS_DIR/config.json"
+echo "{\"nodePath\": \"$NODE_PATH\"}" > "$CONFIG_FILE"
+echo "📄 Created config.json with Node path."
+
+# Copy vision.js to the MacOS directory
+cp "$SCRIPT_DIR/../vision.js" "$MACOS_DIR/vision.js"
+echo "📜 Copied vision.js to app bundle."
+# ---------------------------------------------------------
 
 
 echo "🔏 Signing App Bundle..."
@@ -55,7 +76,24 @@ USER_HOME=$HOME
 sed -i '' "s|/Users/pulkit/.local/bin/screenshot|$USER_HOME/.local/bin/Screenshot.app/Contents/MacOS/screenshot|g" "$PLIST_DEST"
 
 
+
+# Create Log Directory
+LOG_DIR="$HOME/Library/Logs/com.pulkit.screenshot"
+mkdir -p "$LOG_DIR"
+touch "$LOG_DIR/app.log"
+
+# Link logs to project directory for convenience
+PROJECT_LOGS="$SCRIPT_DIR/../logs"
+mkdir -p "$PROJECT_LOGS"
+ln -sf "$LOG_DIR/app.log" "$PROJECT_LOGS/app.log"
+
+
 launchctl unload "$PLIST_DEST" 2>/dev/null || true
+
+
+# Configure logging in plist
+sed -i '' "s|/dev/null|$LOG_DIR/app.log|g" "$PLIST_DEST"
+
 
 
 launchctl load "$PLIST_DEST"
