@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-// Category Link
 export function CategoryLink({ category, className }: { category: string; className?: string }) {
     if (!category) return null;
     return (
@@ -16,7 +15,6 @@ export function CategoryLink({ category, className }: { category: string; classN
     );
 }
 
-// Tag Link
 export function TagLink({ tag, className }: { tag: string; className?: string }) {
     if (!tag) return null;
     return (
@@ -28,7 +26,6 @@ export function TagLink({ tag, className }: { tag: string; className?: string })
     );
 }
 
-// Project Link
 export function ProjectLink({ project, className }: { project: string; className?: string }) {
     if (!project) return null;
     return (
@@ -38,7 +35,6 @@ export function ProjectLink({ project, className }: { project: string; className
     );
 }
 
-// App Link
 export function AppLink({ app, className, children }: { app: string; className?: string; children?: React.ReactNode }) {
     if (!app) return null;
     return (
@@ -48,7 +44,6 @@ export function AppLink({ app, className, children }: { app: string; className?:
     );
 }
 
-// Text Snippet Link
 export function TextLink({ text, className, children }: { text: string; className?: string; children?: React.ReactNode }) {
     if (!text) return null;
     return (

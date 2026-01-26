@@ -18,7 +18,6 @@ export default function Pagination({
 }: PaginationProps) {
     if (totalPages <= 1) return null;
 
-    // Create query string function
     const createQueryString = (page: number) => {
         const newParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {

@@ -32,7 +32,6 @@ export default async function AppDetailPage({ params }: PageProps) {
     const dailyStats = getDailyStats(screenshots);
     const insights = getSmartInsights(stats);
 
-    // Top projects with this app
     const projects = Object.entries(stats.repos || {})
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
@@ -54,7 +53,6 @@ export default async function AppDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* High-level stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-6">
@@ -101,7 +99,6 @@ export default async function AppDetailPage({ params }: PageProps) {
                 </Card>
             </div>
 
-            {/* Smart Insights */}
             <SmartInsights insights={insights} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

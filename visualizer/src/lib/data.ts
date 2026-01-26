@@ -217,8 +217,6 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
 
             const fuse = new Fuse(otherScreenshots, fuseOptions);
 
-            // Construct an OR search if there are multiple words
-            // e.g. "Rbanshi bhandari" -> "Rbanshi | bhandari"
             const fuseQuery = words.length > 1 ? words.join(" | ") : query;
             const fuseResults = fuse.search(fuseQuery);
 
@@ -533,7 +531,6 @@ export interface Insight {
 export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): Insight[] {
     const insights: Insight[] = [];
 
-    // Focus time insight
     const hourly = stats.hourlyDistribution;
     let bestHour = -1;
     let maxActivity = 0;
@@ -555,7 +552,6 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
         });
     }
 
-    // Top category
     const topCat = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
     if (topCat) {
         insights.push({
@@ -566,7 +562,6 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
         });
     }
 
-    // Focus score
     if (stats.avgFocus > 75) {
         insights.push({
             type: "positive",
@@ -583,7 +578,6 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
         });
     }
 
-    // Most used language (if applicable)
     const topLang = Object.entries(stats.languages).sort((a, b) => b[1] - a[1])[0];
     if (topLang) {
         insights.push({

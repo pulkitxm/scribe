@@ -85,19 +85,16 @@ async function DashboardContent({
   const filters = getFiltersFromParams(range, category);
   const screenshots = getAllScreenshots(filters);
   const stats = getExtendedStats(screenshots);
-  const dailyStats = getDailyStats(getAllScreenshots()); // Get all for heatmap
-  const filteredDailyStats = getDailyStats(screenshots); // For chart
+  const dailyStats = getDailyStats(getAllScreenshots());
+  const filteredDailyStats = getDailyStats(screenshots);
   const highFocusScreenshots = getHighFocusScreenshots(4);
   const insights = getSmartInsights(stats);
 
-  // Get categories for filter
   const allScreenshots = getAllScreenshots();
   const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
 
-  // Sort daily stats by date for chart
   filteredDailyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Map for heatmap
   const heatmapData = dailyStats.map(d => ({
     date: d.date,
     count: d.totalScreenshots,
@@ -118,7 +115,6 @@ async function DashboardContent({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="border-b border-border pb-6 flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
@@ -131,21 +127,18 @@ async function DashboardContent({
         </div>
       </div>
 
-      {/* Activity Heatmap */}
       {(!range || range === "all" || range === "month") && (
         <section>
           <ActivityHeatmap data={heatmapData} />
         </section>
       )}
 
-      {/* Filters and Controls */}
       <DashboardFilters
         categories={categories}
         currentRange={range}
         currentCategory={category}
       />
 
-      {/* Primary Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -204,10 +197,8 @@ async function DashboardContent({
         </Card>
       </div>
 
-      {/* Insights Section */}
       <SmartInsights insights={insights} />
 
-      {/* Analytics Links */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Link href="/analytics/apps" className="cursor-pointer">
           <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
@@ -236,7 +227,6 @@ async function DashboardContent({
         </Link>
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
         <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
@@ -246,7 +236,6 @@ async function DashboardContent({
         <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
       </div>
 
-      {/* Flow State Gallery */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">

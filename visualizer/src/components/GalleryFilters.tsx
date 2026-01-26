@@ -39,7 +39,6 @@ export default function GalleryFilters({
     const searchParams = useSearchParams();
     const [searchValue, setSearchValue] = useState(currentText || "");
 
-    // Handle search update
     const updateSearch = (value: string) => {
         const params = new URLSearchParams(searchParams.toString());
         if (value) {
@@ -51,7 +50,6 @@ export default function GalleryFilters({
         router.push(`/gallery?${params.toString()}`, { scroll: false });
     };
 
-    // Update specific filter
     const updateFilter = (key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
         if (value && value !== "all") {
@@ -63,7 +61,6 @@ export default function GalleryFilters({
         router.push(`/gallery?${params.toString()}`, { scroll: false });
     };
 
-    // Debounce search
     useEffect(() => {
         if (searchValue === (currentText || "")) return;
 
@@ -74,7 +71,6 @@ export default function GalleryFilters({
         return () => clearTimeout(timer);
     }, [searchValue, currentText]);
 
-    // Update internal state if URL changes externally
     useEffect(() => {
         setSearchValue(currentText || "");
     }, [currentText]);
@@ -88,7 +84,6 @@ export default function GalleryFilters({
 
     return (
         <div className="flex flex-col gap-4 p-4 bg-card border border-border rounded-lg shadow-sm">
-            {/* Search Bar Row */}
             <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -111,7 +106,6 @@ export default function GalleryFilters({
                 )}
             </div>
 
-            {/* Filter Dropdowns Row */}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground uppercase tracking-wide">Time</span>

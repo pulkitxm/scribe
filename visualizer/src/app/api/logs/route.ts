@@ -4,8 +4,6 @@ import path from 'path';
 
 export async function GET() {
     try {
-        // Assuming process.cwd() is the root of the visualizer app
-        // visualizer is at /visualizer, logs are at /logs (sibling directories in parent)
         const logFilePath = path.join(process.cwd(), '../logs/app.log');
 
         if (!fs.existsSync(logFilePath)) {

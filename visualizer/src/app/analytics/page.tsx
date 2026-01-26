@@ -7,7 +7,6 @@ export default async function AnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);
 
-    // Helpers to get top item
     const getTop = (obj: Record<string, number>) =>
         Object.entries(obj).sort((a, b) => b[1] - a[1])[0] || ["None", 0];
 

@@ -103,12 +103,10 @@ func getSystemIdleTime() -> Double? {
 }
 
 public func shouldTakeScreenshot() -> Bool {
-    // 1. Check if display is active (not sleeping)
     if CGDisplayIsActive(CGMainDisplayID()) == 0 {
         return false
     }
 
-    // 2. Check session state (locked screen)
     if let sessionInfo = CGSessionCopyCurrentDictionary() as? [String: Any] {
         if let onConsole = sessionInfo["kCGSessionOnConsoleKey"] as? Bool, !onConsole {
             return false
@@ -119,7 +117,6 @@ public func shouldTakeScreenshot() -> Bool {
         }
     }
     
-    // 3. Check for user inactivity (Idle > 60 seconds)
     if let idleTime = getSystemIdleTime(), idleTime > 60.0 {
         return false
     }

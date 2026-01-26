@@ -25,7 +25,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
         notFound();
     }
 
-    // Get adjacent screenshots for navigation
     const allDates = getAllDates();
     const allScreenshots: { date: string; id: string }[] = [];
 
@@ -54,7 +53,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
 
     return (
         <div className="space-y-6">
-            {/* Header with navigation */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="sm" asChild className="cursor-pointer">
@@ -95,11 +93,8 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Main content */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-                {/* Screenshot and details */}
                 <div className="space-y-6">
-                    {/* Screenshot image */}
                     <Card>
                         <CardContent className="p-0">
                             <Image
@@ -113,7 +108,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Analysis */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -127,7 +121,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Intent */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -139,7 +132,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Actions Observed */}
                     {data.actions_observed.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -160,7 +152,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </Card>
                     )}
 
-                    {/* Text Snippets */}
                     {data.evidence.text_snippets.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -181,9 +172,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                     )}
                 </div>
 
-                {/* Sidebar */}
                 <div className="space-y-4">
-                    {/* Scores */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -221,7 +210,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Details */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -253,7 +241,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Code Context */}
                     {data.context.code_context?.language && (
                         <Card>
                             <CardHeader>
@@ -296,7 +283,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </Card>
                     )}
 
-                    {/* Apps Visible */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -316,7 +302,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Web Domains */}
                     {data.evidence.web_domains_visible.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -342,7 +327,6 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </Card>
                     )}
 
-                    {/* Tags */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

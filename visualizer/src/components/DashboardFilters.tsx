@@ -43,7 +43,6 @@ export default function DashboardFilters({
 
     return (
         <div className="flex flex-wrap items-center gap-3 p-4 bg-card border border-border rounded-lg">
-            {/* Time Range */}
             <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Time</span>
                 <Tabs value={currentRange || "all"} onValueChange={(v) => updateFilter("range", v)}>
@@ -74,7 +73,6 @@ export default function DashboardFilters({
                 </SelectContent>
             </Select>
 
-            {/* Clear */}
             {hasFilters && (
                 <Button
                     variant="ghost"

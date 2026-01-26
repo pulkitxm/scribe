@@ -78,3 +78,8 @@ viz-restart:
 viz-status:
 	@echo "Checking Visualizer status..."
 	@pm2 show visualizer > /dev/null 2>&1 && pm2 status visualizer || echo "Visualizer is NOT running in pm2"
+
+viz-delete:
+	@echo "Deleting Visualizer..."
+	@pm2 delete visualizer
+	@echo "Visualizer deleted."

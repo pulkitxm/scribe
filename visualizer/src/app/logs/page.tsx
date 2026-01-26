@@ -12,7 +12,6 @@ export default function LogsPage() {
             if (res.ok) {
                 const data = await res.json();
                 const content = data.content || '';
-                // Strip ANSI codes before setting
                 setLogs(content.replace(/\u001b\[[0-9;]*m/g, ''));
             }
         } catch (err) {

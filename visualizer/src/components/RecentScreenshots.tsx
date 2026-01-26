@@ -27,15 +27,12 @@ export default function RecentScreenshots({
         return null;
     }
 
-    // Construct gallery URL with filters
     const queryParams = new URLSearchParams();
     if (filter.project) queryParams.set("project", filter.project);
     if (filter.app) queryParams.set("app", filter.app);
     if (filter.workspace) queryParams.set("workspace", filter.workspace);
     if (filter.domain) queryParams.set("domain", filter.domain);
     if (filter.language) queryParams.set("language", filter.language);
-
-    // Pass other filters to gallery if needed, but for now specific pages usually filter by one dimension.
 
     const galleryUrl = `/gallery?${queryParams.toString()}`;
 

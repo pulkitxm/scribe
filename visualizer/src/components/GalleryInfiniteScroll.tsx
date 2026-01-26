@@ -20,14 +20,13 @@ export default function GalleryInfiniteScroll({
 }: GalleryInfiniteScrollProps) {
     const [screenshots, setScreenshots] = useState<Screenshot[]>(initialScreenshots);
     const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true); // Assume true initially or check length
+    const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
 
-    // We update local state when initial props change (e.g. filters changed)
     useEffect(() => {
         setScreenshots(initialScreenshots);
         setPage(1);
-        setHasMore(initialScreenshots.length >= 48); // rough check, server handles truth
+        setHasMore(initialScreenshots.length >= 48);
         setLoading(false);
     }, [initialScreenshots]);
 
@@ -46,22 +45,13 @@ export default function GalleryInfiniteScroll({
         if (node) observer.current.observe(node);
     }, [loading, hasMore]);
 
-    // Fetch more when page increments
     useEffect(() => {
-        // If page is 1, we already have data from props.
         if (page === 1) return;
 
         const loadMore = async () => {
             setLoading(true);
             try {
                 const res = await fetchScreenshots(page, initialFilters);
-
-                // Convert timestamp strings back to Date objects if needed
-                // Next.js Server Actions usually serialize Dates to strings in JSON
-                // But let's check if we need to hydrate dates. 
-                // In a real app we might need a transform function.
-                // For now, let's assume standard deserialization or just use the string for display
-                // (though formatTime expects a Date object, so we likely need to re-parse)
 
                 const hydratedScreenshots = res.screenshots.map(s => ({
                     ...s,
@@ -80,7 +70,6 @@ export default function GalleryInfiniteScroll({
         loadMore();
     }, [page, initialFilters]);
 
-    // Format time helper (duplicated from page.tsx for now, could be util)
     function formatTime(date: Date | string): string {
         const d = new Date(date);
         return d.toLocaleTimeString("en-US", {

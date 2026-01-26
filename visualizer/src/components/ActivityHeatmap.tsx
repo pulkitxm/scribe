@@ -4,9 +4,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 
 interface DayActivity {
-    date: string;       // YYYY-MM-DD
-    count: number;      // Total screenshots
-    avgFocus: number;   // 0-100
+    date: string;
+    count: number;
+    avgFocus: number;
 }
 
 interface ActivityHeatmapProps {
@@ -14,7 +14,6 @@ interface ActivityHeatmapProps {
 }
 
 export default function ActivityHeatmap({ data }: ActivityHeatmapProps) {
-    // Generate a grid for the last 20 weeks
     const today = new Date();
     const weeks = 20;
 
@@ -25,7 +24,6 @@ export default function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     const dataMap = new Map<string, DayActivity>();
     data.forEach(d => dataMap.set(d.date, d));
 
-    // Map Day ID: Mon(1)->0, Tue(2)->1 ... Sun(0)->6
     const getRowIndex = (d: Date) => (d.getDay() + 6) % 7;
 
     for (let w = weeks - 1; w >= 0; w--) {
