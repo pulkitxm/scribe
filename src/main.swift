@@ -1,6 +1,9 @@
 import Foundation
 
-let interval: TimeInterval = 5
+var interval: TimeInterval = 5.0
+if let gapString = getEnvVar("SCRIBE_TIME_GAP"), let gap = TimeInterval(gapString) {
+    interval = gap
+}
 let screenshotDir = ScreenshotManager.screenshotDir
 
 let runOnce = CommandLine.arguments.contains("--run-once")

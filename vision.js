@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { execSync } = require('child_process');
+const crypto = require('crypto');
 
 const OLLAMA_HOST = 'localhost';
 const OLLAMA_PORT = 11434;
@@ -24,39 +25,77 @@ const log = {
 };
 
 const PROMPT = `
-You are a productivity tracking assistant for a SOFTWARE ENGINEER.
+You are a generic desktop activity tracking assistant.
 
 Analyze the desktop screenshot and return ONLY VALID JSON (no markdown, no extra text).
 
-Main goals:
-1) Extract STRICTLY VISIBLE context. Do NOT hallucinate apps or code that are not clearly legible.
-2) Produce a productivity score based ONLY on visible evidence.
-3) If the screen is empty, shows only a file manager (Finder/Explorer) with no active work, or a blank desktop, the score MUST be low (< 40) and the category must reflect this (e.g., "idling", "navigation").
+Goal:
+Give a high-signal summary of what the user is doing on their laptop based ONLY on what is clearly visible.
 
-Scoring guidelines:
-- Writing/debugging code, reviewing PRs (CLEARLY VISIBLE): 85-100
-- Reading technical docs / API references: 70-95
-- Planning tasks / notes: 60-85
-- Work communication: 45-75
-- Empty desktop / File Browsing / Idling: 0-40 (UNLESS specific project files are being actively organized)
-- Entertainment / Distraction: 0-35
+Strict rules:
+1) Extract STRICTLY VISIBLE context. Do NOT guess. Do NOT hallucinate.
+2) If text is not clearly readable, do not infer it.
+3) If you are unsure about an app or site, omit it.
+4) Do not invent filenames, code, chats, or people.
+5) Treat privacy seriously. Do not reveal secrets. If sensitive data is visible, mention it generically (e.g., "personal info visible").
 
-Rules:
-- FACTUAL ACCURACY IS PARAMOUNT. Do not make up file names, code snippets, or apps "likely" to be there. Only what you SEE.
-- If text is unclear, return empty lists, do NOT guess.
-- "short_description" must be brutally honest based on visual evidence.
-- If the screen is empty/idling, say "Browsing files" or "Idling at desktop".
+Activity categories:
+Use ONE short label only:
+- "work"
+- "coding"
+- "study"
+- "reading"
+- "writing"
+- "browsing"
+- "planning"
+- "communication"
+- "meeting"
+- "social"
+- "gaming"
+- "entertainment"
+- "creative"
+- "shopping"
+- "finance"
+- "tools"
+- "system"
+- "file-management"
+- "idle"
+- "unknown"
+
+Workspace types:
+Use ONE label only:
+- "focused"
+- "mixed"
+- "casual"
+- "social"
+- "leisure"
+- "productive"
+- "idle"
+- "unknown"
+
+Scoring (based only on visible evidence):
+- overall_activity_score: How engaged the user appears (0-100)
+- focus_score: How concentrated the context appears (0-100)
+- productivity_score: How much the context suggests useful progress toward goals (0-100)
+- distraction_risk: How likely the context suggests drifting away from intended task (0-100)
+
+Guidelines:
+- Deep work visible (coding, writing, studying, designing): productivity_score 70-100
+- Meetings / communication: productivity_score 40-80 depending on context
+- Browsing/exploring: productivity_score 20-70 depending on intent and clarity
+- Movies / gaming / entertainment: productivity_score 0-45
+- Idle / desktop / nothing open: overall_activity_score < 35 and productivity_score < 30
 
 Return JSON with this structure:
 {
-  "overall_productivity_score": number,
+  "overall_activity_score": number,
   "category": string,
   "workspace_type": string,
   "short_description": string,
   "detailed_analysis": string,
   "scores": {
-    "focus": number,
-    "engineering_value": number,
+    "focus_score": number,
+    "productivity_score": number,
     "distraction_risk": number
   },
   "evidence": {
@@ -66,9 +105,13 @@ Return JSON with this structure:
     "web_domains_visible": string[],
     "text_snippets": string[]
   },
-  "work_context": {
-    "task_intent": string,
-    "work_item": string,
+  "context": {
+    "intent_guess": string,
+    "topic_or_game_or_media": string,
+    "work_context": {
+      "work_type": string,
+      "project_or_doc": string
+    },
     "code_context": {
       "language": string,
       "tools_or_frameworks": string[],
@@ -79,18 +122,28 @@ Return JSON with this structure:
     "learning_context": {
       "learning_topic": string,
       "source_type": string
+    },
+    "communication_context": {
+      "communication_type": string,
+      "platform_guess": string,
+      "meeting_indicator": boolean
+    },
+    "entertainment_context": {
+      "entertainment_type": string,
+      "platform_guess": string
     }
   },
   "actions_observed": string[],
-  "safety_notes": string[],
+  "privacy_notes": string[],
   "summary_tags": string[],
   "dedupe_signature": string,
   "confidence": number
 }
 
 Important:
-- "category" examples: "coding", "debugging", "reviewing", "documentation", "communication", "planning", "idling", "file-management", "entertainment".
-- "workspace_type": "work", "learning", "communication", "distraction", "mixed", "idle".
+- "category" must be exactly ONE label from the list.
+- Be direct, brutally honest, and minimal.
+- confidence: 0 to 1, based on how clearly visible the context is.
 `.trim();
 
 function validateArgs() {
@@ -110,7 +163,7 @@ function validateArgs() {
 function preprocessImage(inputPath) {
   const tempPath = path.join(path.dirname(inputPath), `temp_${Date.now()}.jpg`);
   try {
-    execSync(`sips -Z 1024 -s format jpeg "${inputPath}" --out "${tempPath}"`, { stdio: 'ignore' });
+    execSync(`sips -Z 1280 -s format jpeg "${inputPath}" --out "${tempPath}"`, { stdio: 'ignore' });
     return tempPath;
   } catch (e) {
     return inputPath;
@@ -127,43 +180,59 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-function normalizeCategory(value) {
-  if (typeof value !== 'string') return 'unknown';
-  const v = value.trim().toLowerCase();
-  if (!v) return 'unknown';
-  const cleaned = v.replace(/[|,]/g, ' ').replace(/\s+/g, ' ').trim();
-  const firstToken = cleaned.split(' ')[0];
-  if (!firstToken || firstToken.length > 40) return 'unknown';
-  return firstToken;
-}
-
 function safeString(x) {
   if (typeof x === 'string') return x.trim();
   return '';
 }
 
+function safeBool(x) {
+  return !!x;
+}
+
 function safeStringArray(x) {
   if (!Array.isArray(x)) return [];
-  return x.filter(v => typeof v === 'string').map(v => v.trim()).filter(Boolean).slice(0, 50);
+  return x.filter(v => typeof v === 'string').map(v => v.trim()).filter(Boolean).slice(0, 80);
+}
+
+function normalizeLabel(value, fallback = 'unknown') {
+  if (typeof value !== 'string') return fallback;
+  const v = value.trim().toLowerCase();
+  if (!v) return fallback;
+  const cleaned = v.replace(/[|,]/g, ' ').replace(/\s+/g, ' ').trim();
+  const firstToken = cleaned.split(' ')[0];
+  if (!firstToken || firstToken.length > 60) return fallback;
+  return firstToken;
+}
+
+function pickFromSet(v, allowed, fallback) {
+  const x = normalizeLabel(v, fallback);
+  if (allowed.has(x)) return x;
+  return fallback;
+}
+
+function sha1(s) {
+  return crypto.createHash('sha1').update(String(s || ''), 'utf8').digest('hex');
 }
 
 function callOllama(imageBase64, isRetry = false) {
   return new Promise((resolve, reject) => {
     const retryHint = `PREVIOUS OUTPUT WAS INVALID.
 Return ONLY JSON.
-Category must be a SINGLE short label like "coding" or "documentation", NOT "coding|research".
-Do not include markdown or extra text.`;
+No markdown.
+No extra text.
+Use a single category label only.`;
 
     const requestBody = JSON.stringify({
       model: MODEL_NAME,
       prompt: isRetry ? `${retryHint}\n\n${PROMPT}` : PROMPT,
       images: [imageBase64],
       stream: false,
-      format: "json",
-      keep_alive: "10m",
+      format: 'json',
+      keep_alive: '10m',
       options: {
         temperature: 0,
-        top_p: 0.9
+        top_p: 0.9,
+        num_predict: 800
       }
     });
 
@@ -207,17 +276,50 @@ function parseAndValidateJSON(responseString) {
 
   if (!json || typeof json !== 'object') throw new Error('Response is not an object');
 
-  json.overall_productivity_score = clamp(json.overall_productivity_score, 0, 100);
+  const categorySet = new Set([
+    'work',
+    'coding',
+    'study',
+    'reading',
+    'writing',
+    'browsing',
+    'planning',
+    'communication',
+    'meeting',
+    'social',
+    'gaming',
+    'entertainment',
+    'creative',
+    'shopping',
+    'finance',
+    'tools',
+    'system',
+    'file-management',
+    'idle',
+    'unknown'
+  ]);
 
-  json.category = normalizeCategory(json.category);
-  json.workspace_type = safeString(json.workspace_type).toLowerCase() || 'unknown';
+  const workspaceSet = new Set([
+    'focused',
+    'mixed',
+    'casual',
+    'social',
+    'leisure',
+    'productive',
+    'idle',
+    'unknown'
+  ]);
+
+  json.overall_activity_score = clamp(json.overall_activity_score, 0, 100);
+  json.category = pickFromSet(json.category, categorySet, 'unknown');
+  json.workspace_type = pickFromSet(json.workspace_type, workspaceSet, 'unknown');
 
   json.short_description = safeString(json.short_description);
   json.detailed_analysis = safeString(json.detailed_analysis);
 
   if (!json.scores || typeof json.scores !== 'object') json.scores = {};
-  json.scores.focus = clamp(json.scores.focus, 0, 100);
-  json.scores.engineering_value = clamp(json.scores.engineering_value, 0, 100);
+  json.scores.focus_score = clamp(json.scores.focus_score, 0, 100);
+  json.scores.productivity_score = clamp(json.scores.productivity_score, 0, 100);
   json.scores.distraction_risk = clamp(json.scores.distraction_risk, 0, 100);
 
   if (!json.evidence || typeof json.evidence !== 'object') json.evidence = {};
@@ -227,35 +329,55 @@ function parseAndValidateJSON(responseString) {
   json.evidence.web_domains_visible = safeStringArray(json.evidence.web_domains_visible);
   json.evidence.text_snippets = safeStringArray(json.evidence.text_snippets);
 
-  if (!json.work_context || typeof json.work_context !== 'object') json.work_context = {};
-  json.work_context.task_intent = safeString(json.work_context.task_intent);
-  json.work_context.work_item = safeString(json.work_context.work_item);
+  if (!json.context || typeof json.context !== 'object') json.context = {};
+  json.context.intent_guess = safeString(json.context.intent_guess);
+  json.context.topic_or_game_or_media = safeString(json.context.topic_or_game_or_media);
 
-  if (!json.work_context.code_context || typeof json.work_context.code_context !== 'object') {
-    json.work_context.code_context = {};
-  }
+  if (!json.context.work_context || typeof json.context.work_context !== 'object') json.context.work_context = {};
+  json.context.work_context.work_type = safeString(json.context.work_context.work_type);
+  json.context.work_context.project_or_doc = safeString(json.context.work_context.project_or_doc);
 
-  json.work_context.code_context.language = safeString(json.work_context.code_context.language);
-  json.work_context.code_context.tools_or_frameworks = safeStringArray(json.work_context.code_context.tools_or_frameworks);
-  json.work_context.code_context.files_or_modules = safeStringArray(json.work_context.code_context.files_or_modules);
-  json.work_context.code_context.repo_or_project = safeString(json.work_context.code_context.repo_or_project);
-  json.work_context.code_context.errors_or_logs_visible = !!json.work_context.code_context.errors_or_logs_visible;
+  if (!json.context.code_context || typeof json.context.code_context !== 'object') json.context.code_context = {};
+  json.context.code_context.language = safeString(json.context.code_context.language);
+  json.context.code_context.tools_or_frameworks = safeStringArray(json.context.code_context.tools_or_frameworks);
+  json.context.code_context.files_or_modules = safeStringArray(json.context.code_context.files_or_modules);
+  json.context.code_context.repo_or_project = safeString(json.context.code_context.repo_or_project);
+  json.context.code_context.errors_or_logs_visible = safeBool(json.context.code_context.errors_or_logs_visible);
 
-  if (!json.work_context.learning_context || typeof json.work_context.learning_context !== 'object') {
-    json.work_context.learning_context = {};
-  }
+  if (!json.context.learning_context || typeof json.context.learning_context !== 'object') json.context.learning_context = {};
+  json.context.learning_context.learning_topic = safeString(json.context.learning_context.learning_topic);
+  json.context.learning_context.source_type = safeString(json.context.learning_context.source_type);
 
-  json.work_context.learning_context.learning_topic = safeString(json.work_context.learning_context.learning_topic);
-  json.work_context.learning_context.source_type = safeString(json.work_context.learning_context.source_type);
+  if (!json.context.communication_context || typeof json.context.communication_context !== 'object') json.context.communication_context = {};
+  json.context.communication_context.communication_type = safeString(json.context.communication_context.communication_type);
+  json.context.communication_context.platform_guess = safeString(json.context.communication_context.platform_guess);
+  json.context.communication_context.meeting_indicator = safeBool(json.context.communication_context.meeting_indicator);
+
+  if (!json.context.entertainment_context || typeof json.context.entertainment_context !== 'object') json.context.entertainment_context = {};
+  json.context.entertainment_context.entertainment_type = safeString(json.context.entertainment_context.entertainment_type);
+  json.context.entertainment_context.platform_guess = safeString(json.context.entertainment_context.platform_guess);
 
   json.actions_observed = safeStringArray(json.actions_observed);
-  json.safety_notes = safeStringArray(json.safety_notes);
+  json.privacy_notes = safeStringArray(json.privacy_notes);
   json.summary_tags = safeStringArray(json.summary_tags);
-  json.dedupe_signature = safeString(json.dedupe_signature);
+
+  const baseSig = JSON.stringify({
+    category: json.category,
+    workspace_type: json.workspace_type,
+    apps_visible: json.evidence.apps_visible.slice(0, 12),
+    web_domains_visible: json.evidence.web_domains_visible.slice(0, 12),
+    key_windows_or_panels: json.evidence.key_windows_or_panels.slice(0, 12)
+  });
+
+  json.dedupe_signature = safeString(json.dedupe_signature) || sha1(baseSig);
   json.confidence = clamp(json.confidence, 0, 1);
 
   if (!json.short_description) throw new Error('short_description missing');
   if (!json.detailed_analysis) throw new Error('detailed_analysis missing');
+
+  if (json.category === 'idle' || json.category === 'unknown') {
+    json.overall_activity_score = Math.min(json.overall_activity_score, 45);
+  }
 
   return json;
 }
@@ -271,7 +393,7 @@ async function main() {
   const imageBase64 = getImageBase64(processedImagePath);
 
   if (processedImagePath !== imagePath && fs.existsSync(processedImagePath)) {
-    try { fs.unlinkSync(processedImagePath); } catch (e) { }
+    try { fs.unlinkSync(processedImagePath); } catch (e) {}
   }
 
   let lastErr = null;
