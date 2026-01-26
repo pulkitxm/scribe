@@ -45,6 +45,9 @@ export default function LogsPage() {
                     padding: { top: 10, bottom: 10 },
                     domReadOnly: true,
                 }}
+                onMount={(editor) => {
+                    editor.focus();
+                }}
                 loading={<div className="text-white p-4">Loading editor...</div>}
             />
             <div className="absolute bottom-2 right-4 text-xs text-neutral-500 z-10 bg-[#1e1e1e] px-2 py-1 rounded">

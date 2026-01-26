@@ -211,6 +211,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 currentTag={params.tag}
                 currentCategory={params.category}
                 currentTimeRange={params.timeRange}
+                currentText={params.text}
             />
 
             {/* Active filter indicator */}
