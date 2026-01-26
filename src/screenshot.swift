@@ -59,8 +59,46 @@ func takeScreenshot() {
     }
 }
 
-// Main loop
+// MARK: - Screen State Detection
+
+func shouldTakeScreenshot() -> Bool {
+    // 1. Check if display is active (sleeping?)
+    if CGDisplayIsActive(CGMainDisplayID()) == 0 {
+        return false
+    }
+
+    // 2. Check session state (locked? on console?)
+    if let sessionInfo = CGSessionCopyCurrentDictionary() as? [String: Any] {
+        // kCGSessionOnConsoleKey: true if we are the active user on the console
+        if let onConsole = sessionInfo["kCGSessionOnConsoleKey"] as? Bool, !onConsole {
+            return false
+        }
+        
+        // kCGSessionScreenIsLocked: true if screen is locked
+        // Note: The key is "CGSSessionScreenIsLocked", usually boolean-like or 1/0
+        if let locked = sessionInfo["CGSSessionScreenIsLocked"] as? Bool, locked {
+            return false
+        }
+    }
+
+    return true
+}
+
+// MARK: - Main Loop
+
+print("📸 Screenshot tool started.")
+print("   Saving to: \(screenshotDir)")
+print("   Interval: \(interval)s")
+
 while true {
-    takeScreenshot()
+    if shouldTakeScreenshot() {
+        takeScreenshot()
+    } else {
+        // Optional: print only once per state change to avoid log spam, 
+        // but for now simple logging is fine for debugging.
+        // To reduce spam, we can just silence it or print a dot.
+        // print(".", terminator: "") 
+        fflush(stdout)
+    }
     Thread.sleep(forTimeInterval: interval)
 }
