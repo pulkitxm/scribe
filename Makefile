@@ -19,7 +19,14 @@ help:
 	@echo "  make restart       - Restart the background service"
 	@echo "  make status        - Check if the service is running"
 	@echo "  make check-running - Alias for status"
+	@echo "  make dev           - Run the script directly for testing"
 	@echo ""
+
+dev:
+	@swift src/screenshot.swift
+
+run-once:
+	@swift src/screenshot.swift --run-once
 
 install:
 	@./scripts/install.sh
