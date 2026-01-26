@@ -22,10 +22,10 @@ help:
 	@echo ""
 
 install:
-	@./install.sh
+	@./scripts/install.sh
 
 uninstall:
-	@./uninstall.sh
+	@./scripts/uninstall.sh
 
 start:
 	@echo "🚀 Starting service..."

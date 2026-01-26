@@ -33,18 +33,18 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 mkdir -p "$MACOS_DIR"
 
 # Copy Info.plist to bundle
-cp "$SCRIPT_DIR/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$SCRIPT_DIR/../config/Info.plist" "$CONTENTS_DIR/Info.plist"
 
 # Compile binary into the App Bundle
 echo "🔨 Compiling screenshot tool..."
-swiftc "$SCRIPT_DIR/screenshot.swift" -o "$MACOS_DIR/screenshot"
+swiftc "$SCRIPT_DIR/../src/screenshot.swift" -o "$MACOS_DIR/screenshot"
 
 # Sign the App Bundle
 echo "🔏 Signing App Bundle..."
 codesign -f -s - --deep --identifier "com.pulkit.screenshot" "$APP_DIR"
 
 # Setup plist with correct path
-PLIST_SOURCE="$SCRIPT_DIR/com.pulkit.screenshot.plist"
+PLIST_SOURCE="$SCRIPT_DIR/../config/com.pulkit.screenshot.plist"
 PLIST_DEST="$LAUNCHAGENT_DIR/com.pulkit.screenshot.plist"
 
 # Copy plist
