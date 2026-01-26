@@ -39,7 +39,14 @@ func takeScreenshot() {
         }
         
         ffmpeg.launchPath = ffmpegPath
-        ffmpeg.arguments = ["-hide_banner", "-loglevel", "error", "-y", "-i", filepath, "-quality", "90", webpPath]
+        // Optimize: Resize to 1280px width (auto height) and quality 50
+        ffmpeg.arguments = [
+            "-hide_banner", "-loglevel", "error", "-y", 
+            "-i", filepath, 
+            "-vf", "scale=1280:-1", 
+            "-quality", "50", 
+            webpPath
+        ]
         ffmpeg.launch()
         ffmpeg.waitUntilExit()
         

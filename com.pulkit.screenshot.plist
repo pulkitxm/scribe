@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.samaan.screenshot</string>
+    <string>com.pulkit.screenshot</string>
     
     <key>ProgramArguments</key>
     <array>

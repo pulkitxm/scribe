@@ -34,8 +34,8 @@ echo "🔨 Compiling screenshot tool..."
 swiftc "$SCRIPT_DIR/screenshot.swift" -o "$INSTALL_DIR/screenshot"
 
 # Setup plist with correct path
-PLIST_SOURCE="$SCRIPT_DIR/com.samaan.screenshot.plist"
-PLIST_DEST="$LAUNCHAGENT_DIR/com.samaan.screenshot.plist"
+PLIST_SOURCE="$SCRIPT_DIR/com.pulkit.screenshot.plist"
+PLIST_DEST="$LAUNCHAGENT_DIR/com.pulkit.screenshot.plist"
 
 # Copy plist
 cp "$PLIST_SOURCE" "$PLIST_DEST"
@@ -58,6 +58,6 @@ echo "⏱️  Taking a screenshot every 5 seconds (WebP format)"
 echo ""
 echo "⚠️  IMPORTANT: Grant Screen Recording permission to 'screenshot' in:"
 echo "   System Settings → Privacy & Security → Screen Recording"
-echo "   Then restart the service with: launchctl kickstart -k gui/\$(id -u)/com.samaan.screenshot"
+echo "   Then restart the service with: launchctl kickstart -k gui/\$(id -u)/com.pulkit.screenshot"
 echo ""
 echo "To uninstall, run: ./uninstall.sh"
