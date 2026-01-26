@@ -1,17 +1,32 @@
 import Foundation
 
 struct ScreenshotManager {
-    static let homeDir = FileManager.default.homeDirectoryForCurrentUser
-    static let screenshotDir = homeDir.appendingPathComponent("screenshots/scribe").path
+    static var baseDir: String {
+        if let customFolder = getEnvVar("SCRIBE_FOLDER"), !customFolder.isEmpty {
+            return customFolder
+        }
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        return homeDir.appendingPathComponent("screenshots/scribe").path
+    }
+    
+    static var screenshotDir: String {
+        let date = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d-M-yyyy"
+        let dateString = formatter.string(from: date)
+        return (baseDir as NSString).appendingPathComponent(dateString)
+    }
     
     static func takeScreenshot() {
         let startTime = Date()
+        let currentDir = screenshotDir
+        
         let timestamp = DateFormatter()
         timestamp.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let filename = "screenshot_\(timestamp.string(from: Date())).png"
-        let filepath = "\(screenshotDir)/\(filename)"
+        let filepath = (currentDir as NSString).appendingPathComponent(filename)
         
-        try? FileManager.default.createDirectory(atPath: screenshotDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: currentDir, withIntermediateDirectories: true)
 
         let task = Process()
         task.launchPath = "/usr/sbin/screencapture"

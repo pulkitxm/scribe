@@ -50,6 +50,32 @@ public func resolvePath(for tool: String) -> String? {
     return nil
 }
 
+public func getEnvVar(_ key: String) -> String? {
+    let envPath = "\(getExecutableDir())/.env"
+    guard let content = try? String(contentsOfFile: envPath, encoding: .utf8) else {
+        return nil
+    }
+
+    let lines = content.components(separatedBy: .newlines)
+    for line in lines {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty || trimmed.hasPrefix("#") { continue }
+        
+        let parts = trimmed.components(separatedBy: "=")
+        if parts.count >= 2 {
+            let k = parts[0].trimmingCharacters(in: .whitespaces)
+            if k == key {
+                var v = parts.dropFirst().joined(separator: "=").trimmingCharacters(in: .whitespaces)
+                if (v.hasPrefix("\"") && v.hasSuffix("\"")) || (v.hasPrefix("'") && v.hasSuffix("'")) {
+                    v = String(v.dropFirst().dropLast())
+                }
+                return v
+            }
+        }
+    }
+    return nil
+}
+
 public func shouldTakeScreenshot() -> Bool {
     if CGDisplayIsActive(CGMainDisplayID()) == 0 {
         return false
