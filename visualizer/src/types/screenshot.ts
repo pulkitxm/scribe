@@ -98,4 +98,5 @@ export interface FilterOptions {
   domain?: string;
   language?: string;
   workspace?: string;
+  text?: string;
 }

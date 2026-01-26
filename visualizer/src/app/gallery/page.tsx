@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { FilterOptions, Screenshot } from "@/types/screenshot";
 import GalleryFilters from "@/components/GalleryFilters";
+import { CategoryLink } from "@/components/SmartLinks";
+import Pagination from "@/components/Pagination";
 
 interface PageProps {
     searchParams: Promise<{
@@ -22,6 +24,11 @@ interface PageProps {
         tag?: string;
         category?: string;
         timeRange?: string;
+        text?: string;
+        domain?: string;
+        workspace?: string;
+        language?: string;
+        page?: string;
     }>;
 }
 
@@ -53,11 +60,19 @@ async function GalleryContent({
     tag,
     category,
     timeRange,
+    text,
+    domain,
+    workspace,
+    language,
 }: {
     date?: string;
     tag?: string;
     category?: string;
     timeRange?: string;
+    text?: string;
+    domain?: string;
+    workspace?: string;
+    language?: string;
 }) {
     // Build filters
     const filters: FilterOptions = {};
@@ -96,6 +111,22 @@ async function GalleryContent({
         filters.category = category;
     }
 
+    if (text) {
+        filters.text = text;
+    }
+
+    if (domain) {
+        filters.domain = domain;
+    }
+
+    if (workspace) {
+        filters.workspace = workspace;
+    }
+
+    if (language) {
+        filters.language = language;
+    }
+
     let screenshots = getAllScreenshots(filters);
 
     // Filter by tag if specified
@@ -104,8 +135,6 @@ async function GalleryContent({
             s.data.summary_tags.some((t) => t.toLowerCase() === tag.toLowerCase())
         );
     }
-
-
 
     if (screenshots.length === 0) {
         return (
@@ -142,9 +171,10 @@ async function GalleryContent({
                                 </div>
                                 <div className="text-xs text-white/70 flex items-center gap-2 mt-1">
                                     {screenshot.data.category && (
-                                        <Badge variant="secondary" className="text-xs py-0">
-                                            {screenshot.data.category}
-                                        </Badge>
+                                        <CategoryLink
+                                            category={screenshot.data.category}
+                                            className="text-white hover:text-white hover:bg-white/20 border-white/20 py-0 h-5"
+                                        />
                                     )}
                                     <span>{screenshot.date}</span>
                                 </div>
@@ -163,6 +193,9 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     const allScreenshots = getAllScreenshots();
     const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
     const tags = [...new Set(allScreenshots.flatMap((s) => s.data.summary_tags))].sort();
+
+    // Check for active "hidden" filters (domain, workspace, etc) to show indicator
+    const hasHiddenFilter = params.domain || params.workspace || params.language || params.text;
 
     return (
         <div className="space-y-6">
@@ -193,6 +226,34 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 </div>
             )}
 
+            {params.text && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Searching for text:</span>
+                    <Badge variant="secondary">"{params.text}"</Badge>
+                </div>
+            )}
+
+            {params.domain && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Domain:</span>
+                    <Badge variant="secondary">{params.domain}</Badge>
+                </div>
+            )}
+
+            {params.workspace && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Workspace:</span>
+                    <Badge variant="secondary">{params.workspace}</Badge>
+                </div>
+            )}
+
+            {params.language && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Language:</span>
+                    <Badge variant="secondary">{params.language}</Badge>
+                </div>
+            )}
+
             {/* Gallery grid */}
             <Suspense fallback={<GalleryGridSkeleton />}>
                 <GalleryContent
@@ -200,6 +261,10 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                     tag={params.tag}
                     category={params.category}
                     timeRange={params.timeRange}
+                    text={params.text}
+                    domain={params.domain}
+                    workspace={params.workspace}
+                    language={params.language}
                 />
             </Suspense>
         </div>

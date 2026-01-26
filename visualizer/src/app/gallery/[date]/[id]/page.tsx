@@ -8,18 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { CategoryLink, TagLink, ProjectLink, AppLink, TextLink } from "@/components/SmartLinks";
 
 interface PageProps {
     params: Promise<{
         date: string;
         id: string;
     }>;
-}
-
-function getScoreVariant(score: number): "default" | "secondary" | "destructive" | "outline" {
-    if (score >= 80) return "default";
-    if (score >= 50) return "secondary";
-    return "destructive";
 }
 
 export default async function ScreenshotDetailPage({ params }: PageProps) {
@@ -175,12 +170,11 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 {data.evidence.text_snippets.map((snippet, i) => (
-                                    <code
+                                    <TextLink
                                         key={i}
-                                        className="block px-3 py-2 bg-muted rounded text-xs font-mono text-foreground break-all"
-                                    >
-                                        {snippet}
-                                    </code>
+                                        text={snippet}
+                                        className="block px-3 py-2 bg-muted rounded text-xs font-mono break-all hover:bg-primary/10 hover:text-primary no-underline"
+                                    />
                                 ))}
                             </CardContent>
                         </Card>
@@ -237,15 +231,20 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         <CardContent className="space-y-3">
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Category</span>
-                                <Badge variant="secondary">{data.category}</Badge>
+                                <CategoryLink category={data.category} />
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Workspace</span>
-                                <span className="text-foreground">{data.workspace_type}</span>
+                                <Link
+                                    href={`/analytics/workspaces/${encodeURIComponent(data.workspace_type)}`}
+                                    className="hover:underline text-foreground decoration-primary underline-offset-4"
+                                >
+                                    {data.workspace_type}
+                                </Link>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Active App</span>
-                                <span className="text-foreground">{data.evidence.active_app_guess}</span>
+                                <AppLink app={data.evidence.active_app_guess} className="text-foreground" />
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Confidence</span>
@@ -265,14 +264,20 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                             <CardContent className="space-y-3">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">Language</span>
-                                    <Badge variant="outline">{data.context.code_context.language}</Badge>
+                                    <Link
+                                        href={`/analytics/languages/${encodeURIComponent(data.context.code_context.language)}`}
+                                        className="hover:underline text-foreground decoration-primary underline-offset-4"
+                                    >
+                                        <Badge variant="outline" className="cursor-pointer hover:bg-accent">{data.context.code_context.language}</Badge>
+                                    </Link>
                                 </div>
                                 {data.context.code_context.repo_or_project && (
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Project</span>
-                                        <span className="text-foreground text-right max-w-[180px] truncate">
-                                            {data.context.code_context.repo_or_project}
-                                        </span>
+                                        <ProjectLink
+                                            project={data.context.code_context.repo_or_project}
+                                            className="text-right max-w-[180px] truncate"
+                                        />
                                     </div>
                                 )}
                                 {data.context.code_context.tools_or_frameworks.length > 0 && (
@@ -301,9 +306,11 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         <CardContent>
                             <div className="flex flex-wrap gap-1">
                                 {data.evidence.apps_visible.map((app, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs">
-                                        {app}
-                                    </Badge>
+                                    <AppLink key={i} app={app}>
+                                        <Badge variant="secondary" className="text-xs pointer-events-none">
+                                            {app}
+                                        </Badge>
+                                    </AppLink>
                                 ))}
                             </div>
                         </CardContent>
@@ -320,9 +327,15 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                             <CardContent>
                                 <div className="flex flex-wrap gap-1">
                                     {data.evidence.web_domains_visible.map((domain, i) => (
-                                        <Badge key={i} variant="outline" className="text-xs">
-                                            {domain}
-                                        </Badge>
+                                        <Link
+                                            key={i}
+                                            href={`/analytics/domains/${encodeURIComponent(domain)}`}
+                                            className="cursor-pointer"
+                                        >
+                                            <Badge variant="outline" className="text-xs hover:bg-accent hover:border-primary/50 transition-colors">
+                                                {domain}
+                                            </Badge>
+                                        </Link>
                                     ))}
                                 </div>
                             </CardContent>
@@ -339,18 +352,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         <CardContent>
                             <div className="flex flex-wrap gap-1">
                                 {data.summary_tags.map((tag, i) => (
-                                    <Link
-                                        key={i}
-                                        href={`/gallery?tag=${encodeURIComponent(tag)}`}
-                                        className="cursor-pointer"
-                                    >
-                                        <Badge
-                                            variant="secondary"
-                                            className="text-xs hover:bg-accent transition-colors cursor-pointer"
-                                        >
-                                            {tag}
-                                        </Badge>
-                                    </Link>
+                                    <TagLink key={i} tag={tag} />
                                 ))}
                             </div>
                         </CardContent>

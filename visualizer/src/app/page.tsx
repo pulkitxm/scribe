@@ -1,21 +1,19 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getAllScreenshots, getDailyStats, getExtendedStats } from "@/lib/data";
+import Image from "next/image";
+import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import DashboardFilters from "@/components/DashboardFilters";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
+import HourlyChart from "@/components/HourlyChart";
+import CategoryChart from "@/components/CategoryChart";
+import ProductivityChart from "@/components/ProductivityChart";
 import { FilterOptions } from "@/types/screenshot";
+import { Lightbulb, Zap, Clock, Target } from "lucide-react";
 
 interface PageProps {
   searchParams: Promise<{
@@ -26,17 +24,12 @@ interface PageProps {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* Header skeleton */}
+    <div className="space-y-8">
       <div className="border-b border-border pb-6">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-4 w-64 mt-2" />
       </div>
-
-      {/* Filter skeleton */}
-      <Skeleton className="h-14 w-full" />
-
-      {/* Stats grid skeleton */}
+      <Skeleton className="h-32 w-full" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
@@ -46,26 +39,6 @@ function DashboardSkeleton() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Charts skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-5 w-32" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[200px] w-full" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-5 w-32" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[200px] w-full" />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
@@ -111,11 +84,24 @@ async function DashboardContent({
   const filters = getFiltersFromParams(range, category);
   const screenshots = getAllScreenshots(filters);
   const stats = getExtendedStats(screenshots);
-  const dailyStats = getDailyStats(screenshots).slice(0, 7);
+  const dailyStats = getDailyStats(getAllScreenshots()); // Get all for heatmap
+  const filteredDailyStats = getDailyStats(screenshots); // For chart
+  const highFocusScreenshots = getHighFocusScreenshots(4);
+  const insights = getSmartInsights(stats);
 
   // Get categories for filter
   const allScreenshots = getAllScreenshots();
   const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
+
+  // Sort daily stats by date for chart
+  filteredDailyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Map for heatmap
+  const heatmapData = dailyStats.map(d => ({
+    date: d.date,
+    count: d.totalScreenshots,
+    avgFocus: d.avgFocusScore
+  }));
 
   if (screenshots.length === 0) {
     return (
@@ -129,239 +115,198 @@ async function DashboardContent({
     );
   }
 
-  // Top apps
-  const topApps = Object.entries(stats.apps)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
-  // Hourly distribution for chart
-  const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
-    hour,
-    count: stats.hourlyDistribution[hour] || 0,
-  }));
-
-  const maxHourly = Math.max(...hourlyData.map((d) => d.count));
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="border-b border-border pb-6">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your productivity at a glance
-        </p>
+      <div className="border-b border-border pb-6 flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Productivity Overview
+          </p>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Activity Heatmap */}
+      {(!range || range === "all" || range === "month") && (
+        <section>
+          <ActivityHeatmap data={heatmapData} />
+        </section>
+      )}
+
+      {/* Filters and Controls */}
       <DashboardFilters
         categories={categories}
         currentRange={range}
         currentCategory={category}
       />
 
-      {/* Stats Grid */}
+      {/* Primary Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                Screenshots
+              </div>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </div>
             <div className="text-3xl font-bold text-foreground">
               {stats.totalScreenshots.toLocaleString()}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-              Total Screenshots
-            </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                Avg Focus
+              </div>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </div>
             <div className="text-3xl font-bold text-foreground">
               {stats.avgFocus}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-              Avg Focus Score
-            </div>
-            <Progress value={stats.avgFocus} className="h-1 mt-2" />
+            <Progress value={stats.avgFocus} className="h-1 mt-3" />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                Productivity
+              </div>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </div>
             <div className="text-3xl font-bold text-foreground">
               {stats.avgProductivity}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-              Avg Productivity
-            </div>
-            <Progress value={stats.avgProductivity} className="h-1 mt-2" />
+            <Progress value={stats.avgProductivity} className="h-1 mt-3" />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-2">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                Context
+              </div>
+              <Lightbulb className="h-4 w-4 text-muted-foreground" />
+            </div>
             <div className="text-3xl font-bold text-foreground">
-              {stats.avgDistraction}%
+              {Object.keys(stats.workTypes).length}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-              Distraction Risk
-            </div>
-            <Progress value={100 - stats.avgDistraction} className="h-1 mt-2" />
+            <div className="text-xs text-muted-foreground mt-1">Work Types Detected</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Analytics Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Quick Insights</CardTitle>
+      {/* Insights Section */}
+      <Card className="bg-muted/30 border-dashed">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            Smart Insights
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <Link href="/analytics/apps" className="cursor-pointer">
-              <Button variant="outline" className="w-full justify-start cursor-pointer">
-                <span className="mr-2">💻</span>
-                Apps
-                <Badge variant="secondary" className="ml-auto">
-                  {Object.keys(stats.apps).length}
-                </Badge>
-              </Button>
-            </Link>
-            <Link href="/analytics/languages" className="cursor-pointer">
-              <Button variant="outline" className="w-full justify-start cursor-pointer">
-                <span className="mr-2">📝</span>
-                Languages
-                <Badge variant="secondary" className="ml-auto">
-                  {Object.keys(stats.languages || {}).length}
-                </Badge>
-              </Button>
-            </Link>
-            <Link href="/analytics/projects" className="cursor-pointer">
-              <Button variant="outline" className="w-full justify-start cursor-pointer">
-                <span className="mr-2">📁</span>
-                Projects
-                <Badge variant="secondary" className="ml-auto">
-                  {Object.keys(stats.repos || {}).length}
-                </Badge>
-              </Button>
-            </Link>
-            <Link href="/analytics/domains" className="cursor-pointer">
-              <Button variant="outline" className="w-full justify-start cursor-pointer">
-                <span className="mr-2">🌐</span>
-                Domains
-                <Badge variant="secondary" className="ml-auto">
-                  {Object.keys(stats.domains || {}).length}
-                </Badge>
-              </Button>
-            </Link>
-            <Link href="/analytics/workspaces" className="cursor-pointer">
-              <Button variant="outline" className="w-full justify-start cursor-pointer">
-                <span className="mr-2">🖥️</span>
-                Workspaces
-                <Badge variant="secondary" className="ml-auto">
-                  {Object.keys(stats.workspaceTypes || {}).length}
-                </Badge>
-              </Button>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {insights.map((insight, i) => (
+              <div key={i} className="flex gap-3 items-start p-3 bg-card rounded-md border text-sm">
+                <div className="mt-0.5 text-primary text-lg">•</div>
+                <div className="text-muted-foreground">{insight}</div>
+              </div>
+            ))}
+            {insights.length === 0 && (
+              <div className="text-sm text-muted-foreground">Not enough data for insights yet.</div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Activity Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Hourly Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Activity by Hour</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-1 h-[160px]">
-              {hourlyData.map((d) => (
-                <div
-                  key={d.hour}
-                  className="flex-1 bg-muted rounded-t hover:bg-foreground/20 transition-colors cursor-default"
-                  style={{
-                    height: maxHourly > 0 ? `${(d.count / maxHourly) * 100}%` : "0%",
-                    minHeight: d.count > 0 ? "4px" : "0",
-                  }}
-                  title={`${d.hour}:00 - ${d.count} screenshots`}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-2">
-              <span>00:00</span>
-              <span>06:00</span>
-              <span>12:00</span>
-              <span>18:00</span>
-              <span>23:00</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Analytics Links */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Link href="/analytics/apps" className="cursor-pointer">
+          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+            <span className="mr-2">💻</span> Apps
+          </Button>
+        </Link>
+        <Link href="/analytics/languages" className="cursor-pointer">
+          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+            <span className="mr-2">📝</span> Languages
+          </Button>
+        </Link>
+        <Link href="/analytics/projects" className="cursor-pointer">
+          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+            <span className="mr-2">📁</span> Projects
+          </Button>
+        </Link>
+        <Link href="/analytics/domains" className="cursor-pointer">
+          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+            <span className="mr-2">🌐</span> Domains
+          </Button>
+        </Link>
+        <Link href="/analytics/workspaces" className="cursor-pointer">
+          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+            <span className="mr-2">🖥️</span> Workspaces
+          </Button>
+        </Link>
+      </div>
 
-        {/* Categories */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Categories</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(stats.categories)
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 6)
-              .map(([cat, count]) => (
-                <div key={cat} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-foreground">{cat}</span>
-                    <span className="text-muted-foreground">{count}</span>
-                  </div>
-                  <Progress
-                    value={(count / stats.totalScreenshots) * 100}
-                    className="h-1.5"
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
+        <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
+      </div>
+
+      {/* Flow State Gallery */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            Recent Flow States (High Focus)
+          </h2>
+          <Link href="/gallery?minFocus=80" className="text-xs text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {highFocusScreenshots.map((s) => (
+            <Link key={s.id} href={`/gallery/${s.date}/${s.id}`}>
+              <Card className="overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group">
+                <div className="relative aspect-video">
+                  <Image
+                    src={s.imagePath}
+                    alt={s.data.short_description}
+                    fill
+                    className="object-cover"
                   />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Badge>{s.data.scores.focus_score} Focus</Badge>
+                  </div>
                 </div>
-              ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Apps and Daily Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top Apps */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top Apps</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {topApps.map(([app, count]) => (
-              <div key={app} className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{app}</span>
-                <Badge variant="secondary">{count}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Recent Days */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Screenshots</TableHead>
-                  <TableHead className="text-right">Focus</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dailyStats.map((day) => (
-                  <TableRow key={day.date}>
-                    <TableCell className="text-muted-foreground">{day.date}</TableCell>
-                    <TableCell className="text-right">{day.totalScreenshots}</TableCell>
-                    <TableCell className="text-right">{day.avgFocusScore}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+                <CardContent className="p-3">
+                  <div className="text-xs font-medium truncate">{s.data.short_description}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    {new Date(s.timestamp).toLocaleTimeString()}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {highFocusScreenshots.length === 0 && (
+            <div className="col-span-full p-8 text-center text-muted-foreground border border-dashed rounded-lg">
+              No high focus moments detected recently.
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import HourlyChart from "@/components/HourlyChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import RankingTable from "@/components/RankingTable";
+import RecentScreenshots from "@/components/RecentScreenshots";
 
 interface PageProps {
     params: Promise<{
@@ -83,6 +84,11 @@ export default async function DomainDetailPage({ params }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            <RecentScreenshots
+                screenshots={screenshots}
+                viewAllLink={`/gallery?domain=${encodeURIComponent(decodedName)}`}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProductivityChart data={dailyStats} title="Productivity Trend" />

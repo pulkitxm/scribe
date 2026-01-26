@@ -181,6 +181,14 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
                 (s) => s.data.workspace_type === filters.workspace
             );
         }
+        if (filters.text) {
+            const query = filters.text.toLowerCase();
+            allScreenshots = allScreenshots.filter((s) =>
+                s.data.evidence.text_snippets.some(snippet =>
+                    snippet.toLowerCase().includes(query)
+                )
+            );
+        }
     }
 
     return allScreenshots;
@@ -464,4 +472,48 @@ export function getImagePath(dateFolder: string, fileName: string): string | nul
         return imagePath;
     }
     return null;
+}
+
+export function getHighFocusScreenshots(limit: number = 4): Screenshot[] {
+    const all = getAllScreenshots();
+    return all
+        .filter((s) => s.data.scores.focus_score > 80)
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, limit);
+}
+
+export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): string[] {
+    const insights: string[] = [];
+
+    // Focus time insight
+    const hourly = stats.hourlyDistribution;
+    let bestHour = -1;
+    let maxActivity = 0;
+
+    Object.entries(hourly).forEach(([hour, count]) => {
+        if (count > maxActivity) {
+            maxActivity = count;
+            bestHour = parseInt(hour);
+        }
+    });
+
+    if (bestHour !== -1) {
+        const period = bestHour < 12 ? "morning" : bestHour < 17 ? "afternoon" : "evening";
+        insights.push(`You are most active in the ${period} around ${bestHour}:00.`);
+    }
+
+    // Top category
+    const topCat = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
+    if (topCat) {
+        insights.push(`${topCat[0]} is your primary focus (${Math.round(topCat[1] / stats.totalScreenshots * 100)}% of time).`);
+    }
+
+    // Focus score
+    if (stats.avgFocus > 75) {
+        insights.push("Great job! Your average focus score is high.");
+    } else if (stats.avgDistraction > 30) {
+        insights.push("Distraction risk is elevated. Consider blocking notifications.");
+    }
+
+    return insights;
 }
