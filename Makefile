@@ -1,4 +1,4 @@
-# Makefile for Screenshot Tool
+
 
 PLIST_NAME := com.pulkit.screenshot
 PLIST_PATH := $(HOME)/Library/LaunchAgents/$(PLIST_NAME).plist
