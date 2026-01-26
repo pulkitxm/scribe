@@ -1,0 +1,438 @@
+import fs from "fs";
+import path from "path";
+import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
+
+let cachedFolder: string | null = null;
+let folderCache: Map<string, Screenshot[]> = new Map();
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 60000;
+
+function getScribeFolder(): string {
+    if (cachedFolder) return cachedFolder;
+
+    const envPath = path.join(process.cwd(), "..", ".env");
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, "utf-8");
+        const match = envContent.match(/SCRIBE_FOLDER="([^"]+)"/);
+        if (match) {
+            cachedFolder = match[1];
+            return cachedFolder;
+        }
+    }
+    cachedFolder = process.env.SCRIBE_FOLDER || "";
+    return cachedFolder;
+}
+
+function isCacheValid(): boolean {
+    return Date.now() - cacheTimestamp < CACHE_DURATION;
+}
+
+function clearCacheIfStale() {
+    if (!isCacheValid()) {
+        folderCache.clear();
+        cacheTimestamp = Date.now();
+    }
+}
+
+export function getAllDates(): string[] {
+    const folder = getScribeFolder();
+    if (!folder || !fs.existsSync(folder)) return [];
+
+    const dirs = fs.readdirSync(folder, { withFileTypes: true });
+    return dirs
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name)
+        .sort((a, b) => {
+            const parseDate = (str: string) => {
+                const parts = str.split("-");
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            };
+            return parseDate(b).getTime() - parseDate(a).getTime();
+        });
+}
+
+export function getScreenshotsForDate(dateFolder: string): Screenshot[] {
+    clearCacheIfStale();
+
+    if (folderCache.has(dateFolder)) {
+        return folderCache.get(dateFolder)!;
+    }
+
+    const folder = getScribeFolder();
+    if (!folder) return [];
+
+    const datePath = path.join(folder, dateFolder);
+    if (!fs.existsSync(datePath)) return [];
+
+    const files = fs.readdirSync(datePath);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    const screenshots = jsonFiles.map((jsonFile) => {
+        const jsonPath = path.join(datePath, jsonFile);
+        const imagePath = jsonPath.replace(".json", ".webp");
+        const data: ScreenshotData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+
+        const timestampMatch = jsonFile.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+        let timestamp = new Date();
+        if (timestampMatch) {
+            const [datePart, timePart] = timestampMatch[1].split("_");
+            const [year, month, day] = datePart.split("-").map(Number);
+            const [hour, minute, second] = timePart.split("-").map(Number);
+            timestamp = new Date(year, month - 1, day, hour, minute, second);
+        }
+
+        return {
+            id: jsonFile.replace(".json", ""),
+            timestamp,
+            date: dateFolder,
+            imagePath: `/api/image?date=${dateFolder}&file=${path.basename(imagePath)}`,
+            jsonPath,
+            data,
+        };
+    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    folderCache.set(dateFolder, screenshots);
+    return screenshots;
+}
+
+export function getScreenshotsSummaryForDate(dateFolder: string): Omit<Screenshot, "data">[] {
+    const folder = getScribeFolder();
+    if (!folder) return [];
+
+    const datePath = path.join(folder, dateFolder);
+    if (!fs.existsSync(datePath)) return [];
+
+    const files = fs.readdirSync(datePath);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
+
+    return jsonFiles.map((jsonFile) => {
+        const imagePath = jsonFile.replace(".json", ".webp");
+
+        const timestampMatch = jsonFile.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+        let timestamp = new Date();
+        if (timestampMatch) {
+            const [datePart, timePart] = timestampMatch[1].split("_");
+            const [year, month, day] = datePart.split("-").map(Number);
+            const [hour, minute, second] = timePart.split("-").map(Number);
+            timestamp = new Date(year, month - 1, day, hour, minute, second);
+        }
+
+        return {
+            id: jsonFile.replace(".json", ""),
+            timestamp,
+            date: dateFolder,
+            imagePath: `/api/image?date=${dateFolder}&file=${imagePath}`,
+            jsonPath: path.join(datePath, jsonFile),
+        };
+    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+}
+
+export function getScreenshotById(date: string, id: string): Screenshot | null {
+    const folder = getScribeFolder();
+    if (!folder) return null;
+
+    const jsonPath = path.join(folder, date, `${id}.json`);
+    if (!fs.existsSync(jsonPath)) return null;
+
+    const data: ScreenshotData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+    const imagePath = `${id}.webp`;
+
+    const timestampMatch = id.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
+    let timestamp = new Date();
+    if (timestampMatch) {
+        const [datePart, timePart] = timestampMatch[1].split("_");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute, second] = timePart.split("-").map(Number);
+        timestamp = new Date(year, month - 1, day, hour, minute, second);
+    }
+
+    return {
+        id,
+        timestamp,
+        date,
+        imagePath: `/api/image?date=${date}&file=${imagePath}`,
+        jsonPath,
+        data,
+    };
+}
+
+export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
+    const dates = getAllDates();
+    let allScreenshots: Screenshot[] = [];
+
+    for (const date of dates) {
+        const screenshots = getScreenshotsForDate(date);
+        allScreenshots = allScreenshots.concat(screenshots);
+    }
+
+    if (filters) {
+        if (filters.startDate) {
+            const start = new Date(filters.startDate);
+            allScreenshots = allScreenshots.filter((s) => s.timestamp >= start);
+        }
+        if (filters.endDate) {
+            const end = new Date(filters.endDate);
+            end.setHours(23, 59, 59);
+            allScreenshots = allScreenshots.filter((s) => s.timestamp <= end);
+        }
+        if (filters.category) {
+            allScreenshots = allScreenshots.filter((s) => s.data.category === filters.category);
+        }
+        if (filters.app) {
+            allScreenshots = allScreenshots.filter((s) =>
+                s.data.evidence.apps_visible.includes(filters.app!)
+            );
+        }
+        if (filters.minFocusScore !== undefined) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.scores.focus_score >= filters.minFocusScore!
+            );
+        }
+        if (filters.minProductivityScore !== undefined) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.scores.productivity_score >= filters.minProductivityScore!
+            );
+        }
+    }
+
+    return allScreenshots;
+}
+
+export function getStatsOnly(screenshots: Screenshot[]): {
+    avgFocus: number;
+    avgProductivity: number;
+    avgDistraction: number;
+    totalScreenshots: number;
+    categories: Record<string, number>;
+    apps: Record<string, number>;
+    hourlyDistribution: Record<number, number>;
+} {
+    if (screenshots.length === 0) {
+        return {
+            avgFocus: 0,
+            avgProductivity: 0,
+            avgDistraction: 0,
+            totalScreenshots: 0,
+            categories: {},
+            apps: {},
+            hourlyDistribution: {},
+        };
+    }
+
+    const categories: Record<string, number> = {};
+    const apps: Record<string, number> = {};
+    const hourlyDistribution: Record<number, number> = {};
+
+    let totalFocus = 0;
+    let totalProductivity = 0;
+    let totalDistraction = 0;
+
+    for (const item of screenshots) {
+        totalFocus += item.data.scores.focus_score;
+        totalProductivity += item.data.scores.productivity_score;
+        totalDistraction += item.data.scores.distraction_risk;
+
+        categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+        for (const app of item.data.evidence.apps_visible) {
+            apps[app] = (apps[app] || 0) + 1;
+        }
+
+        const hour = item.timestamp.getHours();
+        hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+    }
+
+    return {
+        avgFocus: Math.round(totalFocus / screenshots.length),
+        avgProductivity: Math.round(totalProductivity / screenshots.length),
+        avgDistraction: Math.round(totalDistraction / screenshots.length),
+        totalScreenshots: screenshots.length,
+        categories,
+        apps,
+        hourlyDistribution,
+    };
+}
+
+export function getDailyStats(screenshots: Screenshot[]): DailyStats[] {
+    const grouped: Record<string, Screenshot[]> = {};
+
+    for (const ss of screenshots) {
+        if (!grouped[ss.date]) {
+            grouped[ss.date] = [];
+        }
+        grouped[ss.date].push(ss);
+    }
+
+    return Object.entries(grouped).map(([date, items]) => {
+        const categories: Record<string, number> = {};
+        const apps: Record<string, number> = {};
+        const workTypes: Record<string, number> = {};
+
+        let totalFocus = 0;
+        let totalProductivity = 0;
+        let totalDistraction = 0;
+
+        for (const item of items) {
+            totalFocus += item.data.scores.focus_score;
+            totalProductivity += item.data.scores.productivity_score;
+            totalDistraction += item.data.scores.distraction_risk;
+
+            categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+            for (const app of item.data.evidence.apps_visible) {
+                apps[app] = (apps[app] || 0) + 1;
+            }
+
+            const workType = item.data.context.work_context.work_type;
+            if (workType) {
+                workTypes[workType] = (workTypes[workType] || 0) + 1;
+            }
+        }
+
+        return {
+            date,
+            avgFocusScore: Math.round(totalFocus / items.length),
+            avgProductivityScore: Math.round(totalProductivity / items.length),
+            avgDistraction: Math.round(totalDistraction / items.length),
+            totalScreenshots: items.length,
+            categories,
+            apps,
+            workTypes,
+        };
+    });
+}
+
+export function getWeeklyStats(screenshots: Screenshot[]): DailyStats[] {
+    const grouped: Record<string, Screenshot[]> = {};
+
+    for (const ss of screenshots) {
+        const date = ss.timestamp;
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay() + 1);
+        const weekKey = `${weekStart.getDate()}-${weekStart.getMonth() + 1}-${weekStart.getFullYear()}`;
+
+        if (!grouped[weekKey]) {
+            grouped[weekKey] = [];
+        }
+        grouped[weekKey].push(ss);
+    }
+
+    return Object.entries(grouped).map(([weekKey, items]) => {
+        const categories: Record<string, number> = {};
+        const apps: Record<string, number> = {};
+        const workTypes: Record<string, number> = {};
+
+        let totalFocus = 0;
+        let totalProductivity = 0;
+        let totalDistraction = 0;
+
+        for (const item of items) {
+            totalFocus += item.data.scores.focus_score;
+            totalProductivity += item.data.scores.productivity_score;
+            totalDistraction += item.data.scores.distraction_risk;
+
+            categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+            for (const app of item.data.evidence.apps_visible) {
+                apps[app] = (apps[app] || 0) + 1;
+            }
+
+            const workType = item.data.context.work_context.work_type;
+            if (workType) {
+                workTypes[workType] = (workTypes[workType] || 0) + 1;
+            }
+        }
+
+        return {
+            date: `Week of ${weekKey}`,
+            avgFocusScore: Math.round(totalFocus / items.length),
+            avgProductivityScore: Math.round(totalProductivity / items.length),
+            avgDistraction: Math.round(totalDistraction / items.length),
+            totalScreenshots: items.length,
+            categories,
+            apps,
+            workTypes,
+        };
+    });
+}
+
+export function getMonthlyStats(screenshots: Screenshot[]): DailyStats[] {
+    const grouped: Record<string, Screenshot[]> = {};
+
+    for (const ss of screenshots) {
+        const date = ss.timestamp;
+        const monthKey = `${date.getMonth() + 1}-${date.getFullYear()}`;
+
+        if (!grouped[monthKey]) {
+            grouped[monthKey] = [];
+        }
+        grouped[monthKey].push(ss);
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    return Object.entries(grouped).map(([monthKey, items]) => {
+        const [month, year] = monthKey.split("-").map(Number);
+        const categories: Record<string, number> = {};
+        const apps: Record<string, number> = {};
+        const workTypes: Record<string, number> = {};
+
+        let totalFocus = 0;
+        let totalProductivity = 0;
+        let totalDistraction = 0;
+
+        for (const item of items) {
+            totalFocus += item.data.scores.focus_score;
+            totalProductivity += item.data.scores.productivity_score;
+            totalDistraction += item.data.scores.distraction_risk;
+
+            categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+            for (const app of item.data.evidence.apps_visible) {
+                apps[app] = (apps[app] || 0) + 1;
+            }
+
+            const workType = item.data.context.work_context.work_type;
+            if (workType) {
+                workTypes[workType] = (workTypes[workType] || 0) + 1;
+            }
+        }
+
+        return {
+            date: `${monthNames[month - 1]} ${year}`,
+            avgFocusScore: Math.round(totalFocus / items.length),
+            avgProductivityScore: Math.round(totalProductivity / items.length),
+            avgDistraction: Math.round(totalDistraction / items.length),
+            totalScreenshots: items.length,
+            categories,
+            apps,
+            workTypes,
+        };
+    });
+}
+
+export function getUniqueCategories(screenshots: Screenshot[]): string[] {
+    const categories = new Set(screenshots.map((s) => s.data.category));
+    return Array.from(categories).filter(Boolean).sort();
+}
+
+export function getUniqueApps(screenshots: Screenshot[]): string[] {
+    const apps = new Set<string>();
+    for (const ss of screenshots) {
+        for (const app of ss.data.evidence.apps_visible) {
+            apps.add(app);
+        }
+    }
+    return Array.from(apps).sort();
+}
+
+export function getImagePath(dateFolder: string, fileName: string): string | null {
+    const folder = getScribeFolder();
+    if (!folder) return null;
+
+    const imagePath = path.join(folder, dateFolder, fileName);
+    if (fs.existsSync(imagePath)) {
+        return imagePath;
+    }
+    return null;
+}
