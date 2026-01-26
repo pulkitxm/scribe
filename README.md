@@ -39,7 +39,7 @@ This will:
 3. Navigate to `~/.local/bin/scribe` (cmd+shift+g to paste path) and add it
 4. Restart the service:
    ```bash
-   launchctl kickstart -k gui/$(id -u)/com.pulkit.scribe
+   launchctl kickstart -k gui/$(id -u)/com.scribe.service
    ```
 
 ## Uninstall
@@ -55,13 +55,13 @@ This will:
 launchctl list | grep scribe
 
 # Manually stop
-launchctl unload ~/Library/LaunchAgents/com.pulkit.scribe.plist
+launchctl unload ~/Library/LaunchAgents/com.scribe.service.plist
 
 # Manually start
-launchctl load ~/Library/LaunchAgents/com.pulkit.scribe.plist
+launchctl load ~/Library/LaunchAgents/com.scribe.service.plist
 
 # Restart
-launchctl kickstart -k gui/$(id -u)/com.pulkit.scribe
+launchctl kickstart -k gui/$(id -u)/com.scribe.service
 ```
 
 ## Storage Estimate

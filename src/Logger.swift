@@ -6,7 +6,7 @@ public class Logger {
     
     private init() {
         if let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first {
-            let logsDir = libraryDir.appendingPathComponent("Logs").appendingPathComponent("com.pulkit.scribe")
+            let logsDir = libraryDir.appendingPathComponent("Logs").appendingPathComponent("com.scribe.service")
             let logFile = logsDir.appendingPathComponent("app.log")
             
             do {

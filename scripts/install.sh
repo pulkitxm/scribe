@@ -54,17 +54,16 @@ try cp "$SCRIPT_DIR/../vision.js" "$MACOS_DIR/vision.js"
 echo "Copied vision.js"
 
 echo "Signing App Bundle..."
-try codesign -f -s - --deep --identifier "com.pulkit.scribe" "$APP_DIR"
+try codesign -f -s - --deep --identifier "com.scribe.service" "$APP_DIR"
 
-PLIST_SOURCE="$SCRIPT_DIR/../config/com.pulkit.scribe.plist"
-PLIST_DEST="$LAUNCHAGENT_DIR/com.pulkit.scribe.plist"
+PLIST_SOURCE="$SCRIPT_DIR/../config/com.scribe.service.plist"
+PLIST_DEST="$LAUNCHAGENT_DIR/com.scribe.service.plist"
 
 try cp "$PLIST_SOURCE" "$PLIST_DEST"
 
-USER_HOME=$HOME
-sed -i '' "s|/Users/pulkit/.local/bin/scribe|$USER_HOME/.local/bin/Scribe.app/Contents/MacOS/scribe|g" "$PLIST_DEST"
+sed -i '' "s|/usr/local/bin/Scribe.app/Contents/MacOS/scribe|$INSTALL_DIR/Scribe.app/Contents/MacOS/scribe|g" "$PLIST_DEST"
 
-LOG_DIR="$HOME/Library/Logs/com.pulkit.scribe"
+LOG_DIR="$HOME/Library/Logs/com.scribe.service"
 mkdir -p "$LOG_DIR"
 touch "$LOG_DIR/app.log"
 
@@ -82,6 +81,6 @@ echo "Scribe installed successfully!"
 echo "Screenshots saved to: $SCREENSHOT_DIR"
 echo ""
 echo "IMPORTANT: Grant Screen Recording permission to 'scribe' in System Settings."
-echo "Then restart: launchctl kickstart -k gui/$(id -u)/com.pulkit.scribe"
+echo "Then restart: launchctl kickstart -k gui/$(id -u)/com.scribe.service"
 echo ""
 echo "Uninstall: ./uninstall.sh"

@@ -5,10 +5,10 @@ LAUNCHAGENT_DIR="$HOME/Library/LaunchAgents"
 
 echo "Uninstalling Scribe..."
 
-launchctl unload "$LAUNCHAGENT_DIR/com.pulkit.scribe.plist" 2>/dev/null || true
+launchctl unload "$LAUNCHAGENT_DIR/com.scribe.service.plist" 2>/dev/null || true
 
 rm -rf "$INSTALL_DIR/Scribe.app"
-rm -f "$LAUNCHAGENT_DIR/com.pulkit.scribe.plist"
+rm -f "$LAUNCHAGENT_DIR/com.scribe.service.plist"
 
 echo "Scribe uninstalled!"
 echo "Screenshots preserved."

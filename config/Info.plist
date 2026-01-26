@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.pulkit.screenshot</string>
+    <string>com.scribe.service</string>
     <key>CFBundleName</key>
-    <string>screenshot</string>
+    <string>Scribe</string>
     <key>CFBundleExecutable</key>
-    <string>screenshot</string>
+    <string>scribe</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>

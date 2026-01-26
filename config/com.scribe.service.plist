@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.pulkit.scribe</string>
+    <string>com.scribe.service</string>
     
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/pulkit/.local/bin/Scribe.app/Contents/MacOS/scribe</string>
+        <string>/usr/local/bin/Scribe.app/Contents/MacOS/scribe</string>
     </array>
     
     <key>RunAtLoad</key>

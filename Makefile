@@ -1,4 +1,4 @@
-PLIST_NAME := com.pulkit.scribe
+PLIST_NAME := com.scribe.service
 PLIST_PATH := $(HOME)/Library/LaunchAgents/$(PLIST_NAME).plist
 USER_ID := $(shell id -u)
 

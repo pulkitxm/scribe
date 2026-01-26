@@ -38,8 +38,8 @@ macOS requires explicit permission for screen recording.
 
 1.  Go to **System Settings > Privacy & Security > Screen Recording**.
 2.  Click `+`.
-3.  Press **Cmd+Shift+G** and paste: `~/.local/bin/screenshot`
-4.  Select the `screenshot` binary and click **Open**.
+3.  Press **Cmd+Shift+G** and paste: `~/.local/bin/scribe`
+4.  Select the `scribe` binary and click **Open**.
 5.  Toggle the switch **ON**.
 
 ### 4. Start the Service
@@ -47,25 +47,25 @@ macOS requires explicit permission for screen recording.
 After granting permissions, restart the service to begin capturing:
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.pulkit.screenshot
+launchctl kickstart -k gui/$(id -u)/com.scribe.service
 ```
 
 ## Usage
 
-- **Location**: Screenshots are saved in `~/screenshots/ss-tool/`.
+- **Location**: Screenshots are saved in `~/screenshots/scribe/`.
 - **Format**: `screenshot_YYYY-MM-DD_HH-mm-ss.webp`
 
 ### Controls
 
 ```bash
 # Check status
-launchctl list | grep screenshot
+launchctl list | grep scribe
 
 # Stop temporarily
-launchctl unload ~/Library/LaunchAgents/com.pulkit.screenshot.plist
+launchctl unload ~/Library/LaunchAgents/com.scribe.service.plist
 
 # Resume
-launchctl load ~/Library/LaunchAgents/com.pulkit.screenshot.plist
+launchctl load ~/Library/LaunchAgents/com.scribe.service.plist
 
 # Uninstall completely
 ./uninstall.sh
