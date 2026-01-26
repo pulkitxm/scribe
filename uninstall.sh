@@ -10,7 +10,7 @@ echo "🗑️  Uninstalling Screenshot Tool..."
 launchctl unload "$LAUNCHAGENT_DIR/com.pulkit.screenshot.plist" 2>/dev/null || true
 
 # Remove files
-rm -f "$INSTALL_DIR/screenshot"
+rm -rf "$INSTALL_DIR/Screenshot.app"
 rm -f "$LAUNCHAGENT_DIR/com.pulkit.screenshot.plist"
 
 echo "✅ Screenshot Tool uninstalled!"

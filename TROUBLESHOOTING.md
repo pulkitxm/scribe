@@ -17,5 +17,5 @@ If you cannot add permissions or if the toggle won't stay active:
 4.  **Re-Add**:
     - Click `+`.
     - Press **Cmd+Shift+G**.
-    - Paste: `~/.local/bin/screenshot`
+    - Paste: `~/.local/bin/Screenshot.app`
     - Start the service again: `make restart`

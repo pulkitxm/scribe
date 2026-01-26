@@ -7,7 +7,7 @@
     
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/pulkit/.local/bin/screenshot</string>
+        <string>/Users/pulkit/.local/bin/Screenshot.app/Contents/MacOS/screenshot</string>
     </array>
     
     <!-- Start on login -->

@@ -24,7 +24,7 @@ func takeScreenshot() {
     
     // Convert to WebP using ffmpeg
     if FileManager.default.fileExists(atPath: filepath) {
-        let webpPath = filepath.replacingOccurrences(of: ".png", with: ".webp")
+        let avifPath = filepath.replacingOccurrences(of: ".png", with: ".avif")
         let ffmpeg = Process()
         
         // Find ffmpeg path - fallback to common locations if not in PATH
@@ -39,13 +39,17 @@ func takeScreenshot() {
         }
         
         ffmpeg.launchPath = ffmpegPath
-        // Optimize: Resize to 1280px width (auto height) and quality 50
+        // Optimize: Resize to 1280px width, encode to AVIF (libaom-av1)
+        // crf 30 is good quality, cpu-used 6 is faster encoding speed
         ffmpeg.arguments = [
             "-hide_banner", "-loglevel", "error", "-y", 
             "-i", filepath, 
             "-vf", "scale=1280:-1", 
-            "-quality", "50", 
-            webpPath
+            "-c:v", "libaom-av1",
+            "-crf", "30",
+            "-b:v", "0",
+            "-cpu-used", "6",
+            avifPath
         ]
         ffmpeg.launch()
         ffmpeg.waitUntilExit()

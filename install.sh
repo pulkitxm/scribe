@@ -25,13 +25,23 @@ if ! command -v ffmpeg &> /dev/null; then
 fi
 
 # Create directories
-mkdir -p "$INSTALL_DIR"
-mkdir -p "$LAUNCHAGENT_DIR"
-mkdir -p "$SCREENSHOT_DIR"
+APP_DIR="$INSTALL_DIR/Screenshot.app"
+CONTENTS_DIR="$APP_DIR/Contents"
+MACOS_DIR="$CONTENTS_DIR/MacOS"
 
-# Compile binary
+# Create App Bundle structure
+mkdir -p "$MACOS_DIR"
+
+# Copy Info.plist to bundle
+cp "$SCRIPT_DIR/Info.plist" "$CONTENTS_DIR/Info.plist"
+
+# Compile binary into the App Bundle
 echo "🔨 Compiling screenshot tool..."
-swiftc "$SCRIPT_DIR/screenshot.swift" -o "$INSTALL_DIR/screenshot"
+swiftc "$SCRIPT_DIR/screenshot.swift" -o "$MACOS_DIR/screenshot"
+
+# Sign the App Bundle
+echo "🔏 Signing App Bundle..."
+codesign -f -s - --deep --identifier "com.pulkit.screenshot" "$APP_DIR"
 
 # Setup plist with correct path
 PLIST_SOURCE="$SCRIPT_DIR/com.pulkit.screenshot.plist"
@@ -40,11 +50,10 @@ PLIST_DEST="$LAUNCHAGENT_DIR/com.pulkit.screenshot.plist"
 # Copy plist
 cp "$PLIST_SOURCE" "$PLIST_DEST"
 
-# Replace placeholder with actual path if needed, or ensure it points to the correct binary location
-# Since we know the install location is $HOME/.local/bin/screenshot, we can update it dynamically
-# But since $HOME is expanded in the plist only if we use it, simpler to just use full path
+# Replace placeholder with actual path
+# Point to the binary INSIDE the App Bundle
 USER_HOME=$HOME
-sed -i '' "s|/Users/pulkit/.local/bin/screenshot|$USER_HOME/.local/bin/screenshot|g" "$PLIST_DEST"
+sed -i '' "s|/Users/pulkit/.local/bin/screenshot|$USER_HOME/.local/bin/Screenshot.app/Contents/MacOS/screenshot|g" "$PLIST_DEST"
 
 # Unload if already running (ignore errors)
 launchctl unload "$PLIST_DEST" 2>/dev/null || true
@@ -54,7 +63,7 @@ launchctl load "$PLIST_DEST"
 
 echo "✅ Screenshot Tool installed successfully!"
 echo "📁 Screenshots will be saved to: $SCREENSHOT_DIR"
-echo "⏱️  Taking a screenshot every 5 seconds (WebP format)"
+echo "⏱️  Taking a screenshot every 5 seconds (AVIF format)"
 echo ""
 echo "⚠️  IMPORTANT: Grant Screen Recording permission to 'screenshot' in:"
 echo "   System Settings → Privacy & Security → Screen Recording"
