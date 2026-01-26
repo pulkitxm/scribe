@@ -95,38 +95,6 @@ export function getScreenshotsForDate(dateFolder: string): Screenshot[] {
     return screenshots;
 }
 
-export function getScreenshotsSummaryForDate(dateFolder: string): Omit<Screenshot, "data">[] {
-    const folder = getScribeFolder();
-    if (!folder) return [];
-
-    const datePath = path.join(folder, dateFolder);
-    if (!fs.existsSync(datePath)) return [];
-
-    const files = fs.readdirSync(datePath);
-    const jsonFiles = files.filter((f) => f.endsWith(".json"));
-
-    return jsonFiles.map((jsonFile) => {
-        const imagePath = jsonFile.replace(".json", ".webp");
-
-        const timestampMatch = jsonFile.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
-        let timestamp = new Date();
-        if (timestampMatch) {
-            const [datePart, timePart] = timestampMatch[1].split("_");
-            const [year, month, day] = datePart.split("-").map(Number);
-            const [hour, minute, second] = timePart.split("-").map(Number);
-            timestamp = new Date(year, month - 1, day, hour, minute, second);
-        }
-
-        return {
-            id: jsonFile.replace(".json", ""),
-            timestamp,
-            date: dateFolder,
-            imagePath: `/api/image?date=${dateFolder}&file=${imagePath}`,
-            jsonPath: path.join(datePath, jsonFile),
-        };
-    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-}
-
 export function getScreenshotById(date: string, id: string): Screenshot | null {
     const folder = getScribeFolder();
     if (!folder) return null;
@@ -198,15 +166,7 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
     return allScreenshots;
 }
 
-export function getStatsOnly(screenshots: Screenshot[]): {
-    avgFocus: number;
-    avgProductivity: number;
-    avgDistraction: number;
-    totalScreenshots: number;
-    categories: Record<string, number>;
-    apps: Record<string, number>;
-    hourlyDistribution: Record<number, number>;
-} {
+export function getExtendedStats(screenshots: Screenshot[]) {
     if (screenshots.length === 0) {
         return {
             avgFocus: 0,
@@ -216,30 +176,72 @@ export function getStatsOnly(screenshots: Screenshot[]): {
             categories: {},
             apps: {},
             hourlyDistribution: {},
+            workTypes: {},
+            languages: {},
+            repos: {},
+            domains: {},
+            tags: {},
+            workspaceTypes: {},
+            avgConfidence: 0,
         };
     }
 
     const categories: Record<string, number> = {};
     const apps: Record<string, number> = {};
     const hourlyDistribution: Record<number, number> = {};
+    const workTypes: Record<string, number> = {};
+    const languages: Record<string, number> = {};
+    const repos: Record<string, number> = {};
+    const domains: Record<string, number> = {};
+    const tags: Record<string, number> = {};
+    const workspaceTypes: Record<string, number> = {};
 
     let totalFocus = 0;
     let totalProductivity = 0;
     let totalDistraction = 0;
+    let totalConfidence = 0;
 
     for (const item of screenshots) {
         totalFocus += item.data.scores.focus_score;
         totalProductivity += item.data.scores.productivity_score;
         totalDistraction += item.data.scores.distraction_risk;
+        totalConfidence += item.data.confidence;
 
         categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+        if (item.data.workspace_type) {
+            workspaceTypes[item.data.workspace_type] = (workspaceTypes[item.data.workspace_type] || 0) + 1;
+        }
 
         for (const app of item.data.evidence.apps_visible) {
             apps[app] = (apps[app] || 0) + 1;
         }
 
+        for (const domain of item.data.evidence.web_domains_visible || []) {
+            domains[domain] = (domains[domain] || 0) + 1;
+        }
+
+        for (const tag of item.data.summary_tags) {
+            tags[tag] = (tags[tag] || 0) + 1;
+        }
+
         const hour = item.timestamp.getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+
+        const workType = item.data.context.work_context?.work_type;
+        if (workType) {
+            workTypes[workType] = (workTypes[workType] || 0) + 1;
+        }
+
+        const language = item.data.context.code_context?.language;
+        if (language) {
+            languages[language] = (languages[language] || 0) + 1;
+        }
+
+        const repo = item.data.context.code_context?.repo_or_project;
+        if (repo) {
+            repos[repo] = (repos[repo] || 0) + 1;
+        }
     }
 
     return {
@@ -250,6 +252,13 @@ export function getStatsOnly(screenshots: Screenshot[]): {
         categories,
         apps,
         hourlyDistribution,
+        workTypes,
+        languages,
+        repos,
+        domains,
+        tags,
+        workspaceTypes,
+        avgConfidence: Math.round((totalConfidence / screenshots.length) * 100),
     };
 }
 
@@ -283,7 +292,7 @@ export function getDailyStats(screenshots: Screenshot[]): DailyStats[] {
                 apps[app] = (apps[app] || 0) + 1;
             }
 
-            const workType = item.data.context.work_context.work_type;
+            const workType = item.data.context.work_context?.work_type;
             if (workType) {
                 workTypes[workType] = (workTypes[workType] || 0) + 1;
             }
@@ -337,14 +346,14 @@ export function getWeeklyStats(screenshots: Screenshot[]): DailyStats[] {
                 apps[app] = (apps[app] || 0) + 1;
             }
 
-            const workType = item.data.context.work_context.work_type;
+            const workType = item.data.context.work_context?.work_type;
             if (workType) {
                 workTypes[workType] = (workTypes[workType] || 0) + 1;
             }
         }
 
         return {
-            date: `Week of ${weekKey}`,
+            date: `Week ${weekKey}`,
             avgFocusScore: Math.round(totalFocus / items.length),
             avgProductivityScore: Math.round(totalProductivity / items.length),
             avgDistraction: Math.round(totalDistraction / items.length),
@@ -392,7 +401,7 @@ export function getMonthlyStats(screenshots: Screenshot[]): DailyStats[] {
                 apps[app] = (apps[app] || 0) + 1;
             }
 
-            const workType = item.data.context.work_context.work_type;
+            const workType = item.data.context.work_context?.work_type;
             if (workType) {
                 workTypes[workType] = (workTypes[workType] || 0) + 1;
             }

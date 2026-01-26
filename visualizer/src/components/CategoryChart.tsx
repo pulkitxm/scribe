@@ -47,10 +47,13 @@ export default function CategoryChart({ data, title }: Props) {
                         </Pie>
                         <Tooltip
                             contentStyle={{
-                                background: "var(--bg-card)",
-                                border: "1px solid var(--border-color)",
+                                background: "#16161f",
+                                border: "1px solid #2a2a3a",
                                 borderRadius: "8px",
+                                color: "#f0f0f5",
                             }}
+                            labelStyle={{ color: "#f0f0f5" }}
+                            itemStyle={{ color: "#f0f0f5" }}
                         />
                         <Legend
                             formatter={(value) => <span style={{ color: "var(--text-secondary)" }}>{value}</span>}

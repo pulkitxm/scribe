@@ -6,7 +6,7 @@ import {
     getMonthlyStats,
     getUniqueCategories,
     getUniqueApps,
-    getStatsOnly,
+    getExtendedStats,
 } from "@/lib/data";
 import { FilterOptions } from "@/types/screenshot";
 
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const statsOnly = searchParams.get("statsOnly") === "true";
     const aggregation = searchParams.get("aggregation") || "daily";
+    const extended = searchParams.get("extended") === "true";
 
     const filters: FilterOptions = {};
     if (searchParams.get("startDate")) filters.startDate = searchParams.get("startDate")!;
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     const apps = getUniqueApps(allScreenshots);
 
     if (statsOnly) {
-        const stats = getStatsOnly(allScreenshots);
+        const stats = extended ? getExtendedStats(allScreenshots) : getBasicStats(allScreenshots);
         let aggregatedStats;
 
         switch (aggregation) {
@@ -90,4 +91,51 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(allScreenshots.length / limit),
         hasMore: end < allScreenshots.length,
     });
+}
+
+function getBasicStats(screenshots: any[]) {
+    if (screenshots.length === 0) {
+        return {
+            avgFocus: 0,
+            avgProductivity: 0,
+            avgDistraction: 0,
+            totalScreenshots: 0,
+            categories: {},
+            apps: {},
+            hourlyDistribution: {},
+        };
+    }
+
+    const categories: Record<string, number> = {};
+    const apps: Record<string, number> = {};
+    const hourlyDistribution: Record<number, number> = {};
+
+    let totalFocus = 0;
+    let totalProductivity = 0;
+    let totalDistraction = 0;
+
+    for (const item of screenshots) {
+        totalFocus += item.data.scores.focus_score;
+        totalProductivity += item.data.scores.productivity_score;
+        totalDistraction += item.data.scores.distraction_risk;
+
+        categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+
+        for (const app of item.data.evidence.apps_visible) {
+            apps[app] = (apps[app] || 0) + 1;
+        }
+
+        const hour = item.timestamp.getHours();
+        hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+    }
+
+    return {
+        avgFocus: Math.round(totalFocus / screenshots.length),
+        avgProductivity: Math.round(totalProductivity / screenshots.length),
+        avgDistraction: Math.round(totalDistraction / screenshots.length),
+        totalScreenshots: screenshots.length,
+        categories,
+        apps,
+        hourlyDistribution,
+    };
 }

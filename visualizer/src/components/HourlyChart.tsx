@@ -42,11 +42,14 @@ export default function HourlyChart({ data, title }: Props) {
                         <YAxis stroke="var(--text-muted)" fontSize={12} />
                         <Tooltip
                             contentStyle={{
-                                background: "var(--bg-card)",
-                                border: "1px solid var(--border-color)",
+                                background: "#16161f",
+                                border: "1px solid #2a2a3a",
                                 borderRadius: "8px",
+                                color: "#f0f0f5",
                             }}
-                            formatter={(value: number) => [`${value} screenshots`, "Count"]}
+                            labelStyle={{ color: "#f0f0f5" }}
+                            itemStyle={{ color: "#f0f0f5" }}
+                            formatter={(value) => [`${value} screenshots`, "Count"]}
                         />
                         <Bar
                             dataKey="count"
