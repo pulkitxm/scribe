@@ -5,9 +5,8 @@ public class Logger {
     var fileHandle: FileHandle?
     
     private init() {
-        // Use ~/Library/Logs/com.pulkit.screenshot/app.log
         if let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first {
-            let logsDir = libraryDir.appendingPathComponent("Logs").appendingPathComponent("com.pulkit.screenshot")
+            let logsDir = libraryDir.appendingPathComponent("Logs").appendingPathComponent("com.pulkit.scribe")
             let logFile = logsDir.appendingPathComponent("app.log")
             
             do {
@@ -24,10 +23,8 @@ public class Logger {
     }
     
     func log(_ message: String) {
-        // Console output
         print(message)
         
-        // File output
         let timestamp = DateFormatter()
         timestamp.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let logEntry = "[\(timestamp.string(from: Date()))] \(message)\n"
@@ -38,7 +35,6 @@ public class Logger {
     }
 }
 
-// Extension to help writing data
 extension FileHandle {
     func trace(_ data: Data) {
         self.seekToEndOfFile()

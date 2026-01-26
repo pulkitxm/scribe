@@ -1,3 +1,4 @@
 ss-tool
 .DS_Store
 *.log
+.env

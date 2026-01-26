@@ -7,7 +7,6 @@ public func getExecutableDir() -> String {
 }
 
 public func resolvePath(for tool: String) -> String? {
-    // 1. Try reading from config.json in the executable directory
     if tool == "node" {
         let configPath = "\(getExecutableDir())/config.json"
         if FileManager.default.fileExists(atPath: configPath) {
@@ -19,7 +18,6 @@ public func resolvePath(for tool: String) -> String? {
         }
     }
 
-    // 2. Try 'which' command
     let task = Process()
     task.launchPath = "/usr/bin/which"
     task.arguments = [tool]
@@ -37,7 +35,6 @@ public func resolvePath(for tool: String) -> String? {
         }
     }
     
-    // 3. Fallback known paths
     let commonPaths = [
         "/opt/homebrew/bin/\(tool)",
         "/usr/local/bin/\(tool)",

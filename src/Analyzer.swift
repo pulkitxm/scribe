@@ -3,7 +3,7 @@ import Foundation
 struct Analyzer {
     public static func analyzeImage(path: String, captureDuration: TimeInterval, convertDuration: TimeInterval) {
         guard let nodePath = resolvePath(for: "node") else {
-            Logger.shared.log("❌ Node.js not found.")
+            Logger.shared.log("Node.js not found.")
             return
         }
         
@@ -11,7 +11,7 @@ struct Analyzer {
         let visionScriptPath = "\(executableDir)/vision.js"
 
         if !FileManager.default.fileExists(atPath: visionScriptPath) {
-             Logger.shared.log("⚠️ vision.js not found at: \(visionScriptPath)")
+             Logger.shared.log("vision.js not found at: \(visionScriptPath)")
              return
         }
         
@@ -24,9 +24,8 @@ struct Analyzer {
         nodeProcess.launchPath = nodePath
         nodeProcess.arguments = [scriptPath, imagePath]
 
-        Logger.shared.log("📸 Processing screenshot...")
+        Logger.shared.log("Processing screenshot...")
         
-        // Capture stdout/stderr to log them
         let pipe = Pipe()
         nodeProcess.standardOutput = pipe
         nodeProcess.standardError = pipe
@@ -50,16 +49,15 @@ struct Analyzer {
         
         nodeProcess.waitUntilExit()
         
-        // Clean up handler
         handle.readabilityHandler = nil
         
         let analysisDuration = Date().timeIntervalSince(startAnalysis)
         let totalDuration = captureDuration + convertDuration + analysisDuration
 
         if nodeProcess.terminationStatus == 0 {
-            Logger.shared.log(String(format: "✅ Processed in %.1fs (Screen: %.1fs, Convert: %.1fs, Analyze: %.1fs)", totalDuration, captureDuration, convertDuration, analysisDuration))
+            Logger.shared.log(String(format: "Processed in %.1fs (Screen: %.1fs, Convert: %.1fs, Analyze: %.1fs)", totalDuration, captureDuration, convertDuration, analysisDuration))
         } else {
-            Logger.shared.log("❌ Analysis failed.")
+            Logger.shared.log("Analysis failed.")
         }
     }
 }

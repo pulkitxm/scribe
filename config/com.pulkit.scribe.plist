@@ -3,29 +3,25 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.pulkit.screenshot</string>
+    <string>com.pulkit.scribe</string>
     
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/pulkit/.local/bin/Screenshot.app/Contents/MacOS/screenshot</string>
+        <string>/Users/pulkit/.local/bin/Scribe.app/Contents/MacOS/scribe</string>
     </array>
     
-    <!-- Start on login -->
     <key>RunAtLoad</key>
     <true/>
     
-    <!-- Restart if it crashes -->
     <key>KeepAlive</key>
     <true/>
     
-    <!-- Run in background with low priority -->
     <key>LowPriorityIO</key>
     <true/>
     
     <key>Nice</key>
     <integer>10</integer>
     
-    <!-- Suppress output (silent) -->
     <key>StandardOutPath</key>
     <string>/dev/null</string>
     

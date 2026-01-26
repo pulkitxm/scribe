@@ -1,4 +1,4 @@
-# 📸 Screenshot Tool for macOS
+# Scribe
 
 A lightweight, silent background service that captures full-screen screenshots every 5 seconds.
 
@@ -36,10 +36,10 @@ This will:
 
 1. Open **System Settings → Privacy & Security → Screen Recording**
 2. Click the **+** button
-3. Navigate to `~/.local/bin/screenshot` (cmd+shift+g to paste path) and add it
+3. Navigate to `~/.local/bin/scribe` (cmd+shift+g to paste path) and add it
 4. Restart the service:
    ```bash
-   launchctl kickstart -k gui/$(id -u)/com.pulkit.screenshot
+   launchctl kickstart -k gui/$(id -u)/com.pulkit.scribe
    ```
 
 ## Uninstall
@@ -52,16 +52,16 @@ This will:
 
 ```bash
 # See if it's running
-launchctl list | grep screenshot
+launchctl list | grep scribe
 
 # Manually stop
-launchctl unload ~/Library/LaunchAgents/com.pulkit.screenshot.plist
+launchctl unload ~/Library/LaunchAgents/com.pulkit.scribe.plist
 
 # Manually start
-launchctl load ~/Library/LaunchAgents/com.pulkit.screenshot.plist
+launchctl load ~/Library/LaunchAgents/com.pulkit.scribe.plist
 
 # Restart
-launchctl kickstart -k gui/$(id -u)/com.pulkit.screenshot
+launchctl kickstart -k gui/$(id -u)/com.pulkit.scribe
 ```
 
 ## Storage Estimate
