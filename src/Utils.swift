@@ -76,11 +76,39 @@ public func getEnvVar(_ key: String) -> String? {
     return nil
 }
 
+
+
+func getSystemIdleTime() -> Double? {
+    var iterator: io_iterator_t = 0
+    let result = IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"), &iterator)
+    
+    if result == KERN_SUCCESS {
+        let entry = IOIteratorNext(iterator)
+        if entry != 0 {
+            var dict: Unmanaged<CFMutableDictionary>? = nil
+            IORegistryEntryCreateCFProperties(entry, &dict, kCFAllocatorDefault, 0)
+            
+            if let properties = dict?.takeRetainedValue() as? [String: Any] {
+                if let idleTimeNanoseconds = properties["HIDIdleTime"] as? UInt64 {
+                    IOObjectRelease(entry)
+                    IOObjectRelease(iterator)
+                    return Double(idleTimeNanoseconds) / 1_000_000_000.0
+                }
+            }
+            IOObjectRelease(entry)
+        }
+        IOObjectRelease(iterator)
+    }
+    return nil
+}
+
 public func shouldTakeScreenshot() -> Bool {
+    // 1. Check if display is active (not sleeping)
     if CGDisplayIsActive(CGMainDisplayID()) == 0 {
         return false
     }
 
+    // 2. Check session state (locked screen)
     if let sessionInfo = CGSessionCopyCurrentDictionary() as? [String: Any] {
         if let onConsole = sessionInfo["kCGSessionOnConsoleKey"] as? Bool, !onConsole {
             return false
@@ -89,6 +117,11 @@ public func shouldTakeScreenshot() -> Bool {
         if let locked = sessionInfo["CGSSessionScreenIsLocked"] as? Bool, locked {
             return false
         }
+    }
+    
+    // 3. Check for user inactivity (Idle > 60 seconds)
+    if let idleTime = getSystemIdleTime(), idleTime > 60.0 {
+        return false
     }
 
     return true
