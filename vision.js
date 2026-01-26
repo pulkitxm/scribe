@@ -46,6 +46,8 @@ Rules:
 - Never guess personal info.
 - If text is unclear, state uncertainty and reduce confidence.
 - Always include evidence that explains the score.
+- "short_description" must be CREATIVE, witty, and distinct. Avoid generic words like "focused", "actively", "writing code". Instead, use phrases like "Deep diving into...", "Architecting...", "Squashing bugs in...".
+- "detailed_analysis" should be a narrative observation, not a robotic list. Capture the *vibe* of the work.
 
 Return JSON with this structure:
 {

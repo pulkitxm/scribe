@@ -23,10 +23,12 @@ help:
 	@echo ""
 
 dev:
-	@swift src/screenshot.swift
+	@swiftc src/*.swift -o ss-tool
+	@./ss-tool
 
 run-once:
-	@swift src/screenshot.swift --run-once
+	@swiftc src/*.swift -o ss-tool
+	@./ss-tool --run-once
 
 install:
 	@./scripts/install.sh
