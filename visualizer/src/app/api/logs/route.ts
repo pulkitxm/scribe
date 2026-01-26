@@ -1,0 +1,21 @@
+import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+
+export async function GET() {
+    try {
+        // Assuming process.cwd() is the root of the visualizer app
+        // visualizer is at /visualizer, logs are at /logs (sibling directories in parent)
+        const logFilePath = path.join(process.cwd(), '../logs/app.log');
+
+        if (!fs.existsSync(logFilePath)) {
+            return NextResponse.json({ error: 'Log file not found' }, { status: 404 });
+        }
+
+        const fileContent = fs.readFileSync(logFilePath, 'utf-8');
+        return NextResponse.json({ content: fileContent });
+    } catch (error) {
+        console.error('Error reading log file:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
