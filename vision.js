@@ -232,7 +232,8 @@ Use a single category label only.`;
       options: {
         temperature: 0,
         top_p: 0.9,
-        num_predict: 800
+        num_ctx: 8192,
+        num_predict: 2048
       }
     });
 
@@ -277,9 +278,42 @@ Use a single category label only.`;
 }
 
 function parseAndValidateJSON(responseString) {
-  const clean = String(responseString || '').replace(/```json/g, '').replace(/```/g, '').trim();
-  const json = JSON.parse(clean);
+  const str = String(responseString || '');
+  const start = str.indexOf('{');
+  // If we can't find '}', might be truncated, so use length as fallback end
+  let end = str.lastIndexOf('}');
 
+  if (start === -1) {
+    log.error('Raw response was: ' + responseString);
+    throw new Error('No JSON object found in response');
+  }
+
+  // If no closing brace found after start, take the whole rest of string
+  if (end < start) end = str.length;
+
+  const clean = str.substring(start, end + 1);
+  try {
+    const json = JSON.parse(clean);
+    return validateJSON(json);
+  } catch (e) {
+    // Simple repair: try appending '}' or '}}'
+    try {
+      return validateJSON(JSON.parse(clean + '}'));
+    } catch (e2) {
+      try {
+        return validateJSON(JSON.parse(clean + '}}'));
+      } catch (e3) {
+        // give up
+      }
+    }
+
+    log.error('Failed to parse JSON: ' + e.message);
+    log.error('Raw content was: ' + clean);
+    throw e;
+  }
+}
+
+function validateJSON(json) {
   if (!json || typeof json !== 'object') throw new Error('Response is not an object');
 
   const categorySet = new Set([
