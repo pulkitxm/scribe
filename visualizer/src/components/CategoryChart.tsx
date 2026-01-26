@@ -1,13 +1,12 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
     data: Record<string, number>;
     title: string;
 }
-
-const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4", "#6366f1"];
 
 export default function CategoryChart({ data, title }: Props) {
     const chartData = Object.entries(data)
@@ -15,21 +14,36 @@ export default function CategoryChart({ data, title }: Props) {
         .sort((a, b) => b.value - a.value)
         .slice(0, 8);
 
+    const COLORS = [
+        "hsl(var(--chart-1))",
+        "hsl(var(--chart-2))",
+        "hsl(var(--chart-3))",
+        "hsl(var(--chart-4))",
+        "hsl(var(--chart-5))",
+        "hsl(var(--muted-foreground))",
+        "hsl(var(--border))",
+        "hsl(var(--muted))",
+    ];
+
     if (chartData.length === 0) {
         return (
-            <div className="card">
-                <div className="card-title">{title}</div>
-                <div className="empty-state" style={{ padding: "40px" }}>
-                    <p>No data available</p>
-                </div>
-            </div>
+            <Card className="h-full">
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
+                    No data available
+                </CardContent>
+            </Card>
         );
     }
 
     return (
-        <div className="card">
-            <div className="card-title">{title}</div>
-            <div className="chart-container">
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -40,6 +54,8 @@ export default function CategoryChart({ data, title }: Props) {
                             outerRadius={100}
                             paddingAngle={2}
                             dataKey="value"
+                            stroke="hsl(var(--background))"
+                            strokeWidth={2}
                         >
                             {chartData.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -47,20 +63,25 @@ export default function CategoryChart({ data, title }: Props) {
                         </Pie>
                         <Tooltip
                             contentStyle={{
-                                background: "#16161f",
-                                border: "1px solid #2a2a3a",
-                                borderRadius: "8px",
-                                color: "#f0f0f5",
+                                backgroundColor: "hsl(var(--card))",
+                                borderColor: "hsl(var(--border))",
+                                borderRadius: "var(--radius)",
+                                color: "hsl(var(--foreground))",
                             }}
-                            labelStyle={{ color: "#f0f0f5" }}
-                            itemStyle={{ color: "#f0f0f5" }}
+                            labelStyle={{ color: "hsl(var(--foreground))" }}
+                            itemStyle={{ color: "hsl(var(--foreground))" }}
                         />
                         <Legend
-                            formatter={(value) => <span style={{ color: "var(--text-secondary)" }}>{value}</span>}
+                            verticalAlign="bottom"
+                            height={36}
+                            iconType="circle"
+                            formatter={(value) => (
+                                <span className="text-foreground text-sm font-medium ml-1">{value}</span>
+                            )}
                         />
                     </PieChart>
                 </ResponsiveContainer>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

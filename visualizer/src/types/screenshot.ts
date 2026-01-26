@@ -94,4 +94,8 @@ export interface FilterOptions {
   app?: string;
   minFocusScore?: number;
   minProductivityScore?: number;
+  project?: string;
+  domain?: string;
+  language?: string;
+  workspace?: string;
 }

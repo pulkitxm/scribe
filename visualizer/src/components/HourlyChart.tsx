@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
     data: Record<number, number>;
@@ -13,53 +14,63 @@ export default function HourlyChart({ data, title }: Props) {
         count: data[hour] || 0,
     }));
 
-    const maxCount = Math.max(...chartData.map((d) => d.count), 1);
-
     if (Object.keys(data).length === 0) {
         return (
-            <div className="card">
-                <div className="card-title">{title}</div>
-                <div className="empty-state" style={{ padding: "40px" }}>
-                    <p>No data available</p>
-                </div>
-            </div>
+            <Card className="h-full">
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
+                    No data available
+                </CardContent>
+            </Card>
         );
     }
 
     return (
-        <div className="card">
-            <div className="card-title">{title}</div>
-            <div className="chart-container">
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis
                             dataKey="hour"
-                            stroke="var(--text-muted)"
+                            stroke="hsl(var(--muted-foreground))"
                             fontSize={10}
-                            interval={2}
+                            interval={3}
+                            tickLine={false}
+                            axisLine={false}
+                            dy={10}
                         />
-                        <YAxis stroke="var(--text-muted)" fontSize={12} />
+                        <YAxis
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            dx={-10}
+                        />
                         <Tooltip
                             contentStyle={{
-                                background: "#16161f",
-                                border: "1px solid #2a2a3a",
-                                borderRadius: "8px",
-                                color: "#f0f0f5",
+                                backgroundColor: "hsl(var(--card))",
+                                borderColor: "hsl(var(--border))",
+                                borderRadius: "var(--radius)",
+                                color: "hsl(var(--foreground))",
                             }}
-                            labelStyle={{ color: "#f0f0f5" }}
-                            itemStyle={{ color: "#f0f0f5" }}
-                            formatter={(value) => [`${value} screenshots`, "Count"]}
+                            cursor={{ fill: "hsl(var(--muted)/0.4)" }}
+                            labelStyle={{ color: "hsl(var(--foreground))" }}
+                            itemStyle={{ color: "hsl(var(--foreground))" }}
                         />
                         <Bar
                             dataKey="count"
-                            fill="#8b5cf6"
+                            fill="hsl(var(--primary))"
                             radius={[4, 4, 0, 0]}
-                            opacity={0.8}
                         />
                     </BarChart>
                 </ResponsiveContainer>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

@@ -8,7 +8,7 @@ import {
     getUniqueApps,
     getExtendedStats,
 } from "@/lib/data";
-import { FilterOptions } from "@/types/screenshot";
+import { FilterOptions, Screenshot } from "@/types/screenshot";
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -93,7 +93,8 @@ export async function GET(request: NextRequest) {
     });
 }
 
-function getBasicStats(screenshots: any[]) {
+
+function getBasicStats(screenshots: Screenshot[]) {
     if (screenshots.length === 0) {
         return {
             avgFocus: 0,

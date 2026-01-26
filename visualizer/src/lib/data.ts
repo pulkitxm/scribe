@@ -3,7 +3,7 @@ import path from "path";
 import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
 
 let cachedFolder: string | null = null;
-let folderCache: Map<string, Screenshot[]> = new Map();
+const folderCache: Map<string, Screenshot[]> = new Map();
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 60000;
 
@@ -159,6 +159,26 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
         if (filters.minProductivityScore !== undefined) {
             allScreenshots = allScreenshots.filter(
                 (s) => s.data.scores.productivity_score >= filters.minProductivityScore!
+            );
+        }
+        if (filters.project) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.context.code_context?.repo_or_project === filters.project
+            );
+        }
+        if (filters.domain) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.evidence.web_domains_visible.includes(filters.domain!)
+            );
+        }
+        if (filters.language) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.context.code_context?.language === filters.language
+            );
+        }
+        if (filters.workspace) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.workspace_type === filters.workspace
             );
         }
     }

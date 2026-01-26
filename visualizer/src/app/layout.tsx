@@ -19,10 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}>
         <Navigation />
-        <main className="container" style={{ paddingTop: "24px", paddingBottom: "60px" }}>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
           {children}
         </main>
       </body>

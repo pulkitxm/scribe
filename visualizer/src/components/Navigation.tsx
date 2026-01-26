@@ -2,33 +2,48 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+
+const links = [
+    { href: "/", label: "Dashboard" },
+    { href: "/gallery", label: "Gallery" },
+    { href: "/analytics", label: "Analytics" },
+    { href: "/tags", label: "Tags" },
+];
 
 export default function Navigation() {
     const pathname = usePathname();
 
-    const links = [
-        { href: "/", label: "Dashboard" },
-        { href: "/gallery", label: "Gallery" },
-        { href: "/analytics", label: "Analytics" },
-        { href: "/tags", label: "Tags" },
-    ];
+    const isActive = (href: string) => {
+        if (href === "/") return pathname === "/";
+        return pathname.startsWith(href);
+    };
 
     return (
-        <nav className="nav">
-            <div className="nav-content">
-                <Link href="/" className="nav-logo">
-                    Scribe Visualizer
-                </Link>
-                <div className="nav-links">
-                    {links.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className={`nav-link ${pathname === link.href ? "active" : ""}`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+        <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex h-14 items-center justify-between">
+                    <Link
+                        href="/"
+                        className="text-xl font-bold text-foreground hover:opacity-80 transition-opacity cursor-pointer"
+                    >
+                        Scribe Visualizer
+                    </Link>
+                    <div className="flex items-center gap-1">
+                        {links.map((link) => (
+                            <Button
+                                key={link.href}
+                                variant={isActive(link.href) ? "secondary" : "ghost"}
+                                size="sm"
+                                asChild
+                                className="cursor-pointer"
+                            >
+                                <Link href={link.href}>
+                                    {link.label}
+                                </Link>
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </div>
         </nav>
