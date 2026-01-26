@@ -37,7 +37,13 @@ export default function TagsPage() {
         }
     }
 
-    const tags = Object.keys(tagCounts).sort();
+    const tags = Object.keys(tagCounts).sort((a, b) => {
+        const countDiff = tagCounts[b] - tagCounts[a];
+        if (countDiff !== 0) {
+            return countDiff;
+        }
+        return a.localeCompare(b);
+    });
 
     return (
         <div className="space-y-6">

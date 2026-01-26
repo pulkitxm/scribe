@@ -6,7 +6,8 @@
     "dev": "next dev -p 65535",
     "build": "next build",
     "start": "next start -p 65535",
-    "lint": "eslint"
+    "lint": "eslint",
+    "serve": "pnpm build && pnpm start"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

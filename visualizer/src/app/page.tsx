@@ -14,6 +14,7 @@ import CategoryChart from "@/components/CategoryChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import { FilterOptions } from "@/types/screenshot";
 import { Lightbulb, Zap, Clock, Target } from "lucide-react";
+import SmartInsights from "@/components/SmartInsights";
 
 interface PageProps {
   searchParams: Promise<{
@@ -204,27 +205,7 @@ async function DashboardContent({
       </div>
 
       {/* Insights Section */}
-      <Card className="bg-muted/30 border-dashed">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Lightbulb className="h-4 w-4 text-yellow-500" />
-            Smart Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {insights.map((insight, i) => (
-              <div key={i} className="flex gap-3 items-start p-3 bg-card rounded-md border text-sm">
-                <div className="mt-0.5 text-primary text-lg">•</div>
-                <div className="text-muted-foreground">{insight}</div>
-              </div>
-            ))}
-            {insights.length === 0 && (
-              <div className="text-sm text-muted-foreground">Not enough data for insights yet.</div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <SmartInsights insights={insights} />
 
       {/* Analytics Links */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

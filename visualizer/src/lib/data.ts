@@ -488,8 +488,15 @@ export function getHighFocusScreenshots(limit: number = 4): Screenshot[] {
         .slice(0, limit);
 }
 
-export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): string[] {
-    const insights: string[] = [];
+export interface Insight {
+    type: "positive" | "negative" | "neutral" | "info";
+    icon: string;
+    title: string;
+    description: string;
+}
+
+export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): Insight[] {
+    const insights: Insight[] = [];
 
     // Focus time insight
     const hourly = stats.hourlyDistribution;
@@ -505,20 +512,51 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): st
 
     if (bestHour !== -1) {
         const period = bestHour < 12 ? "morning" : bestHour < 17 ? "afternoon" : "evening";
-        insights.push(`You are most active in the ${period} around ${bestHour}:00.`);
+        insights.push({
+            type: "info",
+            icon: "clock",
+            title: "Peak Productivity",
+            description: `You are most active in the ${period} around ${bestHour}:00.`
+        });
     }
 
     // Top category
     const topCat = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
     if (topCat) {
-        insights.push(`${topCat[0]} is your primary focus (${Math.round(topCat[1] / stats.totalScreenshots * 100)}% of time).`);
+        insights.push({
+            type: "neutral",
+            icon: "chart",
+            title: "Primary Focus",
+            description: `${topCat[0]} accounts for ${Math.round(topCat[1] / stats.totalScreenshots * 100)}% of your time.`
+        });
     }
 
     // Focus score
     if (stats.avgFocus > 75) {
-        insights.push("Great job! Your average focus score is high.");
+        insights.push({
+            type: "positive",
+            icon: "zap",
+            title: "High Focus",
+            description: "Great job! Your average focus score is consistently high."
+        });
     } else if (stats.avgDistraction > 30) {
-        insights.push("Distraction risk is elevated. Consider blocking notifications.");
+        insights.push({
+            type: "negative",
+            icon: "alert",
+            title: "High Distraction",
+            description: "Distraction risk is elevated. Consider blocking notifications."
+        });
+    }
+
+    // Most used language (if applicable)
+    const topLang = Object.entries(stats.languages).sort((a, b) => b[1] - a[1])[0];
+    if (topLang) {
+        insights.push({
+            type: "info",
+            icon: "code",
+            title: "Top Language",
+            description: `You are writing a lot of ${topLang[0]} code recently.`
+        });
     }
 
     return insights;
