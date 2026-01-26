@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import Fuse from "fuse.js";
 import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
 
 let cachedFolder: string | null = null;
@@ -182,12 +183,46 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
             );
         }
         if (filters.text) {
-            const query = filters.text.toLowerCase();
-            allScreenshots = allScreenshots.filter((s) =>
-                s.data.evidence.text_snippets.some(snippet =>
-                    snippet.toLowerCase().includes(query)
-                )
-            );
+            const query = filters.text.trim();
+            const words = query.split(/\s+/).filter(Boolean);
+            const normalizedQuery = query.toLowerCase().trim();
+
+            const fuseOptions = {
+                keys: [
+                    { name: "data.category", weight: 2.0 },
+                    { name: "data.summary_tags", weight: 1.5 },
+                    { name: "data.evidence.text_snippets", weight: 1.0 },
+                    { name: "data.evidence.web_domains_visible", weight: 0.5 },
+                    { name: "data.evidence.apps_visible", weight: 0.5 },
+                ],
+                threshold: 0.4,
+                distance: 100,
+                findAllMatches: true,
+                useExtendedSearch: true,
+            };
+
+            const exactMatches: Screenshot[] = [];
+            const otherScreenshots: Screenshot[] = [];
+
+            for (const s of allScreenshots) {
+                const categoryLower = s.data.category.toLowerCase();
+                const tagsLower = s.data.summary_tags.map(t => t.toLowerCase());
+
+                if (categoryLower === normalizedQuery || tagsLower.includes(normalizedQuery)) {
+                    exactMatches.push(s);
+                } else {
+                    otherScreenshots.push(s);
+                }
+            }
+
+            const fuse = new Fuse(otherScreenshots, fuseOptions);
+
+            // Construct an OR search if there are multiple words
+            // e.g. "Rbanshi bhandari" -> "Rbanshi | bhandari"
+            const fuseQuery = words.length > 1 ? words.join(" | ") : query;
+            const fuseResults = fuse.search(fuseQuery);
+
+            allScreenshots = [...exactMatches, ...fuseResults.map(r => r.item)];
         }
         if (filters.tag) {
             const query = filters.tag.toLowerCase();
