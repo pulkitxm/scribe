@@ -257,7 +257,13 @@ Use a single category label only.`;
         }
         try {
           const parsed = JSON.parse(data);
-          resolve(parsed.response);
+          // qwen3 models may return content in 'thinking' field instead of 'response'
+          const content = parsed.response || parsed.thinking || '';
+          if (!content) {
+            reject(new Error('Ollama returned empty response'));
+            return;
+          }
+          resolve(content);
         } catch (e) {
           reject(new Error(`Failed to parse Ollama wrapper JSON: ${e.message}`));
         }
@@ -393,7 +399,7 @@ async function main() {
   const imageBase64 = getImageBase64(processedImagePath);
 
   if (processedImagePath !== imagePath && fs.existsSync(processedImagePath)) {
-    try { fs.unlinkSync(processedImagePath); } catch (e) {}
+    try { fs.unlinkSync(processedImagePath); } catch (e) { }
   }
 
   let lastErr = null;
