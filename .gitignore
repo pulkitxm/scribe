@@ -2,3 +2,4 @@ scribe
 .DS_Store
 *.log
 .env
+outputs-dev/

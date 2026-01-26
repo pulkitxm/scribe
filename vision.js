@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 const OLLAMA_HOST = 'localhost';
 const OLLAMA_PORT = 11434;
-const MODEL_NAME = 'qwen2.5:7b';
+const MODEL_NAME = process.env.OLLAMA_MODEL || 'qwen3-vl:8b';
 const MAX_RETRIES = 2;
 
 const colors = {

@@ -1,5 +1,8 @@
 # How to Run & How it Works
 
+> [!WARNING]
+> This project is completely vibe coded. Use at your own risk.
+
 ## How it Works
 
 1.  **Swift Binary**: A small compiled program runs in the background.

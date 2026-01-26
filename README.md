@@ -1,5 +1,8 @@
 # Scribe
 
+> [!WARNING]
+> This project is completely vibe coded. Use at your own risk.
+
 A lightweight, silent background service that captures full-screen screenshots every 5 seconds.
 
 ## Features
