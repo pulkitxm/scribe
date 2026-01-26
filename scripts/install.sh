@@ -53,6 +53,11 @@ echo "Created config.json"
 try cp "$SCRIPT_DIR/../vision.js" "$MACOS_DIR/vision.js"
 echo "Copied vision.js"
 
+if [ -f "$SCRIPT_DIR/../.env" ]; then
+    try cp "$SCRIPT_DIR/../.env" "$MACOS_DIR/.env"
+    echo "Copied .env"
+fi
+
 echo "Signing App Bundle..."
 try codesign -f -s - --deep --identifier "com.scribe.service" "$APP_DIR"
 
