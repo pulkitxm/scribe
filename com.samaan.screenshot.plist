@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.samaan.screenshot</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/pulkit/.local/bin/screenshot</string>
+    </array>
+    
+    <!-- Start on login -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- Restart if it crashes -->
+    <key>KeepAlive</key>
+    <true/>
+    
+    <!-- Run in background with low priority -->
+    <key>LowPriorityIO</key>
+    <true/>
+    
+    <key>Nice</key>
+    <integer>10</integer>
+    
+    <!-- Suppress output (silent) -->
+    <key>StandardOutPath</key>
+    <string>/dev/null</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/dev/null</string>
+</dict>
+</plist>
