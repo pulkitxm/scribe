@@ -25,12 +25,12 @@ help:
 	@echo ""
 
 dev:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe
-	@./scribe
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
+	@./scribe_cli
 
 run-once:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe
-	@./scribe --run-once
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
+	@./scribe_cli --run-once
 
 install:
 	@./scripts/install.sh
@@ -61,7 +61,7 @@ status:
 check-running: status
 
 clean:
-	@rm -f scribe
+	@rm -f scribe_cli
 
 viz-start:
 	@echo "Starting Visualizer (pm2)..."
