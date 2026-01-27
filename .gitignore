@@ -3,3 +3,4 @@ scribe
 *.log
 .env
 outputs-dev/
+*.mp4
