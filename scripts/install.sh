@@ -37,7 +37,7 @@ mkdir -p "$MACOS_DIR"
 try cp "$SCRIPT_DIR/../config/Info.plist" "$CONTENTS_DIR/Info.plist"
 
 echo "Compiling Scribe..."
-try swiftc "$SCRIPT_DIR/../src/main.swift" "$SCRIPT_DIR/../src/Analyzer.swift" "$SCRIPT_DIR/../src/Logger.swift" "$SCRIPT_DIR/../src/ScreenshotManager.swift" "$SCRIPT_DIR/../src/Utils.swift" -o "$MACOS_DIR/scribe"
+try swiftc -framework CoreWLAN -framework CoreAudio "$SCRIPT_DIR/../src/"*.swift "$SCRIPT_DIR/../src/utils/"*.swift -o "$MACOS_DIR/scribe"
 
 NODE_PATH=$(which node)
 if [ -z "$NODE_PATH" ]; then
