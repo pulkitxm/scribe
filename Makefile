@@ -25,11 +25,11 @@ help:
 	@echo ""
 
 dev:
-	@swiftc src/*.swift -o scribe
+	@swiftc src/*.swift src/utils/*.swift -o scribe
 	@./scribe
 
 run-once:
-	@swiftc src/*.swift -o scribe
+	@swiftc src/*.swift src/utils/*.swift -o scribe
 	@./scribe --run-once
 
 install:
@@ -69,7 +69,7 @@ viz-start:
 
 viz-stop:
 	@echo "Stopping Visualizer..."
-	@pm2 stop visualizer
+	@pm2 stop visualizere
 
 viz-restart:
 	@echo "Restarting Visualizer..."

@@ -76,8 +76,6 @@ public func getEnvVar(_ key: String) -> String? {
     return nil
 }
 
-
-
 func getSystemIdleTime() -> Double? {
     var iterator: io_iterator_t = 0
     let result = IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"), &iterator)

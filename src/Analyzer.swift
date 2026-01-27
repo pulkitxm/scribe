@@ -30,7 +30,30 @@ struct Analyzer {
         nodeProcess.standardOutput = pipe
         nodeProcess.standardError = pipe
         
-        nodeProcess.environment = ProcessInfo.processInfo.environment
+        var env = ProcessInfo.processInfo.environment
+        env["SCRIBE_ACTIVE_APP"] = getActiveAppName()
+        env["SCRIBE_OPENED_APPS"] = getOpenedApps().joined(separator: ", ")
+        env["SCRIBE_BATTERY"] = getBatteryLevel()
+        env["SCRIBE_BATTERY_PERCENT"] = String(getBatteryPercentage())
+        env["SCRIBE_IS_PLUGGED"] = String(isPluggedIntoPower())
+        env["SCRIBE_VOLUME"] = String(getSystemVolume())
+        
+        let ram = getRAMUsage()
+        env["SCRIBE_RAM_TOTAL"] = String(ram.total)
+        env["SCRIBE_RAM_USED"] = String(ram.used)
+        env["SCRIBE_RAM_FREE"] = String(ram.free)
+        
+        let storage = getStorageUsage()
+        env["SCRIBE_STORAGE_TOTAL"] = String(storage.total)
+        env["SCRIBE_STORAGE_USED"] = String(storage.used)
+        env["SCRIBE_STORAGE_FREE"] = String(storage.free)
+        
+        let cpu = getCPUUsage()
+        env["SCRIBE_CPU_CORES"] = String(cpu.totalCores)
+        env["SCRIBE_CPU_USED"] = String(format: "%.1f", cpu.usagePercent)
+        env["SCRIBE_CPU_IDLE"] = String(format: "%.1f", cpu.idlePercent)
+        
+        nodeProcess.environment = env
         
         nodeProcess.launch()
         

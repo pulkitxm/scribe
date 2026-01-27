@@ -29,15 +29,25 @@ You are a generic desktop activity tracking assistant.
 
 Analyze the desktop screenshot and return ONLY VALID JSON (no markdown, no extra text).
 
+Context from system:
+- Active Application: ${process.env.SCRIBE_ACTIVE_APP || 'Unknown'}
+- All Running Applications: ${process.env.SCRIBE_OPENED_APPS || 'Unknown'}
+- Battery/Power: ${process.env.SCRIBE_BATTERY || 'Unknown'} (${process.env.SCRIBE_BATTERY_PERCENT || '0'}%, Plugged in: ${process.env.SCRIBE_IS_PLUGGED || 'false'})
+- Volume: ${process.env.SCRIBE_VOLUME || 'Unknown'}%
+- RAM: ${process.env.SCRIBE_RAM_USED || '0'}GB used / ${process.env.SCRIBE_RAM_TOTAL || '0'}GB total
+- Storage: ${process.env.SCRIBE_STORAGE_USED || '0'}GB used / ${process.env.SCRIBE_STORAGE_TOTAL || '0'}GB total
+- CPU: ${process.env.SCRIBE_CPU || '0'}%
+
 Goal:
-Give a high-signal summary of what the user is doing on their laptop based ONLY on what is clearly visible.
+Give a high-signal summary of what the user is doing on their laptop based on the screenshot and provided system context.
 
 Strict rules:
-1) Extract STRICTLY VISIBLE context. Do NOT guess. Do NOT hallucinate.
-2) If text is not clearly readable, do not infer it.
-3) If you are unsure about an app or site, omit it.
-4) Do not invent filenames, code, chats, or people.
-5) Treat privacy seriously. Do not reveal secrets. If sensitive data is visible, mention it generically (e.g., "personal info visible").
+1) Extract STRICTLY VISIBLE context from screenshot, but you can use system context for better accuracy (e.g., if you see a code editor and system says "VS Code" is active).
+2) Do NOT guess. Do NOT hallucinate.
+3) If text is not clearly readable, do not infer it unless system context supports it.
+4) If you are unsure about an app or site, omit it.
+5) Do not invent filenames, code, chats, or people.
+6) Treat privacy seriously. Do not reveal secrets. If sensitive data is visible, mention it generically (e.g., "personal info visible").
 
 Activity categories:
 Use ONE short label only:
@@ -293,13 +303,20 @@ function parseAndValidateJSON(responseString) {
     const json = JSON.parse(clean);
     return validateJSON(json);
   } catch (e) {
-    try {
-      return validateJSON(JSON.parse(clean + '}'));
-    } catch (e2) {
+    // Attempt repairs
+    const repairs = [
+      clean + '}',
+      clean + '"}',
+      clean + '"]}',
+      clean + '"}]}',
+      clean + '}}',
+      clean + '"}}',
+    ];
+
+    for (const r of repairs) {
       try {
-        return validateJSON(JSON.parse(clean + '}}'));
-      } catch (e3) {
-      }
+        return validateJSON(JSON.parse(r));
+      } catch (err) { }
     }
 
     log.error('Failed to parse JSON: ' + e.message);
@@ -410,9 +427,16 @@ function validateJSON(json) {
   if (!json.short_description) throw new Error('short_description missing');
   if (!json.detailed_analysis) throw new Error('detailed_analysis missing');
 
-  if (json.category === 'idle' || json.category === 'unknown') {
-    json.overall_activity_score = Math.min(json.overall_activity_score, 45);
+  if (!json.system_metadata || typeof json.system_metadata !== 'object') json.system_metadata = {};
+  json.system_metadata.active_app = safeString(json.system_metadata.active_app);
+  json.system_metadata.opened_apps = safeStringArray(json.system_metadata.opened_apps);
+
+  if (!json.system_metadata.battery || typeof json.system_metadata.battery !== 'object') {
+    json.system_metadata.battery = {};
   }
+  json.system_metadata.battery.percentage = typeof json.system_metadata.battery.percentage === 'number' ? json.system_metadata.battery.percentage : 0;
+  json.system_metadata.battery.isPlugged = !!json.system_metadata.battery.isPlugged;
+  json.system_metadata.battery.battery_status = safeString(json.system_metadata.battery.battery_status);
 
   return json;
 }
@@ -438,6 +462,36 @@ async function main() {
       if (attempt > 0) log.warn(`Retry ${attempt}/${MAX_RETRIES}...`);
       const responseText = await callOllama(imageBase64, attempt > 0);
       const resultJSON = parseAndValidateJSON(responseText);
+
+      // Inject real system metadata to ensure accuracy
+      resultJSON.system_metadata = {
+        active_app: process.env.SCRIBE_ACTIVE_APP || 'Unknown',
+        opened_apps: (process.env.SCRIBE_OPENED_APPS || '').split(',').map(s => s.trim()).filter(Boolean),
+        volume: parseInt(process.env.SCRIBE_VOLUME || '0', 10),
+        stats: {
+          battery: {
+            percentage: parseInt(process.env.SCRIBE_BATTERY_PERCENT || '0', 10),
+            isPlugged: process.env.SCRIBE_IS_PLUGGED === 'true',
+            status: process.env.SCRIBE_BATTERY || 'Unknown'
+          },
+          ram: {
+            total: parseInt(process.env.SCRIBE_RAM_TOTAL || '0', 10),
+            used: parseInt(process.env.SCRIBE_RAM_USED || '0', 10),
+            free: parseInt(process.env.SCRIBE_RAM_FREE || '0', 10)
+          },
+          storage: {
+            total: parseInt(process.env.SCRIBE_STORAGE_TOTAL || '0', 10),
+            used: parseInt(process.env.SCRIBE_STORAGE_USED || '0', 10),
+            free: parseInt(process.env.SCRIBE_STORAGE_FREE || '0', 10)
+          },
+          cpu: {
+            cores: parseInt(process.env.SCRIBE_CPU_CORES || '0', 10),
+            used: parseFloat(process.env.SCRIBE_CPU_USED || '0'),
+            idle: parseFloat(process.env.SCRIBE_CPU_IDLE || '0')
+          }
+        }
+      };
+
       fs.writeFileSync(finalOutputPath, JSON.stringify(resultJSON, null, 2));
       log.success(`Saved: ${finalOutputPath}`);
       return;
