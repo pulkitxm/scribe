@@ -62,6 +62,9 @@ importers:
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.3)
+      moment:
+        specifier: ^2.30.1
+        version: 2.30.1
       next:
         specifier: 16.1.4
         version: 16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -77,6 +80,12 @@ importers:
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
+      vis-data:
+        specifier: ^8.0.3
+        version: 8.0.3(uuid@13.0.0)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1))
+      vis-timeline:
+        specifier: ^8.5.0
+        version: 8.5.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)(keycharm@0.4.0)(moment@2.30.1)(propagating-hammerjs@3.0.0(@egjs/hammerjs@2.0.17))(uuid@13.0.0)(vis-data@8.0.3(uuid@13.0.0)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)))(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1))(xss@1.0.15)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -181,6 +190,10 @@ packages:
   '@babel/types@7.28.6':
     resolution: {integrity: sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==}
     engines: {node: '>=6.9.0'}
+
+  '@egjs/hammerjs@2.0.17':
+    resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
+    engines: {node: '>=0.8.0'}
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -1079,6 +1092,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/hammerjs@2.0.46':
+    resolution: {integrity: sha512-ynRvcq6wvqexJ9brDMS4BnBLzmr0e14d6ZJTEShTBWKymQiHwlAyGu0ZPEFI2Fh1U53F7tN9ufClWM5KvqkKOw==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -1397,6 +1413,12 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
+  commander@2.20.3:
+    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
+
+  component-emitter@1.3.1:
+    resolution: {integrity: sha512-T0+barUSQRTUQASh8bx02dl+DhF54GtIDY13Y3m9oWTklKbb3Wv974meRpeZ3lp1JpLVECWWNHC4vaG2XHXouQ==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -1406,6 +1428,9 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  cssfilter@0.0.10:
+    resolution: {integrity: sha512-FAaLDaplstoRsDR8XGYH51znUN0UY7nMc6Z9/fvE8EXGwvJE9hu7W2vHwx1+bd6gCYnln9nLbzxFTrcO9YQDZw==}
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
@@ -2023,6 +2048,9 @@ packages:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
     engines: {node: '>=4.0'}
 
+  keycharm@0.4.0:
+    resolution: {integrity: sha512-TyQTtsabOVv3MeOpR92sIKk/br9wxS+zGj4BG7CR8YbK4jM3tyIBaF0zhzeBUMx36/Q/iQLOKKOT+3jOQtemRQ==}
+
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -2155,6 +2183,9 @@ packages:
 
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
+
+  moment@2.30.1:
+    resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
 
   monaco-editor@0.55.1:
     resolution: {integrity: sha512-jz4x+TJNFHwHtwuV9vA9rMujcZRb0CEilTEwG2rRSpe/A7Jdkuj8xPKttCgOh+v/lkHy7HsZ64oj+q3xoAFl9A==}
@@ -2291,6 +2322,11 @@ packages:
 
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+
+  propagating-hammerjs@3.0.0:
+    resolution: {integrity: sha512-FJTclGll0ysatpF9rKO4jwobyaVDitPb0g/bGlufqqtXPQX8mxf8IXilnIK2iYRMPkVlYeFNhPTrspF9CM1stg==}
+    peerDependencies:
+      '@egjs/hammerjs': ^2.0.17
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -2645,8 +2681,38 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   victory-vendor@37.3.6:
     resolution: {integrity: sha512-SbPDPdDBYp+5MJHhBCAyI7wKM3d5ivekigc2Dk2s7pgbZ9wIgIBYGVw4zGHBml/qTFbexrofXW6Gu4noGxrOwQ==}
+
+  vis-data@8.0.3:
+    resolution: {integrity: sha512-jhnb6rJNqkKR1Qmlay0VuDXY9ZlvAnYN1udsrP4U+krgZEq7C0yNSKdZqmnCe13mdnf9AdVcdDGFOzy2mpPoqw==}
+    peerDependencies:
+      uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
+      vis-util: '>=6.0.0'
+
+  vis-timeline@8.5.0:
+    resolution: {integrity: sha512-u0+UUuk8qJTxf2SdQ0z0ckCjtks0ECRrjAipbmCZd6vEPf6USGXxeoi7ilRilTU8iVzVE3P0W5TLWzei5KuPfQ==}
+    peerDependencies:
+      '@egjs/hammerjs': ^2.0.0
+      component-emitter: ^1.3.0
+      keycharm: ^0.2.0 || ^0.3.0 || ^0.4.0
+      moment: ^2.24.0
+      propagating-hammerjs: ^1.4.0 || ^2.0.0 || ^3.0.0
+      uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0
+      vis-data: '>=8.0.0'
+      vis-util: '>=6.0.0'
+      xss: ^1.0.0
+
+  vis-util@6.0.0:
+    resolution: {integrity: sha512-qtpts3HRma0zPe4bO7t9A2uejkRNj8Z2Tb6do6lN85iPNWExFkUiVhdAq5uLGIUqBFduyYeqWJKv/jMkxX0R5g==}
+    engines: {node: '>=8'}
+    peerDependencies:
+      '@egjs/hammerjs': ^2.0.0
+      component-emitter: ^1.3.0 || ^2.0.0
 
   which-boxed-primitive@1.1.1:
     resolution: {integrity: sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA==}
@@ -2672,6 +2738,11 @@ packages:
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
+
+  xss@1.0.15:
+    resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
+    engines: {node: '>= 0.10.0'}
+    hasBin: true
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
@@ -2792,6 +2863,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@egjs/hammerjs@2.0.17':
+    dependencies:
+      '@types/hammerjs': 2.0.46
 
   '@emnapi/core@1.8.1':
     dependencies:
@@ -3603,6 +3678,8 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  '@types/hammerjs@2.0.46': {}
+
   '@types/json-schema@7.0.15': {}
 
   '@types/json5@0.0.29': {}
@@ -3943,6 +4020,10 @@ snapshots:
 
   color-name@1.1.4: {}
 
+  commander@2.20.3: {}
+
+  component-emitter@1.3.1: {}
+
   concat-map@0.0.1: {}
 
   convert-source-map@2.0.0: {}
@@ -3952,6 +4033,8 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  cssfilter@0.0.10: {}
 
   csstype@3.2.3: {}
 
@@ -4699,6 +4782,8 @@ snapshots:
       object.assign: 4.1.7
       object.values: 1.2.1
 
+  keycharm@0.4.0: {}
+
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -4805,6 +4890,8 @@ snapshots:
       brace-expansion: 2.0.2
 
   minimist@1.2.8: {}
+
+  moment@2.30.1: {}
 
   monaco-editor@0.55.1:
     dependencies:
@@ -4947,6 +5034,10 @@ snapshots:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
+
+  propagating-hammerjs@3.0.0(@egjs/hammerjs@2.0.17):
+    dependencies:
+      '@egjs/hammerjs': 2.0.17
 
   punycode@2.3.1: {}
 
@@ -5402,6 +5493,8 @@ snapshots:
     dependencies:
       react: 19.2.3
 
+  uuid@13.0.0: {}
+
   victory-vendor@37.3.6:
     dependencies:
       '@types/d3-array': 3.2.2
@@ -5418,6 +5511,28 @@ snapshots:
       d3-shape: 3.2.0
       d3-time: 3.1.0
       d3-timer: 3.0.1
+
+  vis-data@8.0.3(uuid@13.0.0)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)):
+    dependencies:
+      uuid: 13.0.0
+      vis-util: 6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)
+
+  vis-timeline@8.5.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)(keycharm@0.4.0)(moment@2.30.1)(propagating-hammerjs@3.0.0(@egjs/hammerjs@2.0.17))(uuid@13.0.0)(vis-data@8.0.3(uuid@13.0.0)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)))(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1))(xss@1.0.15):
+    dependencies:
+      '@egjs/hammerjs': 2.0.17
+      component-emitter: 1.3.1
+      keycharm: 0.4.0
+      moment: 2.30.1
+      propagating-hammerjs: 3.0.0(@egjs/hammerjs@2.0.17)
+      uuid: 13.0.0
+      vis-data: 8.0.3(uuid@13.0.0)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1))
+      vis-util: 6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1)
+      xss: 1.0.15
+
+  vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@1.3.1):
+    dependencies:
+      '@egjs/hammerjs': 2.0.17
+      component-emitter: 1.3.1
 
   which-boxed-primitive@1.1.1:
     dependencies:
@@ -5465,6 +5580,11 @@ snapshots:
       isexe: 2.0.0
 
   word-wrap@1.2.5: {}
+
+  xss@1.0.15:
+    dependencies:
+      commander: 2.20.3
+      cssfilter: 0.0.10
 
   yallist@3.1.1: {}
 

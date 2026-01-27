@@ -172,7 +172,7 @@ export const ScreenshotDataSchema = z.object({
     actions_observed: z.array(z.string()).optional().default([]),
     privacy_notes: z.array(z.string()).optional().default([]),
     summary_tags: z.array(z.string()).optional().default([]),
-    dedupe_signature: z.string(),
+    dedupe_signature: z.string().optional().default(""),
     confidence: z.number(),
     system_metadata: SystemMetadataSchema.optional(),
 });

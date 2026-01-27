@@ -134,7 +134,7 @@ async function DashboardContent({
 
       {(!range || range === "all" || range === "month") && (
         <section className="space-y-6">
-          <SessionTimeline sessions={sessions} />
+          <SessionTimeline sessions={JSON.parse(JSON.stringify(sessions))} />
           <ActivityHeatmap data={heatmapData} />
         </section>
       )}
