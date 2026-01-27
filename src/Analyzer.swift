@@ -57,6 +57,19 @@ struct Analyzer {
         ] }), options: []), let outputsString = String(data: outputsJson, encoding: .utf8) {
             env["SCRIBE_AUDIO_OUTPUTS"] = outputsString
         }
+
+        let videoDevices = getVideoDevices()
+        if let videoJson = try? JSONSerialization.data(withJSONObject: videoDevices.map({ [
+            "name": $0.name,
+            "manufacturer": $0.manufacturer,
+            "unique_id": $0.uniqueID,
+            "is_connected": $0.isConnected,
+            "is_suspended": $0.isSuspended
+        ] }), options: []), let videoString = String(data: videoJson, encoding: .utf8) {
+            env["SCRIBE_VIDEO_SOURCES"] = videoString
+        } else {
+            env["SCRIBE_VIDEO_SOURCES"] = "[]"
+        }
         
         let ram = getRAMUsage()
         env["SCRIBE_RAM_TOTAL"] = String(ram.total)

@@ -531,6 +531,13 @@ async function main() {
             } catch (e) { return []; }
           })()
         },
+        video: {
+          sources: (() => {
+            try {
+              return JSON.parse(process.env.SCRIBE_VIDEO_SOURCES || '[]');
+            } catch (e) { return []; }
+          })()
+        },
         stats: {
           battery: {
             percentage: parseInt(process.env.SCRIBE_BATTERY_PERCENT || '0', 10),

@@ -25,11 +25,11 @@ help:
 	@echo ""
 
 dev:
-	@swiftc -framework CoreWLAN -framework CoreAudio src/*.swift src/utils/*.swift -o scribe
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe
 	@./scribe
 
 run-once:
-	@swiftc -framework CoreWLAN -framework CoreAudio src/*.swift src/utils/*.swift -o scribe
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe
 	@./scribe --run-once
 
 install:
