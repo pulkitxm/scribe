@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Code, Monitor, Cpu, Volume2, Wifi, Battery, FileText, GraduationCap, MessageSquare, Gamepad } from "lucide-react";
+import { ChevronLeft, ChevronRight, Code, Monitor, Cpu, Volume2, Wifi, Battery, FileText, GraduationCap, MessageSquare, Gamepad, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { CategoryLink, TagLink, ProjectLink, AppLink, TextLink } from "@/components/SmartLinks";
 import { Screenshot } from "@/types/screenshot";
 import { JsonViewerModal } from "@/components/JsonViewerModal";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 interface Props {
     screenshot: Screenshot;
@@ -21,6 +23,7 @@ interface Props {
 
 export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextScreenshot }: Props) {
     const [showJson, setShowJson] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const { data } = screenshot;
 
     const timestamp = new Date(screenshot.timestamp).toLocaleString("en-US", {
@@ -95,16 +98,37 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                     {/* Main Image */}
                     <Card>
                         <CardContent className="p-0 relative group">
-                            <Image
-                                src={screenshot.imagePath}
-                                alt={data.short_description}
-                                width={1200}
-                                height={675}
-                                className="w-full h-auto rounded-lg"
-                                priority
-                            />
+                            <div
+                                className="cursor-zoom-in relative"
+                                onClick={() => setLightboxOpen(true)}
+                            >
+                                <Image
+                                    src={screenshot.imagePath}
+                                    alt={data.short_description}
+                                    width={1200}
+                                    height={675}
+                                    className="w-full h-auto rounded-lg"
+                                    priority
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <div className="bg-black/50 backdrop-blur-sm rounded-full p-3">
+                                        <ZoomIn className="h-6 w-6 text-white" />
+                                    </div>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
+
+                    <Lightbox
+                        open={lightboxOpen}
+                        close={() => setLightboxOpen(false)}
+                        slides={[
+                            {
+                                src: screenshot.imagePath,
+                                alt: data.short_description,
+                            }
+                        ]}
+                    />
 
                     {/* AI Analysis */}
                     <Card>

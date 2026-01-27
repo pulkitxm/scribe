@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import RankingTable from "@/components/RankingTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProjectsAnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);
 
     const projects = Object.entries(stats.repos || {})
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, count]) => ({ name, count }));
+        .sort((a, b) => (b[1] as number) - (a[1] as number))
+        .map(([name, count]) => ({ name, count: count as number }));
 
     return (
         <div className="space-y-6">

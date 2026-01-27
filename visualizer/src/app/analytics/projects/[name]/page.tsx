@@ -10,6 +10,11 @@ import HourlyChart from "@/components/HourlyChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import RankingTable from "@/components/RankingTable";
 import RecentScreenshots from "@/components/RecentScreenshots";
+import FocusTrendChart from "@/components/charts/FocusTrendChart";
+import DayOfWeekChart from "@/components/charts/DayOfWeekChart";
+import ScoreDistributionChart from "@/components/charts/ScoreDistributionChart";
+
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
     params: Promise<{
@@ -40,6 +45,45 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([name, count]) => ({ name, count }));
+
+    // Calculate day-of-week distribution
+    const dayOfWeekData = screenshots.reduce((acc, s) => {
+        const day = new Date(s.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
+        acc[day] = (acc[day] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const dayOfWeekChartData = Object.entries(dayOfWeekData).map(([day, count]) => ({ day, count }));
+
+    // Calculate score distributions
+    const focusDistribution = [0, 0, 0, 0, 0];
+    const productivityDistribution = [0, 0, 0, 0, 0];
+    const distractionDistribution = [0, 0, 0, 0, 0];
+
+    screenshots.forEach(s => {
+        const focusScore = s.data.scores.focus_score;
+        const productivityScore = s.data.scores.productivity_score;
+        const distractionScore = s.data.scores.distraction_risk;
+
+        focusDistribution[Math.min(Math.floor(focusScore / 20), 4)]++;
+        productivityDistribution[Math.min(Math.floor(productivityScore / 20), 4)]++;
+        distractionDistribution[Math.min(Math.floor(distractionScore / 20), 4)]++;
+    });
+
+    const focusDistData = focusDistribution.map((count, i) => ({
+        range: `${i * 20}-${(i + 1) * 20}`,
+        count
+    }));
+
+    const productivityDistData = productivityDistribution.map((count, i) => ({
+        range: `${i * 20}-${(i + 1) * 20}`,
+        count
+    }));
+
+    const distractionDistData = distractionDistribution.map((count, i) => ({
+        range: `${i * 20}-${(i + 1) * 20}`,
+        count
+    }));
 
     return (
         <div className="space-y-8">
@@ -111,49 +155,84 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
             <SmartInsights insights={insights} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ProductivityChart data={dailyStats} title="Productivity Trend" />
-                <HourlyChart data={stats.hourlyDistribution} title="Usage by Hour" />
-            </div>
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Trends & Patterns</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <FocusTrendChart data={dailyStats} days={30} />
+                    <DayOfWeekChart data={dayOfWeekChartData} />
+                </div>
+            </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="h-full">
-                    <CardHeader>
-                        <CardTitle>Top Apps Used</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RankingTable
-                            items={apps}
-                            total={stats.totalScreenshots}
-                            label="App"
-                            icon="💻"
-                            linkPrefix="/analytics/apps"
-                        />
-                    </CardContent>
-                </Card>
-                <Card className="h-full">
-                    <CardHeader>
-                        <CardTitle>Languages</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RankingTable
-                            items={languages}
-                            total={stats.totalScreenshots}
-                            label="Language"
-                            icon="📝"
-                            linkPrefix="/analytics/languages"
-                        />
-                    </CardContent>
-                </Card>
-            </div>
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Score Distributions</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <ScoreDistributionChart
+                        data={focusDistData}
+                        title="Focus Score Distribution"
+                        scoreType="focus"
+                    />
+                    <ScoreDistributionChart
+                        data={productivityDistData}
+                        title="Productivity Distribution"
+                        scoreType="productivity"
+                    />
+                    <ScoreDistributionChart
+                        data={distractionDistData}
+                        title="Distraction Distribution"
+                        scoreType="distraction"
+                    />
+                </div>
+            </section>
 
-            <div className="pt-6 border-t border-border">
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Performance Overview</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ProductivityChart data={dailyStats} title="Productivity Trend" />
+                    <HourlyChart data={stats.hourlyDistribution} title="Usage by Hour" />
+                </div>
+            </section>
+
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Tools & Languages</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle>Top Apps Used</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <RankingTable
+                                items={apps}
+                                total={stats.totalScreenshots}
+                                label="App"
+                                icon="💻"
+                                linkPrefix="/analytics/apps"
+                            />
+                        </CardContent>
+                    </Card>
+                    <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle>Languages</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <RankingTable
+                                items={languages}
+                                total={stats.totalScreenshots}
+                                label="Language"
+                                icon="📝"
+                                linkPrefix="/analytics/languages"
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border">
                 <RecentScreenshots
                     filter={{ project: decodedName }}
                     title="Project Gallery"
                     limit={12}
                 />
-            </div>
+            </section>
         </div>
     );
 }

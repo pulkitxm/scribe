@@ -34,60 +34,7 @@ export default function SystemAnalyticsDashboard({ stats }: Props) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">System & Context Analytics</h2>
-
-            {/* System Health Trends */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>System Load (Hourly Avg)</CardTitle>
-                        <CardDescription>CPU (%) and RAM (GB) usage patterns throughout the day</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={stats.hourlyTrends}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="hour" stroke="#888888" fontSize={12} tickFormatter={(value) => `${value}:00`} />
-                                <YAxis yAxisId="left" stroke="#888888" fontSize={12} />
-                                <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }}
-                                    itemStyle={{ color: "#e5e7eb" }}
-                                />
-                                <Legend />
-                                <Line yAxisId="left" type="monotone" dataKey="cpu" name="CPU %" stroke="#f43f5e" strokeWidth={2} dot={false} />
-                                <Line yAxisId="right" type="monotone" dataKey="ram" name="RAM (GB)" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Environment (Audio & Battery)</CardTitle>
-                        <CardDescription>Volume levels and Battery state trends</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats.hourlyTrends}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="hour" stroke="#888888" fontSize={12} tickFormatter={(value) => `${value}:00`} />
-                                <YAxis stroke="#888888" fontSize={12} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }}
-                                    itemStyle={{ color: "#e5e7eb" }}
-                                />
-                                <Legend />
-                                <Area type="monotone" dataKey="battery" name="Battery %" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                                <Area type="monotone" dataKey="volume" name="Volume %" stackId="2" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </div>
-
             {/* Context Distribution */}
-            <h3 className="text-xl font-semibold mt-8 mb-4">Context Insights</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardHeader>

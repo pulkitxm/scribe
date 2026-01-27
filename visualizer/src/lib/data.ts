@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Fuse from "fuse.js";
-import { Screenshot, ScreenshotData, DailyStats, FilterOptions, Session } from "@/types/screenshot";
+import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
 import { ScreenshotDataSchema } from "@/lib/schemas";
 
 let cachedFolder: string | null = null;
@@ -756,139 +756,6 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
     return insights;
 }
 
-export function getSessions(filters?: FilterOptions): Session[] {
-    const screenshots = getAllScreenshots(filters).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    if (screenshots.length === 0) return [];
-
-    const sessions: Session[] = [];
-    let currentSessionScreenshots: Screenshot[] = [screenshots[0]];
-
-    // Thresholds
-    const IDLE_THRESHOLD_MS = 60 * 1000; // 60 seconds
-
-    for (let i = 1; i < screenshots.length; i++) {
-        const prev = screenshots[i - 1];
-        const curr = screenshots[i];
-
-        const timeDiff = curr.timestamp.getTime() - prev.timestamp.getTime();
-        const categoryChanged = curr.data.category !== prev.data.category;
-        const appChanged = (curr.data.system_metadata?.active_app || curr.data.evidence?.active_app_guess) !==
-            (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
-
-        // Decide if we should break the session
-        // We break if:
-        // 1. Time gap is too large (idle)
-        // 2. Category changes (e.g. coding -> browsing)
-        // 3. Active app changes (e.g. VS Code -> Chrome)
-
-        const isNewSession = timeDiff > IDLE_THRESHOLD_MS || categoryChanged || appChanged;
-
-        if (isNewSession) {
-            // Finalize current session
-            sessions.push(createSessionFromScreenshots(currentSessionScreenshots));
-            currentSessionScreenshots = [curr];
-        } else {
-            currentSessionScreenshots.push(curr);
-        }
-    }
-
-    // Push the last session
-    if (currentSessionScreenshots.length > 0) {
-        sessions.push(createSessionFromScreenshots(currentSessionScreenshots));
-    }
-
-    return sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-}
-
-function createSessionFromScreenshots(screenshots: Screenshot[]): Session {
-    const first = screenshots[0];
-    const last = screenshots[screenshots.length - 1];
-
-    // Calculate aggregates
-    const totalFocus = screenshots.reduce((sum, s) => sum + s.data.scores.focus_score, 0);
-    const totalProd = screenshots.reduce((sum, s) => sum + s.data.scores.productivity_score, 0);
-    const totalDistraction = screenshots.reduce((sum, s) => sum + s.data.scores.distraction_risk, 0);
-
-    // Find dominant app
-    const appCounts: Record<string, number> = {};
-    screenshots.forEach(s => {
-        const app = s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess || "Unknown";
-        appCounts[app] = (appCounts[app] || 0) + 1;
-    });
-    const dominantApp = Object.entries(appCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
-
-    // Collect tags
-    const allTags = new Set<string>();
-    screenshots.forEach(s => (s.data.summary_tags || []).forEach(t => allTags.add(t)));
-
-    // Calculate additional metrics
-    let contextSwitches = 0;
-    let interruptions = 0;
-    const projectCounts: Record<string, number> = {};
-
-    for (let i = 0; i < screenshots.length; i++) {
-        const s = screenshots[i];
-
-        // Interruptions: High distraction
-        if (s.data.scores.distraction_risk > 75) {
-            interruptions++;
-        }
-
-        // Project
-        const project = s.data.context.code_context?.repo_or_project || "Unknown";
-        if (project !== "Unknown") {
-            projectCounts[project] = (projectCounts[project] || 0) + 1;
-        }
-
-        // Context Switches
-        if (i > 0) {
-            const prev = screenshots[i - 1];
-            const appChanged = (s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess) !==
-                (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
-            if (appChanged) contextSwitches++;
-        }
-    }
-
-    const dominantProject = Object.entries(projectCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-
-    return {
-        id: `session_${first.timestamp.getTime()}`,
-        startTime: first.timestamp,
-        endTime: last.timestamp,
-        durationSeconds: (last.timestamp.getTime() - first.timestamp.getTime()) / 1000,
-        screenshotCount: screenshots.length,
-        category: first.data.category,
-        dominantApp,
-        dominantProject,
-        avgFocusScore: Math.round(totalFocus / screenshots.length),
-        avgProductivityScore: Math.round(totalProd / screenshots.length),
-        avgDistractionScore: Math.round(totalDistraction / screenshots.length),
-        screenshots,
-        workType: first.data.context.work_context?.work_type,
-        project: first.data.context.code_context?.repo_or_project,
-        tags: Array.from(allTags),
-        contextSwitches,
-        interruptions,
-        workspaceStabilityScore: calculateWorkspaceStability(screenshots) // Placeholder if we want to add later, or omit
-    };
-}
-
-function calculateWorkspaceStability(screenshots: Screenshot[]): number {
-    // Basic implementation: inverse of window churn?
-    // For now returning 100 as placeholder or removing if not in interface yet.
-    // Spec said "Calculate workspaceStability score".
-    // I will implement a rudimentary one: 100 - (contextSwitches * 5).
-    let switches = 0;
-    for (let i = 1; i < screenshots.length; i++) {
-        const s = screenshots[i];
-        const prev = screenshots[i - 1];
-        const appChanged = (s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess) !==
-            (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
-        if (appChanged) switches++;
-    }
-    return Math.max(0, 100 - (switches * 5));
-}
 
 export function getAppStats(screenshots: Screenshot[]) {
     const appStats: Record<string, { focus: number; productivity: number; distraction: number; count: number }> = {};
@@ -924,6 +791,18 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
     const audioInputDevices: Record<string, number> = {};
     const audioOutputDevices: Record<string, number> = {};
 
+    // Network tracking
+    const connectionTypes: Record<string, number> = {};
+
+    // Display tracking
+    let darkModeCount = 0;
+    let lightModeCount = 0;
+    const monitorUsage: Record<string, number> = {};
+    const externalDisplayStats = { withExternal: { totalFocus: 0, count: 0 }, withoutExternal: { totalFocus: 0, count: 0 } };
+
+    // Idle time distribution
+    const idleDistribution: Record<string, number> = { "0-5s": 0, "5-30s": 0, "30s-5m": 0, "5m+": 0 };
+
     // Time-series data (averaged per hour)
     const hourlyStats: Record<number, {
         cpu: number;
@@ -931,7 +810,22 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
         volume: number;
         count: number;
         battery: number;
+        signalStrength: number;
+        signalCount: number;
+        storage: number;
+        storageTotal: number;
+        storageCount: number;
+        idleSeconds: number;
+        idleCount: number;
+        darkModeCount: number;
+        lightModeCount: number;
     }> = {};
+
+    // Calculate total RAM from first screenshot for reference
+    let totalRAM = 32; // Default fallback
+    if (screenshots.length > 0 && screenshots[0].data.system_metadata?.stats.ram.total) {
+        totalRAM = screenshots[0].data.system_metadata.stats.ram.total / (1024 * 1024 * 1024);
+    }
 
     for (const s of screenshots) {
         // Contexts
@@ -958,17 +852,103 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
             });
         }
 
+        // Network tracking
+        if (s.data.system_metadata?.stats.network) {
+            const net = s.data.system_metadata.stats.network;
+            if (net.connected) {
+                const connType = net.type || 'wifi';
+                connectionTypes[connType] = (connectionTypes[connType] || 0) + 1;
+            } else {
+                connectionTypes['disconnected'] = (connectionTypes['disconnected'] || 0) + 1;
+            }
+        }
+
+        // Display configuration tracking
+        if (s.data.system_metadata?.stats.display) {
+            const display = s.data.system_metadata.stats.display;
+
+            // Dark mode tracking
+            if (display.dark_mode) {
+                darkModeCount++;
+            } else {
+                lightModeCount++;
+            }
+
+            // Monitor configuration
+            const externalCount = display.external_displays?.length || 0;
+            if (externalCount === 0) {
+                monitorUsage['Single'] = (monitorUsage['Single'] || 0) + 1;
+            } else if (externalCount === 1) {
+                monitorUsage['Dual'] = (monitorUsage['Dual'] || 0) + 1;
+            } else {
+                monitorUsage['Multiple'] = (monitorUsage['Multiple'] || 0) + 1;
+            }
+
+            // External display correlation with focus
+            const focusScore = s.data.scores.focus_score;
+            if (externalCount > 0) {
+                externalDisplayStats.withExternal.totalFocus += focusScore;
+                externalDisplayStats.withExternal.count++;
+            } else {
+                externalDisplayStats.withoutExternal.totalFocus += focusScore;
+                externalDisplayStats.withoutExternal.count++;
+            }
+        }
+
+        // Idle time tracking
+        if (s.data.system_metadata?.stats.input?.idle_seconds !== undefined) {
+            const idle = s.data.system_metadata.stats.input.idle_seconds;
+            if (idle < 5) idleDistribution["0-5s"]++;
+            else if (idle < 30) idleDistribution["5-30s"]++;
+            else if (idle < 300) idleDistribution["30s-5m"]++;
+            else idleDistribution["5m+"]++;
+        }
+
         // Hourly Trends
         if (s.data.system_metadata) {
             const hour = s.timestamp.getHours();
             if (!hourlyStats[hour]) {
-                hourlyStats[hour] = { cpu: 0, ram: 0, volume: 0, count: 0, battery: 0 };
+                hourlyStats[hour] = {
+                    cpu: 0, ram: 0, volume: 0, count: 0, battery: 0,
+                    signalStrength: 0, signalCount: 0,
+                    storage: 0, storageTotal: 0, storageCount: 0,
+                    idleSeconds: 0, idleCount: 0,
+                    darkModeCount: 0, lightModeCount: 0
+                };
             }
-            hourlyStats[hour].cpu += s.data.system_metadata.stats.cpu.used;
-            hourlyStats[hour].ram += (s.data.system_metadata.stats.ram.used / 1024 / 1024 / 1024); // GB
-            hourlyStats[hour].volume += s.data.system_metadata.audio.volume;
-            hourlyStats[hour].battery += s.data.system_metadata.stats.battery.percentage;
-            hourlyStats[hour].count++;
+
+            const stats = hourlyStats[hour];
+            stats.cpu += s.data.system_metadata.stats.cpu.used;
+            stats.ram += (s.data.system_metadata.stats.ram.used / 1024 / 1024 / 1024); // GB
+            stats.volume += s.data.system_metadata.audio.volume;
+            stats.battery += s.data.system_metadata.stats.battery.percentage;
+            stats.count++;
+
+            // Network signal strength
+            if (s.data.system_metadata.stats.network?.signal_strength) {
+                stats.signalStrength += s.data.system_metadata.stats.network.signal_strength;
+                stats.signalCount++;
+            }
+
+            // Storage
+            if (s.data.system_metadata.stats.storage) {
+                stats.storage += s.data.system_metadata.stats.storage.used / (1024 * 1024 * 1024); // GB
+                stats.storageTotal += s.data.system_metadata.stats.storage.total / (1024 * 1024 * 1024);
+                stats.storageCount++;
+            }
+
+            // Idle time
+            if (s.data.system_metadata.stats.input?.idle_seconds !== undefined) {
+                stats.idleSeconds += s.data.system_metadata.stats.input.idle_seconds;
+                stats.idleCount++;
+            }
+
+            // Dark mode by hour
+            if (s.data.system_metadata.stats.display?.dark_mode) {
+                stats.darkModeCount++;
+            } else {
+                stats.lightModeCount++;
+            }
         }
     }
 
@@ -979,7 +959,85 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
         ram: Number((stats.ram / stats.count).toFixed(1)),
         volume: Math.round(stats.volume / stats.count),
         battery: Math.round(stats.battery / stats.count),
+        count: stats.count,
     })).sort((a, b) => a.hour - b.hour);
+
+    // Network signal data
+    const signalData = Object.entries(hourlyStats)
+        .filter(([_, stats]) => stats.signalCount > 0)
+        .map(([hour, stats]) => ({
+            hour: parseInt(hour),
+            signalStrength: Math.round(stats.signalStrength / stats.signalCount),
+            count: stats.signalCount
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+    // Storage trend data
+    const storageTrend = Object.entries(hourlyStats)
+        .filter(([_, stats]) => stats.storageCount > 0)
+        .map(([hour, stats]) => ({
+            hour: parseInt(hour),
+            used: Number((stats.storage / stats.storageCount).toFixed(1)),
+            total: Number((stats.storageTotal / stats.storageCount).toFixed(1)),
+            free: Number(((stats.storageTotal - stats.storage) / stats.storageCount).toFixed(1)),
+            count: stats.storageCount
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+    // Dark mode by hour data
+    const darkModeByHour = Object.entries(hourlyStats)
+        .map(([hour, stats]) => ({
+            hour: parseInt(hour),
+            darkModeCount: stats.darkModeCount,
+            lightModeCount: stats.lightModeCount
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+    // Idle time hourly data
+    const idleTimeHourly = Object.entries(hourlyStats)
+        .filter(([_, stats]) => stats.idleCount > 0)
+        .map(([hour, stats]) => ({
+            hour: parseInt(hour),
+            avgIdleSeconds: Number((stats.idleSeconds / stats.idleCount).toFixed(1)),
+            activeMinutes: Number((stats.count * 0.5).toFixed(1)), // Estimate: assume ~30 sec per capture actively working
+            passiveMinutes: Number(((stats.idleSeconds / stats.idleCount) / 60).toFixed(1))
+        }))
+        .sort((a, b) => a.hour - b.hour);
+
+    // Connection types formatted for chart
+    const connectionTypesData = Object.entries(connectionTypes).map(([type, count]) => ({
+        type,
+        count
+    }));
+
+    // Monitor usage formatted for chart
+    const monitorUsageData = Object.entries(monitorUsage).map(([type, count]) => ({
+        type,
+        count
+    }));
+
+    // Idle distribution formatted for chart
+    const idleDistributionData = Object.entries(idleDistribution).map(([range, count]) => ({
+        range,
+        count,
+        isBreak: range === "5m+"
+    }));
+
+    // Calculate external display correlation
+    const externalDisplayCorrelation = {
+        withExternal: {
+            avgFocus: externalDisplayStats.withExternal.count > 0
+                ? externalDisplayStats.withExternal.totalFocus / externalDisplayStats.withExternal.count
+                : 0,
+            count: externalDisplayStats.withExternal.count
+        },
+        withoutExternal: {
+            avgFocus: externalDisplayStats.withoutExternal.count > 0
+                ? externalDisplayStats.withoutExternal.totalFocus / externalDisplayStats.withoutExternal.count
+                : 0,
+            count: externalDisplayStats.withoutExternal.count
+        }
+    };
 
     return {
         learningTopics,
@@ -987,30 +1045,19 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
         entertainmentTypes,
         audioInputDevices,
         audioOutputDevices,
-        hourlyTrends
+        hourlyTrends,
+
+        // New data for enhanced charts
+        signalData,
+        connectionTypes: connectionTypesData,
+        storageTrend,
+        totalRAM: Math.round(totalRAM),
+        totalStorage: storageTrend.length > 0 ? storageTrend[0].total : 500,
+        darkModeByHour,
+        monitorUsage: monitorUsageData,
+        externalDisplayCorrelation,
+        idleDistribution: idleDistributionData,
+        idleTimeHourly
     };
 }
 
-export function getSessionById(sessionId: string): Session | undefined {
-    // sessionId format: session_TIMESTAMP
-    try {
-        const timestampStr = sessionId.replace("session_", "");
-        const timestamp = parseInt(timestampStr);
-        if (isNaN(timestamp)) return undefined;
-
-        const date = new Date(timestamp);
-        // Assuming session starts on this date.
-        // We fetch sessions for this specific date string.
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const dateStr = `${year}-${month}-${day}`;
-
-        // Get sessions for this date
-        const sessions = getSessions({ startDate: dateStr, endDate: dateStr });
-        return sessions.find(s => s.id === sessionId);
-    } catch (e) {
-        console.error("Error fetching session by id", e);
-        return undefined;
-    }
-}

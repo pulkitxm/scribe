@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import RankingTable from "@/components/RankingTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AppsAnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);

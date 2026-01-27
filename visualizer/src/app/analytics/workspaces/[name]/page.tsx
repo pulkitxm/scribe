@@ -10,6 +10,8 @@ import ProductivityChart from "@/components/ProductivityChart";
 import RankingTable from "@/components/RankingTable";
 import RecentScreenshots from "@/components/RecentScreenshots";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
     params: Promise<{
         name: string;

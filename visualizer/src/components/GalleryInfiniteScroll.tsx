@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchScreenshots } from "@/app/gallery/actions";
 import { CategoryLink } from "@/components/SmartLinks";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 interface GalleryInfiniteScrollProps {
     initialScreenshots: Screenshot[];
@@ -22,6 +24,7 @@ export default function GalleryInfiniteScroll({
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(-1);
 
     useEffect(() => {
         setScreenshots(initialScreenshots);
@@ -100,35 +103,47 @@ export default function GalleryInfiniteScroll({
                             key={`${screenshot.date}-${screenshot.id}-${index}`}
                             ref={isLast ? lastElementRef : null}
                         >
-                            <Link
-                                href={`/gallery/${screenshot.date}/${screenshot.id}`}
-                                className="group cursor-pointer block h-full"
-                            >
-                                <Card className="overflow-hidden transition-colors hover:border-foreground/20 h-full flex flex-col">
-                                    <div className="relative">
-                                        <Image
-                                            src={screenshot.imagePath}
-                                            alt={screenshot.data.short_description || "Screenshot"}
-                                            width={400}
-                                            height={180}
-                                            className="w-full h-[180px] object-cover"
-                                        />
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8">
-                                            <div className="flex justify-between items-end">
-                                                <div className="text-xs text-white/90 font-medium bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
-                                                    {formatTime(screenshot.timestamp)}
-                                                </div>
-                                                {screenshot.data.category && (
-                                                    <CategoryLink
-                                                        category={screenshot.data.category}
-                                                        className="text-white hover:text-white hover:bg-white/20 border-white/20 py-0 h-5 text-[10px]"
-                                                    />
-                                                )}
-                                            </div>
+                            <Card className="overflow-hidden transition-colors hover:border-foreground/20 h-full flex flex-col group">
+                                <div
+                                    className="relative cursor-zoom-in"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setLightboxIndex(index);
+                                    }}
+                                >
+                                    <Image
+                                        src={screenshot.imagePath}
+                                        alt={screenshot.data.short_description || "Screenshot"}
+                                        width={400}
+                                        height={180}
+                                        className="w-full h-[180px] object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm rounded-full p-2">
+                                            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                                            </svg>
                                         </div>
                                     </div>
+                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8 pointer-events-none">
+                                        <div className="flex justify-between items-end">
+                                            <div className="text-xs text-white/90 font-medium bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
+                                                {formatTime(screenshot.timestamp)}
+                                            </div>
+                                            {screenshot.data.category && (
+                                                <span className="text-xs text-white bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
+                                                    {screenshot.data.category}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
 
-                                    <CardContent className="p-3 space-y-2 flex-1 flex flex-col">
+                                <Link
+                                    href={`/gallery/${screenshot.date}/${screenshot.id}`}
+                                    className="cursor-pointer"
+                                >
+                                    <CardContent className="p-3 space-y-2 flex-1 flex flex-col hover:bg-muted/50 transition-colors">
                                         <p className="text-sm font-medium line-clamp-2" title={screenshot.data.short_description}>
                                             {screenshot.data.short_description || "No description"}
                                         </p>
@@ -161,12 +176,24 @@ export default function GalleryInfiniteScroll({
                                             </div>
                                         )}
                                     </CardContent>
-                                </Card>
-                            </Link>
+                                </Link>
+                            </Card>
                         </div>
                     );
                 })}
             </div>
+
+            <Lightbox
+                open={lightboxIndex >= 0}
+                close={() => setLightboxIndex(-1)}
+                index={lightboxIndex}
+                slides={screenshots.map(s => ({
+                    src: s.imagePath,
+                    alt: s.data.short_description || "Screenshot",
+                    title: s.data.short_description,
+                    description: `${formatTime(s.timestamp)} - ${s.data.category || 'Uncategorized'} - Focus: ${s.data.scores.focus_score}`
+                }))}
+            />
 
             {
                 loading && (

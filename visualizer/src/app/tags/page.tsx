@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import TagsList from "@/components/TagsList";
 
+export const dynamic = 'force-dynamic';
+
 function TagsSkeleton() {
     return (
         <div className="space-y-6">

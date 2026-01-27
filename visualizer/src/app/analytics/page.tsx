@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAllScreenshots, getExtendedStats } from "@/lib/data";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);

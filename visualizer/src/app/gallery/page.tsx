@@ -19,6 +19,8 @@ import { CategoryLink } from "@/components/SmartLinks";
 import Pagination from "@/components/Pagination";
 import GalleryInfiniteScroll from "@/components/GalleryInfiniteScroll";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
     searchParams: Promise<{
         date?: string;

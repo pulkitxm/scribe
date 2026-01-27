@@ -1,22 +1,22 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getSessions, getAppStats } from "@/lib/data";
+import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getAppStats } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DashboardFilters from "@/components/DashboardFilters";
-import ActivityHeatmap from "@/components/ActivityHeatmap";
 import HourlyChart from "@/components/HourlyChart";
 import CategoryChart from "@/components/CategoryChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import { FilterOptions } from "@/types/screenshot";
 import { Lightbulb, Zap, Clock, Target } from "lucide-react";
 import SmartInsights from "@/components/SmartInsights";
-import SessionTimeline from "@/components/SessionTimeline";
 import AppEfficiencyChart from "@/components/AppEfficiencyChart";
+
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   searchParams: Promise<{
@@ -87,10 +87,8 @@ async function DashboardContent({
   const filters = getFiltersFromParams(range, category);
   const screenshots = getAllScreenshots(filters);
   const stats = getExtendedStats(screenshots);
-  const sessions = getSessions(filters);
   const appStats = getAppStats(screenshots);
 
-  const dailyStats = getDailyStats(getAllScreenshots());
   const filteredDailyStats = getDailyStats(screenshots);
   const highFocusScreenshots = getHighFocusScreenshots(4);
   const insights = getSmartInsights(stats);
@@ -99,12 +97,6 @@ async function DashboardContent({
   const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
 
   filteredDailyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  const heatmapData = dailyStats.map(d => ({
-    date: d.date,
-    count: d.totalScreenshots,
-    avgFocus: d.avgFocusScore
-  }));
 
   if (screenshots.length === 0) {
     return (
@@ -131,13 +123,6 @@ async function DashboardContent({
           {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
-
-      {(!range || range === "all" || range === "month") && (
-        <section className="space-y-6">
-          <SessionTimeline sessions={JSON.parse(JSON.stringify(sessions))} />
-          <ActivityHeatmap data={heatmapData} />
-        </section>
-      )}
 
       <DashboardFilters
         categories={categories}

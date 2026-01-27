@@ -67,7 +67,7 @@ export default function LogsPage() {
             </div>
             <button
                 onClick={downloadLogs}
-                className="absolute bottom-4 left-4 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg cursor-pointer"
+                className="absolute bottom-10 right-4 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg cursor-pointer"
                 title="Download logs"
             >
                 <Download size={20} />
