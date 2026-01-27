@@ -2,9 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
+import { Download } from 'lucide-react';
 
 export default function LogsPage() {
     const [logs, setLogs] = useState<string>('');
+
+    const downloadLogs = () => {
+        const blob = new Blob([logs], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scribe-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     const fetchLogs = async () => {
         try {
@@ -52,6 +65,13 @@ export default function LogsPage() {
             <div className="absolute bottom-2 right-4 text-xs text-neutral-500 z-10 bg-[#1e1e1e] px-2 py-1 rounded">
                 Auto-refreshing every 1s
             </div>
+            <button
+                onClick={downloadLogs}
+                className="absolute bottom-4 left-4 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg cursor-pointer"
+                title="Download logs"
+            >
+                <Download size={20} />
+            </button>
         </div>
     );
 }
