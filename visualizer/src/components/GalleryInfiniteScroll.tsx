@@ -113,21 +113,54 @@ export default function GalleryInfiniteScroll({
                                             height={180}
                                             className="w-full h-[180px] object-cover"
                                         />
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                                            <div className="text-sm font-medium text-white">
-                                                {formatTime(screenshot.timestamp)}
-                                            </div>
-                                            <div className="text-xs text-white/70 flex items-center gap-2 mt-1">
+                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8">
+                                            <div className="flex justify-between items-end">
+                                                <div className="text-xs text-white/90 font-medium bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
+                                                    {formatTime(screenshot.timestamp)}
+                                                </div>
                                                 {screenshot.data.category && (
                                                     <CategoryLink
                                                         category={screenshot.data.category}
-                                                        className="text-white hover:text-white hover:bg-white/20 border-white/20 py-0 h-5"
+                                                        className="text-white hover:text-white hover:bg-white/20 border-white/20 py-0 h-5 text-[10px]"
                                                     />
                                                 )}
-                                                <span>{screenshot.date}</span>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <CardContent className="p-3 space-y-2 flex-1 flex flex-col">
+                                        <p className="text-sm font-medium line-clamp-2" title={screenshot.data.short_description}>
+                                            {screenshot.data.short_description || "No description"}
+                                        </p>
+
+                                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-auto pt-2">
+                                            {screenshot.data.workspace_type && (
+                                                <span className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded">
+                                                    {screenshot.data.workspace_type}
+                                                </span>
+                                            )}
+                                            {screenshot.data.evidence?.active_app_guess && (
+                                                <span className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded truncate max-w-[100px]">
+                                                    {screenshot.data.evidence.active_app_guess}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {(screenshot.data.summary_tags || []).length > 0 && (
+                                            <div className="flex flex-wrap gap-1 pt-1">
+                                                {screenshot.data.summary_tags?.slice(0, 3).map((tag, i) => (
+                                                    <span key={i} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                                {(screenshot.data.summary_tags?.length || 0) > 3 && (
+                                                    <span className="text-[10px] text-muted-foreground px-1">
+                                                        +{screenshot.data.summary_tags!.length - 3}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </CardContent>
                                 </Card>
                             </Link>
                         </div>
@@ -135,25 +168,29 @@ export default function GalleryInfiniteScroll({
                 })}
             </div>
 
-            {loading && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <Card key={i} className="overflow-hidden">
-                            <Skeleton className="h-[180px] w-full" />
-                            <CardContent className="p-3 space-y-2">
-                                <Skeleton className="h-4 w-20" />
-                                <Skeleton className="h-3 w-32" />
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+            {
+                loading && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <Card key={i} className="overflow-hidden">
+                                <Skeleton className="h-[180px] w-full" />
+                                <CardContent className="p-3 space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-3 w-32" />
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )
+            }
 
-            {!hasMore && screenshots.length > 0 && (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                    You've reached the end of your gallery.
-                </div>
-            )}
-        </div>
+            {
+                !hasMore && screenshots.length > 0 && (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                        You've reached the end of your gallery.
+                    </div>
+                )
+            }
+        </div >
     );
 }

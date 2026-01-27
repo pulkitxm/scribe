@@ -243,6 +243,11 @@ async function DashboardContent({
         <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <HourlyChart data={stats.hourlyContextSwitches} title="Context Switch Rate (Switches/Hr)" />
+        <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" />
+      </div>
+
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">

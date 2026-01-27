@@ -1,5 +1,6 @@
 
 import { Session } from "@/types/screenshot";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -86,16 +87,18 @@ function DayTimeline({ day, sessions }: { day: string, sessions: Session[] }) {
                         <TooltipProvider key={session.id}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <div
-                                        className={cn(
-                                            "absolute h-8 rounded-sm mx-[1px] cursor-pointer hover:brightness-110 transition-all",
-                                            colorClass
-                                        )}
-                                        style={{
-                                            left: `${leftPct}%`,
-                                            width: `${finalWidth}%`
-                                        }}
-                                    />
+                                    <Link href={`/sessions/${session.id}`}>
+                                        <div
+                                            className={cn(
+                                                "absolute h-8 rounded-sm mx-[1px] cursor-pointer hover:brightness-110 transition-all",
+                                                colorClass
+                                            )}
+                                            style={{
+                                                left: `${leftPct}%`,
+                                                width: `${finalWidth}%`
+                                            }}
+                                        />
+                                    </Link>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <div className="text-xs">

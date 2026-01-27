@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import Fuse from "fuse.js";
 import { Screenshot, ScreenshotData, DailyStats, FilterOptions, Session } from "@/types/screenshot";
+import { ScreenshotDataSchema } from "@/lib/schemas";
 
 let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
@@ -71,10 +72,25 @@ export function getScreenshotsForDate(dateFolder: string): Screenshot[] {
     const files = fs.readdirSync(datePath);
     const jsonFiles = files.filter((f) => f.endsWith(".json"));
 
-    const screenshots = jsonFiles.map((jsonFile) => {
+    const screenshots = jsonFiles.map((jsonFile): Screenshot | null => {
         const jsonPath = path.join(datePath, jsonFile);
         const imagePath = jsonPath.replace(".json", ".webp");
-        const data: ScreenshotData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+        let rawData;
+
+        try {
+            rawData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+        } catch (e) {
+            console.warn(`Failed to parse JSON: ${jsonPath}`, e);
+            return null;
+        }
+
+        let data;
+        try {
+            data = ScreenshotDataSchema.parse(rawData);
+        } catch (error) {
+            console.error(`Validation Error in ${jsonPath}:`, error);
+            throw new Error(`Validation failed for ${jsonFile}: ${error}`);
+        }
 
         const timestampMatch = jsonFile.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
         let timestamp = new Date();
@@ -93,7 +109,9 @@ export function getScreenshotsForDate(dateFolder: string): Screenshot[] {
             jsonPath,
             data,
         };
-    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    })
+        .filter((s): s is Screenshot => s !== null)
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
     folderCache.set(dateFolder, screenshots);
     return screenshots;
@@ -106,7 +124,14 @@ export function getScreenshotById(date: string, id: string): Screenshot | null {
     const jsonPath = path.join(folder, date, `${id}.json`);
     if (!fs.existsSync(jsonPath)) return null;
 
-    const data: ScreenshotData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+    const rawData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+    let data;
+    try {
+        data = ScreenshotDataSchema.parse(rawData);
+    } catch (error) {
+        console.error(`Validation Error in ${id}:`, error);
+        throw new Error(`Validation failed for ${id}: ${error}`);
+    }
     const imagePath = `${id}.webp`;
 
     const timestampMatch = id.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
@@ -246,6 +271,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
             categories: {},
             apps: {},
             hourlyDistribution: {},
+            hourlyContextSwitches: {},
             workTypes: {},
             languages: {},
             repos: {},
@@ -259,6 +285,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     const categories: Record<string, number> = {};
     const apps: Record<string, number> = {};
     const hourlyDistribution: Record<number, number> = {};
+    const hourlyContextSwitches: Record<number, number> = {};
     const workTypes: Record<string, number> = {};
     const languages: Record<string, number> = {};
     const repos: Record<string, number> = {};
@@ -271,7 +298,10 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     let totalDistraction = 0;
     let totalConfidence = 0;
 
-    for (const item of screenshots) {
+    const sorted = [...screenshots].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    let prevItem: Screenshot | null = null;
+    for (const item of sorted) {
         totalFocus += item.data.scores.focus_score;
         totalProductivity += item.data.scores.productivity_score;
         totalDistraction += item.data.scores.distraction_risk;
@@ -304,6 +334,17 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         const hour = item.timestamp.getHours();
         hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
 
+        // Context Switches
+        if (prevItem) {
+            const appChanged = (item.data.system_metadata?.active_app || item.data.evidence?.active_app_guess) !==
+                (prevItem.data.system_metadata?.active_app || prevItem.data.evidence?.active_app_guess);
+            if (appChanged) {
+                // Switch happened at 'item' time
+                hourlyContextSwitches[hour] = (hourlyContextSwitches[hour] || 0) + 1;
+            }
+        }
+        prevItem = item;
+
         const workType = item.data.context.work_context?.work_type;
         if (workType) {
             workTypes[workType] = (workTypes[workType] || 0) + 1;
@@ -328,6 +369,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         categories,
         apps,
         hourlyDistribution,
+        hourlyContextSwitches,
         workTypes,
         languages,
         repos,
@@ -674,6 +716,36 @@ function createSessionFromScreenshots(screenshots: Screenshot[]): Session {
     const allTags = new Set<string>();
     screenshots.forEach(s => (s.data.summary_tags || []).forEach(t => allTags.add(t)));
 
+    // Calculate additional metrics
+    let contextSwitches = 0;
+    let interruptions = 0;
+    const projectCounts: Record<string, number> = {};
+
+    for (let i = 0; i < screenshots.length; i++) {
+        const s = screenshots[i];
+
+        // Interruptions: High distraction
+        if (s.data.scores.distraction_risk > 75) {
+            interruptions++;
+        }
+
+        // Project
+        const project = s.data.context.code_context?.repo_or_project || "Unknown";
+        if (project !== "Unknown") {
+            projectCounts[project] = (projectCounts[project] || 0) + 1;
+        }
+
+        // Context Switches
+        if (i > 0) {
+            const prev = screenshots[i - 1];
+            const appChanged = (s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess) !==
+                (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
+            if (appChanged) contextSwitches++;
+        }
+    }
+
+    const dominantProject = Object.entries(projectCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+
     return {
         id: `session_${first.timestamp.getTime()}`,
         startTime: first.timestamp,
@@ -682,14 +754,34 @@ function createSessionFromScreenshots(screenshots: Screenshot[]): Session {
         screenshotCount: screenshots.length,
         category: first.data.category,
         dominantApp,
+        dominantProject,
         avgFocusScore: Math.round(totalFocus / screenshots.length),
         avgProductivityScore: Math.round(totalProd / screenshots.length),
         avgDistractionScore: Math.round(totalDistraction / screenshots.length),
         screenshots,
         workType: first.data.context.work_context?.work_type,
         project: first.data.context.code_context?.repo_or_project,
-        tags: Array.from(allTags)
+        tags: Array.from(allTags),
+        contextSwitches,
+        interruptions,
+        workspaceStabilityScore: calculateWorkspaceStability(screenshots) // Placeholder if we want to add later, or omit
     };
+}
+
+function calculateWorkspaceStability(screenshots: Screenshot[]): number {
+    // Basic implementation: inverse of window churn?
+    // For now returning 100 as placeholder or removing if not in interface yet.
+    // Spec said "Calculate workspaceStability score".
+    // I will implement a rudimentary one: 100 - (contextSwitches * 5).
+    let switches = 0;
+    for (let i = 1; i < screenshots.length; i++) {
+        const s = screenshots[i];
+        const prev = screenshots[i - 1];
+        const appChanged = (s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess) !==
+            (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
+        if (appChanged) switches++;
+    }
+    return Math.max(0, 100 - (switches * 5));
 }
 
 export function getAppStats(screenshots: Screenshot[]) {
@@ -716,4 +808,103 @@ export function getAppStats(screenshots: Screenshot[]) {
         count: stats.count,
         efficiency: Math.round((stats.productivity / stats.count) - (stats.distraction / stats.count))
     })).sort((a, b) => b.count - a.count);
+}
+
+export function getSystemContextStats(screenshots: Screenshot[]) {
+    // Aggregates for Pie/Bar charts
+    const learningTopics: Record<string, number> = {};
+    const communicationPlatforms: Record<string, number> = {};
+    const entertainmentTypes: Record<string, number> = {};
+    const audioInputDevices: Record<string, number> = {};
+    const audioOutputDevices: Record<string, number> = {};
+
+    // Time-series data (averaged per hour)
+    const hourlyStats: Record<number, {
+        cpu: number;
+        ram: number;
+        volume: number;
+        count: number;
+        battery: number;
+    }> = {};
+
+    for (const s of screenshots) {
+        // Contexts
+        if (s.data.context.learning_context?.learning_topic) {
+            const topic = s.data.context.learning_context.learning_topic;
+            learningTopics[topic] = (learningTopics[topic] || 0) + 1;
+        }
+        if (s.data.context.communication_context?.platform_guess) {
+            const platform = s.data.context.communication_context.platform_guess;
+            communicationPlatforms[platform] = (communicationPlatforms[platform] || 0) + 1;
+        }
+        if (s.data.context.entertainment_context?.entertainment_type) {
+            const type = s.data.context.entertainment_context.entertainment_type;
+            entertainmentTypes[type] = (entertainmentTypes[type] || 0) + 1;
+        }
+
+        // System Audio Devices
+        if (s.data.system_metadata?.audio) {
+            s.data.system_metadata.audio.inputs.forEach(d => {
+                if (d.is_default) audioInputDevices[d.name] = (audioInputDevices[d.name] || 0) + 1;
+            });
+            s.data.system_metadata.audio.outputs.forEach(d => {
+                if (d.is_default) audioOutputDevices[d.name] = (audioOutputDevices[d.name] || 0) + 1;
+            });
+        }
+
+        // Hourly Trends
+        if (s.data.system_metadata) {
+            const hour = s.timestamp.getHours();
+            if (!hourlyStats[hour]) {
+                hourlyStats[hour] = { cpu: 0, ram: 0, volume: 0, count: 0, battery: 0 };
+            }
+            hourlyStats[hour].cpu += s.data.system_metadata.stats.cpu.used;
+            hourlyStats[hour].ram += (s.data.system_metadata.stats.ram.used / 1024 / 1024 / 1024); // GB
+            hourlyStats[hour].volume += s.data.system_metadata.audio.volume;
+            hourlyStats[hour].battery += s.data.system_metadata.stats.battery.percentage;
+            hourlyStats[hour].count++;
+        }
+    }
+
+    // Format for Recharts
+    const hourlyTrends = Object.entries(hourlyStats).map(([hour, stats]) => ({
+        hour: parseInt(hour),
+        cpu: Math.round(stats.cpu / stats.count),
+        ram: Number((stats.ram / stats.count).toFixed(1)),
+        volume: Math.round(stats.volume / stats.count),
+        battery: Math.round(stats.battery / stats.count),
+    })).sort((a, b) => a.hour - b.hour);
+
+    return {
+        learningTopics,
+        communicationPlatforms,
+        entertainmentTypes,
+        audioInputDevices,
+        audioOutputDevices,
+        hourlyTrends
+    };
+}
+
+export function getSessionById(sessionId: string): Session | undefined {
+    // sessionId format: session_TIMESTAMP
+    try {
+        const timestampStr = sessionId.replace("session_", "");
+        const timestamp = parseInt(timestampStr);
+        if (isNaN(timestamp)) return undefined;
+
+        const date = new Date(timestamp);
+        // Assuming session starts on this date.
+        // We fetch sessions for this specific date string.
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const dateStr = `${year}-${month}-${day}`;
+
+        // Get sessions for this date
+        const sessions = getSessions({ startDate: dateStr, endDate: dateStr });
+        return sessions.find(s => s.id === sessionId);
+    } catch (e) {
+        console.error("Error fetching session by id", e);
+        return undefined;
+    }
 }

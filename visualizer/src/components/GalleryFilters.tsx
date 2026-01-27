@@ -18,22 +18,42 @@ interface GalleryFiltersProps {
     dates: string[];
     categories: string[];
     tags: string[];
+    apps?: string[];
+    projects?: string[];
+    languages?: string[];
+    workspaces?: string[];
+    domains?: string[];
     currentDate?: string;
     currentTag?: string;
     currentCategory?: string;
     currentTimeRange?: string;
     currentText?: string;
+    currentApp?: string;
+    currentProject?: string;
+    currentLanguage?: string;
+    currentWorkspace?: string;
+    currentDomain?: string;
 }
 
 export default function GalleryFilters({
     dates,
     categories,
     tags,
+    apps = [],
+    projects = [],
+    languages = [],
+    workspaces = [],
+    domains = [],
     currentDate,
     currentTag,
     currentCategory,
     currentTimeRange,
     currentText,
+    currentApp,
+    currentProject,
+    currentLanguage,
+    currentWorkspace,
+    currentDomain,
 }: GalleryFiltersProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -80,7 +100,7 @@ export default function GalleryFilters({
         router.push("/gallery", { scroll: false });
     };
 
-    const hasFilters = currentDate || currentTag || currentCategory || currentTimeRange || currentText;
+    const hasFilters = currentDate || currentTag || currentCategory || currentTimeRange || currentText || currentApp || currentProject || currentLanguage || currentWorkspace || currentDomain;
 
     return (
         <div className="flex flex-col gap-4 p-4 bg-card border border-border rounded-lg shadow-sm">
@@ -145,6 +165,81 @@ export default function GalleryFilters({
                         <SelectItem value="all">All Categories</SelectItem>
                         {categories.map((cat) => (
                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={currentApp || "all"}
+                    onValueChange={(v) => updateFilter("app", v)}
+                >
+                    <SelectTrigger className="w-[150px] cursor-pointer bg-background/50">
+                        <SelectValue placeholder="App" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">All Apps</SelectItem>
+                        {apps.map((app) => (
+                            <SelectItem key={app} value={app}>{app}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={currentProject || "all"}
+                    onValueChange={(v) => updateFilter("project", v)}
+                >
+                    <SelectTrigger className="w-[150px] cursor-pointer bg-background/50">
+                        <SelectValue placeholder="Project" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">All Projects</SelectItem>
+                        {projects.map((p) => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={currentDomain || "all"}
+                    onValueChange={(v) => updateFilter("domain", v)}
+                >
+                    <SelectTrigger className="w-[150px] cursor-pointer bg-background/50">
+                        <SelectValue placeholder="Domain" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">All Domains</SelectItem>
+                        {domains.map((d) => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={currentLanguage || "all"}
+                    onValueChange={(v) => updateFilter("language", v)}
+                >
+                    <SelectTrigger className="w-[150px] cursor-pointer bg-background/50">
+                        <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">All Languages</SelectItem>
+                        {languages.map((l) => (
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select
+                    value={currentWorkspace || "all"}
+                    onValueChange={(v) => updateFilter("workspace", v)}
+                >
+                    <SelectTrigger className="w-[150px] cursor-pointer bg-background/50">
+                        <SelectValue placeholder="Workspace" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">All Workspaces</SelectItem>
+                        {workspaces.map((w) => (
+                            <SelectItem key={w} value={w}>{w}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

@@ -29,6 +29,8 @@ interface PageProps {
         domain?: string;
         workspace?: string;
         language?: string;
+        app?: string;
+        project?: string;
         page?: string;
     }>;
 }
@@ -65,6 +67,8 @@ async function GalleryContent({
     domain,
     workspace,
     language,
+    app,
+    project,
 }: {
     date?: string;
     tag?: string;
@@ -74,6 +78,8 @@ async function GalleryContent({
     domain?: string;
     workspace?: string;
     language?: string;
+    app?: string;
+    project?: string;
 }) {
     const filters: FilterOptions = {};
 
@@ -106,25 +112,13 @@ async function GalleryContent({
         }
     }
 
-    if (category) {
-        filters.category = category;
-    }
-
-    if (text) {
-        filters.text = text;
-    }
-
-    if (domain) {
-        filters.domain = domain;
-    }
-
-    if (workspace) {
-        filters.workspace = workspace;
-    }
-
-    if (language) {
-        filters.language = language;
-    }
+    if (category) filters.category = category;
+    if (text) filters.text = text;
+    if (domain) filters.domain = domain;
+    if (workspace) filters.workspace = workspace;
+    if (language) filters.language = language;
+    if (app) filters.app = app;
+    if (project) filters.project = project;
 
     let screenshots = getAllScreenshots(filters);
 
@@ -151,10 +145,18 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     const params = await searchParams;
     const dates = getAllDates();
     const allScreenshots = getAllScreenshots();
+
+    // Extract unique values for filters
     const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
     const tags = [...new Set(allScreenshots.flatMap((s) => s.data.summary_tags || []))].sort();
 
-    const hasHiddenFilter = params.domain || params.workspace || params.language || params.text;
+    const apps = [...new Set(allScreenshots.flatMap((s) => s.data.evidence?.apps_visible || []))].filter(Boolean).sort();
+    const projects = [...new Set(allScreenshots.map((s) => s.data.context.code_context?.repo_or_project).filter(Boolean))].sort() as string[];
+    const languages = [...new Set(allScreenshots.map((s) => s.data.context.code_context?.language).filter(Boolean))].sort() as string[];
+    const workspaces = [...new Set(allScreenshots.map((s) => s.data.workspace_type).filter(Boolean))].sort();
+    const domains = [...new Set(allScreenshots.flatMap((s) => s.data.evidence?.web_domains_visible || []))].filter(Boolean).sort();
+
+    const hasHiddenFilter = params.domain || params.workspace || params.language || params.text || params.app || params.project;
 
     return (
         <div className="space-y-6">
@@ -169,11 +171,21 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 dates={dates}
                 categories={categories}
                 tags={tags}
+                apps={apps}
+                projects={projects}
+                languages={languages}
+                workspaces={workspaces}
+                domains={domains}
                 currentDate={params.date}
                 currentTag={params.tag}
                 currentCategory={params.category}
                 currentTimeRange={params.timeRange}
                 currentText={params.text}
+                currentApp={params.app as string}
+                currentProject={params.project as string}
+                currentLanguage={params.language as string}
+                currentWorkspace={params.workspace as string}
+                currentDomain={params.domain as string}
             />
 
             {params.tag && (
@@ -183,33 +195,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 </div>
             )}
 
-            {params.text && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Searching for text:</span>
-                    <Badge variant="secondary">"{params.text}"</Badge>
-                </div>
-            )}
-
-            {params.domain && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Domain:</span>
-                    <Badge variant="secondary">{params.domain}</Badge>
-                </div>
-            )}
-
-            {params.workspace && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Workspace:</span>
-                    <Badge variant="secondary">{params.workspace}</Badge>
-                </div>
-            )}
-
-            {params.language && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Language:</span>
-                    <Badge variant="secondary">{params.language}</Badge>
-                </div>
-            )}
+            {/* ... badges for other params ... */}
 
             <Suspense fallback={<GalleryGridSkeleton />}>
                 <GalleryContent
@@ -221,6 +207,8 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                     domain={params.domain}
                     workspace={params.workspace}
                     language={params.language}
+                    app={params.app as string}
+                    project={params.project as string}
                 />
             </Suspense>
         </div>

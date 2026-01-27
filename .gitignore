@@ -4,3 +4,4 @@ scribe
 .env
 outputs-dev/
 *.mp4
+scribe-cli
