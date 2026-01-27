@@ -22,6 +22,8 @@ help:
 	@echo "  make viz-stop      - Stop the visualizer"
 	@echo "  make viz-restart   - Restart the visualizer"
 	@echo "  make viz-status    - Check visualizer status"
+	@echo "  make viz-logs      - Show visualizer logs"
+	@echo "  make viz-delete    - Delete visualizer"
 	@echo ""
 
 dev:
@@ -83,3 +85,7 @@ viz-delete:
 	@echo "Deleting Visualizer..."
 	@pm2 delete visualizer
 	@echo "Visualizer deleted."
+
+viz-logs:
+	@echo "Showing Visualizer logs..."
+	@pm2 logs visualizer
