@@ -23,75 +23,90 @@ public func getDisplayInfo() -> DisplayInfo {
 }
 
 private func getDisplayBrightness() -> Int {
-    let task = Process()
-    task.launchPath = "/usr/bin/osascript"
-    task.arguments = ["-e", "tell application \"System Events\" to tell appearance preferences to return (brightness of main display) * 100"]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = FileHandle.nullDevice
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-           let brightness = Double(output) {
-            return Int(brightness)
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", "tell application \"System Events\" to tell appearance preferences to return (brightness of main display) * 100"]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+               let brightness = Double(output) {
+                return Int(brightness)
+            }
         }
+    } catch {
+        // Fall through to alternative method
     }
     
-    let ioTask = Process()
-    ioTask.launchPath = "/usr/bin/osascript"
-    ioTask.arguments = ["-e", """
-        use framework "Foundation"
-        use framework "IOKit"
-        use scripting additions
+    do {
+        let ioTask = Process()
+        ioTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        ioTask.arguments = ["-e", """
+            use framework "Foundation"
+            use framework "IOKit"
+            use scripting additions
+            
+            set brightnessValue to do shell script "ioreg -c AppleBacklightDisplay | grep brightness | head -1 | sed 's/.*\"brightness\"=\\([0-9]*\\).*/\\1/'"
+            if brightnessValue is not "" then
+                return (brightnessValue as number) / 1024 * 100
+            else
+                return -1
+            end if
+        """]
         
-        set brightnessValue to do shell script "ioreg -c AppleBacklightDisplay | grep brightness | head -1 | sed 's/.*\"brightness\"=\\([0-9]*\\).*/\\1/'"
-        if brightnessValue is not "" then
-            return (brightnessValue as number) / 1024 * 100
-        else
-            return -1
-        end if
-    """]
-    
-    let ioPipe = Pipe()
-    ioTask.standardOutput = ioPipe
-    ioTask.standardError = FileHandle.nullDevice
-    
-    ioTask.launch()
-    ioTask.waitUntilExit()
-    
-    if ioTask.terminationStatus == 0 {
-        let data = ioPipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-           let brightness = Double(output), brightness >= 0 {
-            return Int(brightness)
+        let ioPipe = Pipe()
+        ioTask.standardOutput = ioPipe
+        ioTask.standardError = FileHandle.nullDevice
+        ioTask.standardInput = FileHandle.nullDevice
+        
+        try ioTask.run()
+        ioTask.waitUntilExit()
+        
+        if ioTask.terminationStatus == 0 {
+            let data = ioPipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+               let brightness = Double(output), brightness >= 0 {
+                return Int(brightness)
+            }
         }
+    } catch {
+        // Silently fail
     }
     
     return -1
 }
 
 private func getDarkModeStatus() -> Bool {
-    let task = Process()
-    task.launchPath = "/usr/bin/defaults"
-    task.arguments = ["read", "-g", "AppleInterfaceStyle"]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = FileHandle.nullDevice
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            return output.lowercased() == "dark"
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        task.arguments = ["read", "-g", "AppleInterfaceStyle"]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                return output.lowercased() == "dark"
+            }
         }
+    } catch {
+        // Silently fail
     }
     
     return false

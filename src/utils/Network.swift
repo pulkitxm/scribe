@@ -108,31 +108,36 @@ private func getSSIDFromNetworkSetup() -> String {
     }
     
     for iface in ["en0", "en1"] {
-        let task = Process()
-        task.launchPath = networksetupPath
-        task.arguments = ["-getairportnetwork", iface]
-        
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-        
-        task.launch()
-        task.waitUntilExit()
-        
-        if task.terminationStatus == 0 {
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.contains("Current Wi-Fi Network:") && !trimmed.contains("not associated") {
-                    let parts = trimmed.components(separatedBy: ":")
-                    if parts.count >= 2 {
-                        let networkName = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
-                        if !networkName.isEmpty {
-                            return networkName
+        do {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: networksetupPath)
+            task.arguments = ["-getairportnetwork", iface]
+            
+            let pipe = Pipe()
+            task.standardOutput = pipe
+            task.standardError = FileHandle.nullDevice
+            task.standardInput = FileHandle.nullDevice
+            
+            try task.run()
+            task.waitUntilExit()
+            
+            if task.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8) {
+                    let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if trimmed.contains("Current Wi-Fi Network:") && !trimmed.contains("not associated") {
+                        let parts = trimmed.components(separatedBy: ":")
+                        if parts.count >= 2 {
+                            let networkName = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
+                            if !networkName.isEmpty {
+                                return networkName
+                            }
                         }
                     }
                 }
             }
+        } catch {
+            continue
         }
     }
     
@@ -150,36 +155,41 @@ private func getInterfaceInfo(interface: String) -> InterfaceInfo {
         return InterfaceInfo(isActive: false, ip: "")
     }
     
-    let task = Process()
-    task.launchPath = ifconfigPath
-    task.arguments = [interface]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = FileHandle.nullDevice
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    var isActive = false
-    var ip = ""
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8) {
-            isActive = output.contains("status: active")
-            
-            let pattern = "inet\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)"
-            if let regex = try? NSRegularExpression(pattern: pattern),
-               let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)) {
-                if let range = Range(match.range(at: 1), in: output) {
-                    ip = String(output[range])
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: ifconfigPath)
+        task.arguments = [interface]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        var isActive = false
+        var ip = ""
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                isActive = output.contains("status: active")
+                
+                let pattern = "inet\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)"
+                if let regex = try? NSRegularExpression(pattern: pattern),
+                   let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)) {
+                    if let range = Range(match.range(at: 1), in: output) {
+                        ip = String(output[range])
+                    }
                 }
             }
         }
+        
+        return InterfaceInfo(isActive: isActive, ip: ip)
+    } catch {
+        return InterfaceInfo(isActive: false, ip: "")
     }
-    
-    return InterfaceInfo(isActive: isActive, ip: ip)
 }
 
 private func getLocalIPAddress() -> String {
@@ -203,39 +213,44 @@ private func getNetworkStats() -> NetworkStats {
         return NetworkStats(rx: 0, tx: 0)
     }
     
-    let task = Process()
-    task.launchPath = netstatPath
-    task.arguments = ["-ibn"]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = FileHandle.nullDevice
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    var totalRx: UInt64 = 0
-    var totalTx: UInt64 = 0
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8) {
-            let lines = output.components(separatedBy: "\n")
-            for line in lines {
-                if line.hasPrefix("en") && !line.contains("Link#") {
-                    let cols = line.split(separator: " ").map { String($0) }
-                    if cols.count >= 10 {
-                        if let rx = UInt64(cols[6]), let tx = UInt64(cols[9]) {
-                            totalRx += rx
-                            totalTx += tx
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: netstatPath)
+        task.arguments = ["-ibn"]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        var totalRx: UInt64 = 0
+        var totalTx: UInt64 = 0
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                let lines = output.components(separatedBy: "\n")
+                for line in lines {
+                    if line.hasPrefix("en") && !line.contains("Link#") {
+                        let cols = line.split(separator: " ").map { String($0) }
+                        if cols.count >= 10 {
+                            if let rx = UInt64(cols[6]), let tx = UInt64(cols[9]) {
+                                totalRx += rx
+                                totalTx += tx
+                            }
                         }
                     }
                 }
             }
         }
+        
+        return NetworkStats(rx: totalRx, tx: totalTx)
+    } catch {
+        return NetworkStats(rx: 0, tx: 0)
     }
-    
-    return NetworkStats(rx: totalRx, tx: totalTx)
 }
 
 private func checkInternetConnectivity() -> Bool {
@@ -244,16 +259,21 @@ private func checkInternetConnectivity() -> Bool {
         return false
     }
     
-    let task = Process()
-    task.launchPath = pingPath
-    task.arguments = ["-c", "1", "-t", "1", "8.8.8.8"]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = FileHandle.nullDevice
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    return task.terminationStatus == 0
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: pingPath)
+        task.arguments = ["-c", "1", "-t", "1", "8.8.8.8"]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        return task.terminationStatus == 0
+    } catch {
+        return false
+    }
 }

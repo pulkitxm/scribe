@@ -38,27 +38,34 @@ public func getSystemVolume() -> Int {
 }
 
 private func getSystemVolumeAndMute() -> (volume: Int, isMuted: Bool) {
-    let task = Process()
-    task.launchPath = "/usr/bin/osascript"
-    task.arguments = ["-e", "return {output volume of (get volume settings), output muted of (get volume settings)}"]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            // Output format: "25, false"
-            let parts = output.components(separatedBy: ", ")
-            if parts.count == 2 {
-                let volume = Int(parts[0]) ?? 0
-                let isMuted = parts[1] == "true"
-                return (volume, isMuted)
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", "return {output volume of (get volume settings), output muted of (get volume settings)}"]
+        
+        let pipe = Pipe()
+        let errorPipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = errorPipe
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                // Output format: "25, false"
+                let parts = output.components(separatedBy: ", ")
+                if parts.count == 2 {
+                    let volume = Int(parts[0]) ?? 0
+                    let isMuted = parts[1] == "true"
+                    return (volume, isMuted)
+                }
             }
         }
+    } catch {
+        // Silently fail and return defaults
     }
     return (0, false)
 }

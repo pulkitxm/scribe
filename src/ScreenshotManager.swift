@@ -29,10 +29,19 @@ struct ScreenshotManager {
         try? FileManager.default.createDirectory(atPath: currentDir, withIntermediateDirectories: true)
 
         let task = Process()
-        task.launchPath = "/usr/sbin/screencapture"
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         task.arguments = ["-x", filepath]
-        task.launch()
-        task.waitUntilExit()
+        task.standardOutput = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            Logger.shared.log("screencapture failed to launch: \(error.localizedDescription)")
+            return
+        }
         
         let captureDuration = Date().timeIntervalSince(startTime)
 
@@ -51,7 +60,7 @@ struct ScreenshotManager {
             
             let convertStart = Date()
             let ffmpeg = Process()
-            ffmpeg.launchPath = ffmpegPath
+            ffmpeg.executableURL = URL(fileURLWithPath: ffmpegPath)
             ffmpeg.arguments = [
                 "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
                 "-i", filepath,
@@ -60,8 +69,17 @@ struct ScreenshotManager {
                 "-q:v", "75",
                 webpPath,
             ]
-            ffmpeg.launch()
-            ffmpeg.waitUntilExit()
+            ffmpeg.standardOutput = FileHandle.nullDevice
+            ffmpeg.standardError = FileHandle.nullDevice
+            ffmpeg.standardInput = FileHandle.nullDevice
+            
+            do {
+                try ffmpeg.run()
+                ffmpeg.waitUntilExit()
+            } catch {
+                Logger.shared.log("ffmpeg failed to launch: \(error.localizedDescription)")
+                return
+            }
             
             let convertDuration = Date().timeIntervalSince(convertStart)
 

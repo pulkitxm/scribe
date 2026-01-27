@@ -21,7 +21,7 @@ struct Analyzer {
     private static func runNode(nodePath: String, scriptPath: String, imagePath: String, captureDuration: TimeInterval, convertDuration: TimeInterval) {
         let startAnalysis = Date()
         let nodeProcess = Process()
-        nodeProcess.launchPath = nodePath
+        nodeProcess.executableURL = URL(fileURLWithPath: nodePath)
         nodeProcess.arguments = [scriptPath, imagePath]
 
         Logger.shared.log("Processing screenshot...")
@@ -147,8 +147,14 @@ struct Analyzer {
         env["SCRIBE_TIME_OF_DAY"] = timeOfDay
         
         nodeProcess.environment = env
+        nodeProcess.standardInput = FileHandle.nullDevice
         
-        nodeProcess.launch()
+        do {
+            try nodeProcess.run()
+        } catch {
+            Logger.shared.log("Node process failed to launch: \(error.localizedDescription)")
+            return
+        }
         
         let handle = pipe.fileHandleForReading
         handle.readabilityHandler = { pipeHandle in

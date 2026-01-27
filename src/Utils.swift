@@ -18,21 +18,27 @@ public func resolvePath(for tool: String) -> String? {
         }
     }
 
-    let task = Process()
-    task.launchPath = "/usr/bin/which"
-    task.arguments = [tool]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    
-    task.launch()
-    task.waitUntilExit()
-    
-    if task.terminationStatus == 0 {
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty {
-            return path
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+        task.arguments = [tool]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty {
+                return path
+            }
         }
+    } catch {
+        // Fall through to check common paths
     }
     
     let commonPaths = [
