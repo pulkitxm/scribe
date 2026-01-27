@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
             category: s.data.category,
             scores: s.data.scores,
             shortDescription: s.data.short_description,
-            activeApp: s.data.evidence.active_app_guess,
+            activeApp: s.data.evidence?.active_app_guess,
         })),
         aggregatedStats,
         categories,
@@ -122,8 +122,10 @@ function getBasicStats(screenshots: Screenshot[]) {
 
         categories[item.data.category] = (categories[item.data.category] || 0) + 1;
 
-        for (const app of item.data.evidence.apps_visible) {
-            apps[app] = (apps[app] || 0) + 1;
+        if (item.data.evidence && item.data.evidence.apps_visible) {
+            for (const app of item.data.evidence.apps_visible) {
+                apps[app] = (apps[app] || 0) + 1;
+            }
         }
 
         const hour = item.timestamp.getHours();

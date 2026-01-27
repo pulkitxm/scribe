@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
                 date: s.date,
                 imagePath: s.imagePath,
                 category: s.data.category,
-                tags: s.data.summary_tags,
+                tags: s.data.summary_tags || [],
             }))
         );
     }

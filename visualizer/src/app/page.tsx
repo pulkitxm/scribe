@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights } from "@/lib/data";
+import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getSessions, getAppStats } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +15,8 @@ import ProductivityChart from "@/components/ProductivityChart";
 import { FilterOptions } from "@/types/screenshot";
 import { Lightbulb, Zap, Clock, Target } from "lucide-react";
 import SmartInsights from "@/components/SmartInsights";
+import SessionTimeline from "@/components/SessionTimeline";
+import AppEfficiencyChart from "@/components/AppEfficiencyChart";
 
 interface PageProps {
   searchParams: Promise<{
@@ -85,6 +87,9 @@ async function DashboardContent({
   const filters = getFiltersFromParams(range, category);
   const screenshots = getAllScreenshots(filters);
   const stats = getExtendedStats(screenshots);
+  const sessions = getSessions(filters);
+  const appStats = getAppStats(screenshots);
+
   const dailyStats = getDailyStats(getAllScreenshots());
   const filteredDailyStats = getDailyStats(screenshots);
   const highFocusScreenshots = getHighFocusScreenshots(4);
@@ -128,7 +133,8 @@ async function DashboardContent({
       </div>
 
       {(!range || range === "all" || range === "month") && (
-        <section>
+        <section className="space-y-6">
+          <SessionTimeline sessions={sessions} />
           <ActivityHeatmap data={heatmapData} />
         </section>
       )}
@@ -199,6 +205,11 @@ async function DashboardContent({
 
       <SmartInsights insights={insights} />
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AppEfficiencyChart data={appStats} />
+        <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Link href="/analytics/apps" className="cursor-pointer">
           <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
@@ -229,10 +240,6 @@ async function DashboardContent({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
-        <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
         <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
       </div>
 

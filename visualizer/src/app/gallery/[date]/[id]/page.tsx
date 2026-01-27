@@ -132,7 +132,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {data.actions_observed.length > 0 && (
+                    {data.actions_observed && data.actions_observed.length > 0 && (
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -152,7 +152,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </Card>
                     )}
 
-                    {data.evidence.text_snippets.length > 0 && (
+                    {data.evidence?.text_snippets && data.evidence.text_snippets.length > 0 && (
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -160,7 +160,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                {data.evidence.text_snippets.map((snippet, i) => (
+                                {data.evidence?.text_snippets?.map((snippet, i) => (
                                     <TextLink
                                         key={i}
                                         text={snippet}
@@ -232,7 +232,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Active App</span>
-                                <AppLink app={data.evidence.active_app_guess} className="text-foreground" />
+                                <AppLink app={data.evidence?.active_app_guess || "Unknown"} className="text-foreground" />
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Confidence</span>
@@ -291,7 +291,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-wrap gap-1">
-                                {data.evidence.apps_visible.map((app, i) => (
+                                {(data.evidence?.apps_visible || []).map((app, i) => (
                                     <AppLink key={i} app={app}>
                                         <Badge variant="secondary" className="text-xs pointer-events-none">
                                             {app}
@@ -302,7 +302,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {data.evidence.web_domains_visible.length > 0 && (
+                    {data.evidence?.web_domains_visible && data.evidence.web_domains_visible.length > 0 && (
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -311,7 +311,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-1">
-                                    {data.evidence.web_domains_visible.map((domain, i) => (
+                                    {data.evidence?.web_domains_visible?.map((domain, i) => (
                                         <Link
                                             key={i}
                                             href={`/analytics/domains/${encodeURIComponent(domain)}`}
@@ -335,7 +335,7 @@ export default async function ScreenshotDetailPage({ params }: PageProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-wrap gap-1">
-                                {data.summary_tags.map((tag, i) => (
+                                {(data.summary_tags || []).map((tag, i) => (
                                     <TagLink key={i} tag={tag} />
                                 ))}
                             </div>

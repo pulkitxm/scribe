@@ -130,7 +130,7 @@ async function GalleryContent({
 
     if (tag) {
         screenshots = screenshots.filter((s) =>
-            s.data.summary_tags.some((t) => t.toLowerCase() === tag.toLowerCase())
+            (s.data.summary_tags || []).some((t) => t.toLowerCase() === tag.toLowerCase())
         );
     }
 
@@ -152,7 +152,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     const dates = getAllDates();
     const allScreenshots = getAllScreenshots();
     const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
-    const tags = [...new Set(allScreenshots.flatMap((s) => s.data.summary_tags))].sort();
+    const tags = [...new Set(allScreenshots.flatMap((s) => s.data.summary_tags || []))].sort();
 
     const hasHiddenFilter = params.domain || params.workspace || params.language || params.text;
 

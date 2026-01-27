@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Fuse from "fuse.js";
-import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
+import { Screenshot, ScreenshotData, DailyStats, FilterOptions, Session } from "@/types/screenshot";
 
 let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
@@ -21,6 +21,9 @@ function getScribeFolder(): string {
         }
     }
     cachedFolder = process.env.SCRIBE_FOLDER || "";
+    if (!cachedFolder && fs.existsSync(path.join(process.cwd(), "..", "outputs-dev"))) {
+        cachedFolder = path.join(process.cwd(), "..", "outputs-dev");
+    }
     return cachedFolder;
 }
 
@@ -149,7 +152,7 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
         }
         if (filters.app) {
             allScreenshots = allScreenshots.filter((s) =>
-                s.data.evidence.apps_visible.includes(filters.app!)
+                s.data.evidence?.apps_visible?.includes(filters.app!)
             );
         }
         if (filters.minFocusScore !== undefined) {
@@ -169,7 +172,7 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
         }
         if (filters.domain) {
             allScreenshots = allScreenshots.filter(
-                (s) => s.data.evidence.web_domains_visible.includes(filters.domain!)
+                (s) => s.data.evidence?.web_domains_visible?.includes(filters.domain!)
             );
         }
         if (filters.language) {
@@ -206,7 +209,7 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
 
             for (const s of allScreenshots) {
                 const categoryLower = s.data.category.toLowerCase();
-                const tagsLower = s.data.summary_tags.map(t => t.toLowerCase());
+                const tagsLower = (s.data.summary_tags || []).map(t => t.toLowerCase());
 
                 if (categoryLower === normalizedQuery || tagsLower.includes(normalizedQuery)) {
                     exactMatches.push(s);
@@ -225,7 +228,7 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
         if (filters.tag) {
             const query = filters.tag.toLowerCase();
             allScreenshots = allScreenshots.filter((s) =>
-                s.data.summary_tags.some((t) => t.toLowerCase() === query)
+                (s.data.summary_tags || []).some((t) => t.toLowerCase() === query)
             );
         }
     }
@@ -280,16 +283,22 @@ export function getExtendedStats(screenshots: Screenshot[]) {
             workspaceTypes[item.data.workspace_type] = (workspaceTypes[item.data.workspace_type] || 0) + 1;
         }
 
-        for (const app of item.data.evidence.apps_visible) {
-            apps[app] = (apps[app] || 0) + 1;
+        if (item.data.evidence && item.data.evidence.apps_visible) {
+            for (const app of item.data.evidence.apps_visible) {
+                apps[app] = (apps[app] || 0) + 1;
+            }
         }
 
-        for (const domain of item.data.evidence.web_domains_visible || []) {
-            domains[domain] = (domains[domain] || 0) + 1;
+        if (item.data.evidence && item.data.evidence.web_domains_visible) {
+            for (const domain of item.data.evidence.web_domains_visible) {
+                domains[domain] = (domains[domain] || 0) + 1;
+            }
         }
 
-        for (const tag of item.data.summary_tags) {
-            tags[tag] = (tags[tag] || 0) + 1;
+        if (item.data.summary_tags) {
+            for (const tag of item.data.summary_tags) {
+                tags[tag] = (tags[tag] || 0) + 1;
+            }
         }
 
         const hour = item.timestamp.getHours();
@@ -355,8 +364,10 @@ export function getDailyStats(screenshots: Screenshot[]): DailyStats[] {
 
             categories[item.data.category] = (categories[item.data.category] || 0) + 1;
 
-            for (const app of item.data.evidence.apps_visible) {
-                apps[app] = (apps[app] || 0) + 1;
+            if (item.data.evidence && item.data.evidence.apps_visible) {
+                for (const app of item.data.evidence.apps_visible) {
+                    apps[app] = (apps[app] || 0) + 1;
+                }
             }
 
             const workType = item.data.context.work_context?.work_type;
@@ -409,8 +420,10 @@ export function getWeeklyStats(screenshots: Screenshot[]): DailyStats[] {
 
             categories[item.data.category] = (categories[item.data.category] || 0) + 1;
 
-            for (const app of item.data.evidence.apps_visible) {
-                apps[app] = (apps[app] || 0) + 1;
+            if (item.data.evidence && item.data.evidence.apps_visible) {
+                for (const app of item.data.evidence.apps_visible) {
+                    apps[app] = (apps[app] || 0) + 1;
+                }
             }
 
             const workType = item.data.context.work_context?.work_type;
@@ -464,8 +477,10 @@ export function getMonthlyStats(screenshots: Screenshot[]): DailyStats[] {
 
             categories[item.data.category] = (categories[item.data.category] || 0) + 1;
 
-            for (const app of item.data.evidence.apps_visible) {
-                apps[app] = (apps[app] || 0) + 1;
+            if (item.data.evidence && item.data.evidence.apps_visible) {
+                for (const app of item.data.evidence.apps_visible) {
+                    apps[app] = (apps[app] || 0) + 1;
+                }
             }
 
             const workType = item.data.context.work_context?.work_type;
@@ -495,8 +510,10 @@ export function getUniqueCategories(screenshots: Screenshot[]): string[] {
 export function getUniqueApps(screenshots: Screenshot[]): string[] {
     const apps = new Set<string>();
     for (const ss of screenshots) {
-        for (const app of ss.data.evidence.apps_visible) {
-            apps.add(app);
+        if (ss.data.evidence && ss.data.evidence.apps_visible) {
+            for (const app of ss.data.evidence.apps_visible) {
+                apps.add(app);
+            }
         }
     }
     return Array.from(apps).sort();
@@ -589,4 +606,114 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
     }
 
     return insights;
+}
+
+export function getSessions(filters?: FilterOptions): Session[] {
+    const screenshots = getAllScreenshots(filters).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    if (screenshots.length === 0) return [];
+
+    const sessions: Session[] = [];
+    let currentSessionScreenshots: Screenshot[] = [screenshots[0]];
+
+    // Thresholds
+    const IDLE_THRESHOLD_MS = 60 * 1000; // 60 seconds
+
+    for (let i = 1; i < screenshots.length; i++) {
+        const prev = screenshots[i - 1];
+        const curr = screenshots[i];
+
+        const timeDiff = curr.timestamp.getTime() - prev.timestamp.getTime();
+        const categoryChanged = curr.data.category !== prev.data.category;
+        const appChanged = (curr.data.system_metadata?.active_app || curr.data.evidence?.active_app_guess) !==
+            (prev.data.system_metadata?.active_app || prev.data.evidence?.active_app_guess);
+
+        // Decide if we should break the session
+        // We break if:
+        // 1. Time gap is too large (idle)
+        // 2. Category changes (e.g. coding -> browsing)
+        // 3. Active app changes (e.g. VS Code -> Chrome)
+
+        const isNewSession = timeDiff > IDLE_THRESHOLD_MS || categoryChanged || appChanged;
+
+        if (isNewSession) {
+            // Finalize current session
+            sessions.push(createSessionFromScreenshots(currentSessionScreenshots));
+            currentSessionScreenshots = [curr];
+        } else {
+            currentSessionScreenshots.push(curr);
+        }
+    }
+
+    // Push the last session
+    if (currentSessionScreenshots.length > 0) {
+        sessions.push(createSessionFromScreenshots(currentSessionScreenshots));
+    }
+
+    return sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+}
+
+function createSessionFromScreenshots(screenshots: Screenshot[]): Session {
+    const first = screenshots[0];
+    const last = screenshots[screenshots.length - 1];
+
+    // Calculate aggregates
+    const totalFocus = screenshots.reduce((sum, s) => sum + s.data.scores.focus_score, 0);
+    const totalProd = screenshots.reduce((sum, s) => sum + s.data.scores.productivity_score, 0);
+    const totalDistraction = screenshots.reduce((sum, s) => sum + s.data.scores.distraction_risk, 0);
+
+    // Find dominant app
+    const appCounts: Record<string, number> = {};
+    screenshots.forEach(s => {
+        const app = s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess || "Unknown";
+        appCounts[app] = (appCounts[app] || 0) + 1;
+    });
+    const dominantApp = Object.entries(appCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
+
+    // Collect tags
+    const allTags = new Set<string>();
+    screenshots.forEach(s => (s.data.summary_tags || []).forEach(t => allTags.add(t)));
+
+    return {
+        id: `session_${first.timestamp.getTime()}`,
+        startTime: first.timestamp,
+        endTime: last.timestamp,
+        durationSeconds: (last.timestamp.getTime() - first.timestamp.getTime()) / 1000,
+        screenshotCount: screenshots.length,
+        category: first.data.category,
+        dominantApp,
+        avgFocusScore: Math.round(totalFocus / screenshots.length),
+        avgProductivityScore: Math.round(totalProd / screenshots.length),
+        avgDistractionScore: Math.round(totalDistraction / screenshots.length),
+        screenshots,
+        workType: first.data.context.work_context?.work_type,
+        project: first.data.context.code_context?.repo_or_project,
+        tags: Array.from(allTags)
+    };
+}
+
+export function getAppStats(screenshots: Screenshot[]) {
+    const appStats: Record<string, { focus: number; productivity: number; distraction: number; count: number }> = {};
+
+    for (const s of screenshots) {
+        const app = s.data.system_metadata?.active_app || s.data.evidence?.active_app_guess || "Unknown";
+
+        if (!appStats[app]) {
+            appStats[app] = { focus: 0, productivity: 0, distraction: 0, count: 0 };
+        }
+
+        appStats[app].focus += s.data.scores.focus_score;
+        appStats[app].productivity += s.data.scores.productivity_score;
+        appStats[app].distraction += s.data.scores.distraction_risk;
+        appStats[app].count += 1;
+    }
+
+    return Object.entries(appStats).map(([name, stats]) => ({
+        name,
+        avgFocus: Math.round(stats.focus / stats.count),
+        avgProductivity: Math.round(stats.productivity / stats.count),
+        avgDistraction: Math.round(stats.distraction / stats.count),
+        count: stats.count,
+        efficiency: Math.round((stats.productivity / stats.count) - (stats.distraction / stats.count))
+    })).sort((a, b) => b.count - a.count);
 }

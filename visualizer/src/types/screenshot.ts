@@ -5,11 +5,11 @@ export interface Scores {
 }
 
 export interface Evidence {
-  apps_visible: string[];
-  active_app_guess: string;
-  key_windows_or_panels: string[];
-  web_domains_visible: string[];
-  text_snippets: string[];
+  apps_visible?: string[];
+  active_app_guess?: string;
+  key_windows_or_panels?: string[];
+  web_domains_visible?: string[];
+  text_snippets?: string[];
 }
 
 export interface WorkContext {
@@ -62,9 +62,53 @@ export interface ScreenshotData {
   context: Context;
   actions_observed: string[];
   privacy_notes: string[];
-  summary_tags: string[];
+  summary_tags?: string[];
   dedupe_signature: string;
   confidence: number;
+  system_metadata?: SystemMetadata;
+}
+
+export interface SystemMetadata {
+  active_app: string;
+  opened_apps: string[];
+  audio: {
+    volume: number;
+    is_muted: boolean;
+    inputs: AudioDevice[];
+    outputs: AudioDevice[];
+  };
+  stats: {
+    battery: { percentage: number; isPlugged: boolean };
+    ram: { total: number; used: number; free: number };
+    cpu: { cores: number; used: number; idle: number };
+    network: { connected: boolean; type: string; signal_strength: number };
+    display: { dark_mode: boolean; external_displays: any[] };
+    input: { idle_seconds: number };
+  };
+}
+
+export interface AudioDevice {
+  name: string;
+  is_default: boolean;
+  manufacturer?: string;
+  transport?: string;
+}
+
+export interface Session {
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  durationSeconds: number;
+  screenshotCount: number;
+  category: string;
+  dominantApp: string;
+  avgFocusScore: number;
+  avgProductivityScore: number;
+  avgDistractionScore: number;
+  screenshots: Screenshot[];
+  workType?: string; // e.g. "coding", "meeting"
+  project?: string;
+  tags: string[];
 }
 
 export interface Screenshot {

@@ -32,7 +32,7 @@ export default function TagsPage() {
     const tagCounts: Record<string, number> = {};
 
     for (const s of screenshots) {
-        for (const tag of s.data.summary_tags) {
+        for (const tag of (s.data.summary_tags || [])) {
             tagCounts[tag] = (tagCounts[tag] || 0) + 1;
         }
     }
