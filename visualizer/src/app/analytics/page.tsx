@@ -57,6 +57,22 @@ export default async function AnalyticsPage() {
             stat: `Top: ${topWorkspace[0]}`,
             count: `${topWorkspace[1]} screenshots`
         },
+        {
+            title: "Networks",
+            href: "/analytics/networks",
+            icon: "📡",
+            description: "Connection history & stats",
+            stat: `Top: ${getTop(stats.networks || {})[0] || "Unknown"}`,
+            count: `${Object.keys(stats.networks || {}).length} networks`
+        },
+        {
+            title: "System Health",
+            href: "/analytics/system",
+            icon: "⚙️",
+            description: "CPU, RAM & Battery analysis",
+            stat: `CPU: ${stats.avgCpu}% | RAM: ${stats.avgRam}%`,
+            count: `Battery: ${stats.avgBattery}%`
+        },
     ];
 
     return (

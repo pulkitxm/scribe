@@ -32,6 +32,17 @@ interface PageProps {
         app?: string;
         project?: string;
         page?: string;
+        minFocus?: string;
+        maxFocus?: string;
+        minProductivity?: string;
+        maxDistraction?: string;
+        timeOfDay?: string;
+        hasCode?: string;
+        isMeeting?: string;
+        lowBattery?: string;
+        highCpu?: string;
+        hasErrors?: string;
+        network?: string;
     }>;
 }
 
@@ -69,6 +80,17 @@ async function GalleryContent({
     language,
     app,
     project,
+    minFocus,
+    maxFocus,
+    minProductivity,
+    maxDistraction,
+    timeOfDay,
+    hasCode,
+    isMeeting,
+    lowBattery,
+    highCpu,
+    hasErrors,
+    network,
 }: {
     date?: string;
     tag?: string;
@@ -80,6 +102,17 @@ async function GalleryContent({
     language?: string;
     app?: string;
     project?: string;
+    minFocus?: string;
+    maxFocus?: string;
+    minProductivity?: string;
+    maxDistraction?: string;
+    timeOfDay?: string;
+    hasCode?: string;
+    isMeeting?: string;
+    lowBattery?: string;
+    highCpu?: string;
+    hasErrors?: string;
+    network?: string;
 }) {
     const filters: FilterOptions = {};
 
@@ -119,24 +152,31 @@ async function GalleryContent({
     if (language) filters.language = language;
     if (app) filters.app = app;
     if (project) filters.project = project;
+    if (tag) filters.tag = tag;
 
-    let screenshots = getAllScreenshots(filters);
+    if (minFocus) filters.minFocusScore = parseInt(minFocus);
+    if (maxFocus) filters.maxFocusScore = parseInt(maxFocus);
+    if (minProductivity) filters.minProductivityScore = parseInt(minProductivity);
+    if (maxDistraction) filters.maxDistractionScore = parseInt(maxDistraction);
 
-    if (tag) {
-        screenshots = screenshots.filter((s) =>
-            (s.data.summary_tags || []).some((t) => t.toLowerCase() === tag.toLowerCase())
-        );
+    if (timeOfDay && ['morning', 'afternoon', 'evening', 'night'].includes(timeOfDay)) {
+        filters.timeOfDay = timeOfDay as 'morning' | 'afternoon' | 'evening' | 'night';
     }
 
-    const initialScreenshots = screenshots.slice(0, 48);
+    if (hasCode === 'true') filters.hasCode = true;
+    if (isMeeting === 'true') filters.isMeeting = true;
+    if (lowBattery === 'true') filters.lowBattery = true;
+    if (highCpu === 'true') filters.highCpu = true;
+    if (hasErrors === 'true') filters.hasErrors = true;
+    if (network) filters.network = network;
 
-    const clientFilters = { ...filters };
-    if (tag) (clientFilters as any).tag = tag;
+    const screenshots = getAllScreenshots(filters);
+    const initialScreenshots = screenshots.slice(0, 48);
 
     return (
         <GalleryInfiniteScroll
             initialScreenshots={initialScreenshots}
-            initialFilters={clientFilters}
+            initialFilters={filters}
         />
     );
 }
@@ -156,7 +196,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     const workspaces = [...new Set(allScreenshots.map((s) => s.data.workspace_type).filter(Boolean))].sort();
     const domains = [...new Set(allScreenshots.flatMap((s) => s.data.evidence?.web_domains_visible || []))].filter(Boolean).sort();
 
-    const hasHiddenFilter = params.domain || params.workspace || params.language || params.text || params.app || params.project;
+    const hasHiddenFilter = params.domain || params.workspace || params.language || params.text || params.app || params.project || params.network;
 
     return (
         <div className="space-y-6">
@@ -181,21 +221,24 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 currentCategory={params.category}
                 currentTimeRange={params.timeRange}
                 currentText={params.text}
-                currentApp={params.app as string}
-                currentProject={params.project as string}
-                currentLanguage={params.language as string}
-                currentWorkspace={params.workspace as string}
-                currentDomain={params.domain as string}
+                currentApp={params.app}
+                currentProject={params.project}
+                currentLanguage={params.language}
+                currentWorkspace={params.workspace}
+                currentDomain={params.domain}
+                currentMinFocus={params.minFocus}
+                currentMaxFocus={params.maxFocus}
+                currentMinProductivity={params.minProductivity}
+                currentMaxDistraction={params.maxDistraction}
+                currentTimeOfDay={params.timeOfDay}
+                currentHasCode={params.hasCode}
+                currentIsMeeting={params.isMeeting}
+                currentLowBattery={params.lowBattery}
+                currentHighCpu={params.highCpu}
+                currentHasErrors={params.hasErrors}
+                // @ts-ignore
+                currentNetwork={params.network}
             />
-
-            {params.tag && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Showing screenshots tagged with:</span>
-                    <Badge variant="secondary">{params.tag}</Badge>
-                </div>
-            )}
-
-            {/* ... badges for other params ... */}
 
             <Suspense fallback={<GalleryGridSkeleton />}>
                 <GalleryContent
@@ -209,6 +252,17 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                     language={params.language}
                     app={params.app as string}
                     project={params.project as string}
+                    minFocus={params.minFocus}
+                    maxFocus={params.maxFocus}
+                    minProductivity={params.minProductivity}
+                    maxDistraction={params.maxDistraction}
+                    timeOfDay={params.timeOfDay}
+                    hasCode={params.hasCode}
+                    isMeeting={params.isMeeting}
+                    lowBattery={params.lowBattery}
+                    highCpu={params.highCpu}
+                    hasErrors={params.hasErrors}
+                    network={params.network}
                 />
             </Suspense>
         </div>

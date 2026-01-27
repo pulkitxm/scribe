@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Filter } from "lucide-react";
 import { getAllScreenshots, getExtendedStats, getDailyStats } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,12 +42,18 @@ export default async function DomainDetailPage({ params }: PageProps) {
                         <ChevronLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-2xl font-bold text-foreground">{decodedName}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Domain Insights
                     </p>
                 </div>
+                <Button variant="outline" asChild className="gap-2 cursor-pointer">
+                    <Link href={`/gallery?domain=${encodeURIComponent(decodedName)}`}>
+                        <Filter className="h-4 w-4" />
+                        View in Gallery
+                    </Link>
+                </Button>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

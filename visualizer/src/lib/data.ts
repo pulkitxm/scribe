@@ -256,6 +256,68 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
                 (s.data.summary_tags || []).some((t) => t.toLowerCase() === query)
             );
         }
+        if (filters.maxFocusScore !== undefined) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.scores.focus_score <= filters.maxFocusScore!
+            );
+        }
+        if (filters.maxProductivityScore !== undefined) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.scores.productivity_score <= filters.maxProductivityScore!
+            );
+        }
+        if (filters.maxDistractionScore !== undefined) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.scores.distraction_risk <= filters.maxDistractionScore!
+            );
+        }
+        if (filters.timeOfDay) {
+            allScreenshots = allScreenshots.filter((s) => {
+                const hour = s.timestamp.getHours();
+                switch (filters.timeOfDay) {
+                    case 'morning': return hour >= 5 && hour < 12;
+                    case 'afternoon': return hour >= 12 && hour < 17;
+                    case 'evening': return hour >= 17 && hour < 21;
+                    case 'night': return hour >= 21 || hour < 5;
+                    default: return true;
+                }
+            });
+        }
+        if (filters.hasCode) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.context.code_context?.language && s.data.context.code_context.language !== ""
+            );
+        }
+        if (filters.isMeeting) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.context.communication_context?.meeting_indicator === true
+            );
+        }
+        if (filters.lowBattery) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.system_metadata?.stats.battery.percentage !== undefined &&
+                    s.data.system_metadata.stats.battery.percentage < 20
+            );
+        }
+        if (filters.highCpu) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.system_metadata?.stats.cpu.used !== undefined &&
+                    s.data.system_metadata.stats.cpu.used > 80
+            );
+        }
+        if (filters.hasErrors) {
+            allScreenshots = allScreenshots.filter(
+                (s) => s.data.context.code_context?.errors_or_logs_visible === true
+            );
+        }
+        if (filters.network) {
+            allScreenshots = allScreenshots.filter((s) => {
+                const net = s.data.system_metadata?.stats.network;
+                if (!net) return false;
+                const name = net.ssid || (net.connected ? "Unknown Network" : null);
+                return name === filters.network;
+            });
+        }
     }
 
     return allScreenshots;
@@ -298,15 +360,56 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     let totalDistraction = 0;
     let totalConfidence = 0;
 
+    let totalCpu = 0;
+    let totalRam = 0;
+    let totalBattery = 0;
+    let wifiCount = 0;
+    const networks: Record<string, number> = {};
+
+    let batterySamples = 0;
+    let cpuSamples = 0;
+    let ramSamples = 0;
+
     const sorted = [...screenshots].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     let prevItem: Screenshot | null = null;
+
     for (const item of sorted) {
+        // ... existing aggregation ...
         totalFocus += item.data.scores.focus_score;
         totalProductivity += item.data.scores.productivity_score;
         totalDistraction += item.data.scores.distraction_risk;
         totalConfidence += item.data.confidence;
 
+        // System Stats
+        if (item.data.system_metadata?.stats) {
+            const s = item.data.system_metadata.stats;
+
+            if (s.cpu?.used !== undefined) {
+                totalCpu += s.cpu.used;
+                cpuSamples++;
+            }
+
+            if (s.ram?.used !== undefined && s.ram?.total !== undefined && s.ram.total > 0) {
+                const percent = (s.ram.used / s.ram.total) * 100;
+                totalRam += percent;
+                ramSamples++;
+            }
+
+            if (s.battery?.percentage !== undefined) {
+                totalBattery += s.battery.percentage;
+                batterySamples++;
+            }
+
+            if (s.network) {
+                const name = s.network.ssid || (s.network.connected ? "Unknown Network" : null);
+                if (name) {
+                    networks[name] = (networks[name] || 0) + 1;
+                }
+            }
+        }
+
+        // ... existing aggregation properties ...
         categories[item.data.category] = (categories[item.data.category] || 0) + 1;
 
         if (item.data.workspace_type) {
@@ -339,7 +442,6 @@ export function getExtendedStats(screenshots: Screenshot[]) {
             const appChanged = (item.data.system_metadata?.active_app || item.data.evidence?.active_app_guess) !==
                 (prevItem.data.system_metadata?.active_app || prevItem.data.evidence?.active_app_guess);
             if (appChanged) {
-                // Switch happened at 'item' time
                 hourlyContextSwitches[hour] = (hourlyContextSwitches[hour] || 0) + 1;
             }
         }
@@ -365,6 +467,9 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         avgFocus: Math.round(totalFocus / screenshots.length),
         avgProductivity: Math.round(totalProductivity / screenshots.length),
         avgDistraction: Math.round(totalDistraction / screenshots.length),
+        avgCpu: cpuSamples > 0 ? Math.round(totalCpu / cpuSamples) : 0,
+        avgRam: ramSamples > 0 ? Math.round(totalRam / ramSamples) : 0,
+        avgBattery: batterySamples > 0 ? Math.round(totalBattery / batterySamples) : 0,
         totalScreenshots: screenshots.length,
         categories,
         apps,
@@ -376,6 +481,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         domains,
         tags,
         workspaceTypes,
+        networks,
         avgConfidence: Math.round((totalConfidence / screenshots.length) * 100),
     };
 }

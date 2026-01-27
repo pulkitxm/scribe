@@ -17,7 +17,7 @@ export default async function ProjectsAnalyticsPage() {
         <div className="space-y-6">
             <div className="flex items-center gap-4 border-b border-border pb-6">
                 <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                    <Link href="/">
+                    <Link href="/analytics">
                         <ChevronLeft className="h-4 w-4" />
                     </Link>
                 </Button>
@@ -41,6 +41,7 @@ export default async function ProjectsAnalyticsPage() {
                             label="Project"
                             icon="📁"
                             linkPrefix="/analytics/projects"
+                            galleryFilterKey="project"
                         />
                     </CardContent>
                 </Card>

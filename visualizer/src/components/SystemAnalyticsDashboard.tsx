@@ -104,13 +104,23 @@ export default function SystemAnalyticsDashboard({ stats }: Props) {
                                         outerRadius={80}
                                         fill="#8884d8"
                                         dataKey="value"
-                                        label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        label={(props: any) => {
+                                            const { name, percent } = props;
+                                            if (!name || percent === undefined) return null;
+                                            const val = (percent * 100).toFixed(0);
+                                            if (percent < 0.05) return null;
+                                            return `${name.substring(0, 12)}${name.length > 12 ? '..' : ''} ${val}%`;
+                                        }}
+                                        labelLine={{ stroke: '#6b7280' }}
                                     >
                                         {learningData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="hsl(var(--card))" />
                                         ))}
                                     </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none" }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }}
+                                        itemStyle={{ color: "#e5e7eb" }}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
@@ -129,8 +139,12 @@ export default function SystemAnalyticsDashboard({ stats }: Props) {
                                 <BarChart data={commData} layout="vertical" margin={{ left: 40 }}>
                                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} horizontal={true} vertical={false} />
                                     <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                                    <Tooltip contentStyle={{ backgroundColor: "#1f2937", border: "none" }} />
+                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12, fill: "#888888" }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }}
+                                        itemStyle={{ color: "#e5e7eb" }}
+                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                    />
                                     <Bar dataKey="value" fill="#8884d8" radius={[0, 4, 4, 0]}>
                                         {commData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

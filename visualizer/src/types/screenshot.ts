@@ -66,11 +66,21 @@ export interface FilterOptions {
   category?: string;
   app?: string;
   minFocusScore?: number;
+  maxFocusScore?: number;
   minProductivityScore?: number;
+  maxProductivityScore?: number;
+  maxDistractionScore?: number;
   project?: string;
   domain?: string;
   language?: string;
   workspace?: string;
   text?: string;
   tag?: string;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  hasCode?: boolean;
+  isMeeting?: boolean;
+  lowBattery?: boolean;
+  highCpu?: boolean;
+  hasErrors?: boolean;
+  network?: string;
 }

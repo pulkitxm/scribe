@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import RankingTable from "@/components/RankingTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function LanguagesAnalyticsPage() {
+export default async function NetworksAnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);
 
-    const languages = Object.entries(stats.languages || {})
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, count]) => ({ name, count }));
+    // Ensure stats.networks exists, defaulting to empty object if not
+    const networksData = (stats as any).networks || {};
+
+    const networks = Object.entries(networksData)
+        .sort((a: any, b: any) => b[1] - a[1])
+        .map(([name, count]) => ({ name: name as string, count: count as number }));
 
     return (
         <div className="space-y-6">
@@ -22,9 +25,9 @@ export default async function LanguagesAnalyticsPage() {
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Programming Languages</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Wi-Fi Networks</h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Analyzing code across {languages.length} languages
+                        Analyzing connectivity across {networks.length} networks
                     </p>
                 </div>
             </div>
@@ -32,16 +35,16 @@ export default async function LanguagesAnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
                     <CardHeader>
-                        <CardTitle>Language Ranking</CardTitle>
+                        <CardTitle>Network Ranking</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <RankingTable
-                            items={languages}
+                            items={networks}
                             total={stats.totalScreenshots}
-                            label="Language"
-                            icon="📝"
-                            linkPrefix="/analytics/languages"
-                            galleryFilterKey="language"
+                            label="SSID"
+                            icon="📡"
+                            linkPrefix="/analytics/networks"
+                            galleryFilterKey="network"
                         />
                     </CardContent>
                 </Card>
@@ -50,15 +53,15 @@ export default async function LanguagesAnalyticsPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                                Top Language
+                                Top Network
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-foreground truncate">
-                                {languages[0]?.name || "N/A"}
+                                {networks[0]?.name || "N/A"}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1">
-                                {languages[0]?.count || 0} screenshots
+                                {networks[0]?.count || 0} screenshots
                             </div>
                         </CardContent>
                     </Card>

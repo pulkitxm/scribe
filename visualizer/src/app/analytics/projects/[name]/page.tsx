@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Filter } from "lucide-react";
 import { getAllScreenshots, getExtendedStats, getDailyStats, getSmartInsights } from "@/lib/data";
 import SmartInsights from "@/components/SmartInsights";
 import { Button } from "@/components/ui/button";
@@ -49,12 +49,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         <ChevronLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-3xl font-bold text-foreground tracking-tight">{decodedName}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Project Overview & Insights
                     </p>
                 </div>
+                <Button variant="outline" asChild className="gap-2 cursor-pointer">
+                    <Link href={`/gallery?project=${encodeURIComponent(decodedName)}`}>
+                        <Filter className="h-4 w-4" />
+                        View in Gallery
+                    </Link>
+                </Button>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
