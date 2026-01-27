@@ -6,3 +6,4 @@ outputs-dev/
 *.mp4
 scribe-cli
 scribe_cli
+*.md
