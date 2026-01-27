@@ -136,8 +136,8 @@ private func getCoreAudioDevices() -> [AudioDevice] {
 }
 
 private func getDeviceStringProperty(id: AudioDeviceID, selector: AudioObjectPropertySelector) -> String {
-    var stringRef: CFString = "" as CFString
-    var propertySize = UInt32(MemoryLayout.size(ofValue: stringRef))
+    var stringRef: Unmanaged<CFString>?
+    var propertySize = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
     var address = AudioObjectPropertyAddress(
         mSelector: selector,
         mScope: kAudioObjectPropertyScopeGlobal,
@@ -145,8 +145,8 @@ private func getDeviceStringProperty(id: AudioDeviceID, selector: AudioObjectPro
     )
     
     let status = AudioObjectGetPropertyData(id, &address, 0, nil, &propertySize, &stringRef)
-    if status == noErr {
-        return stringRef as String
+    if status == noErr, let existingString = stringRef?.takeRetainedValue() {
+        return existingString as String
     }
     return "Unknown"
 }
