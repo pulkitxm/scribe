@@ -41,8 +41,8 @@ export const SystemMetadataSchema = z.object({
         }),
         network: z.object({
             connected: z.boolean(),
-            type: z.string(),
-            signal_strength: z.number(),
+            type: z.string().optional(),
+            signal_strength: z.number().optional(),
             ssid: z.string().optional(),
         }),
         display: z.object({
