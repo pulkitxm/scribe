@@ -38,7 +38,7 @@ run-once:
 
 analyze:
 	@echo "Analyzing incomplete screenshots..."
-	@node analyze.js --concurrency $(or $(CONCURRENCY),1)
+	@node analyze.js --concurrency $(or $(THREADS),$(CONCURRENCY),1) $(if $(FOLDER),--folder "$(FOLDER)",)
 
 install:
 	@./scripts/install.sh

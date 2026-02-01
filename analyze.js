@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { analyzeImageWithAI } = require('./js-scripts/analyzer');
 const { log } = require('./js-scripts/utils');
 
@@ -52,7 +53,6 @@ if (!fs.existsSync(scribeFolder)) {
 }
 
 function isIncompleteJSON(jsonPath) {
-  return true;
   try {
     const content = fs.readFileSync(jsonPath, 'utf8');
     const json = JSON.parse(content);
@@ -91,33 +91,54 @@ function findIncompleteScreenshots(dir) {
   return incomplete;
 }
 
-async function processWithConcurrency(items, concurrency, processor) {
+/**
+ * Process items with true concurrent async execution
+ * Maintains N concurrent API requests at all times for maximum throughput
+ */
+async function processWithConcurrency(items, concurrency) {
   const results = {
     success: 0,
     failed: 0,
     errors: []
   };
   
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const promises = batch.map(async (item) => {
-      try {
-        // Read existing metadata from JSON
-        const existingMetadata = JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));
-        await processor(item.imagePath, existingMetadata);
-        results.success++;
-      } catch (err) {
-        results.failed++;
-        results.errors.push({ path: item.imagePath, error: err.message });
-        log.error(`Failed to process ${path.basename(item.imagePath)}: ${err.message}`);
-      }
-    });
-    
-    await Promise.all(promises);
-    
-    const processed = Math.min(i + concurrency, items.length);
-    log.info(`Progress: ${processed}/${items.length} (${results.success} success, ${results.failed} failed)`);
+  let processed = 0;
+  let currentIndex = 0;
+  const total = items.length;
+  
+  // Process a single item
+  async function processItem(item) {
+    try {
+      const existingMetadata = JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));
+      await analyzeImageWithAI(item.imagePath, existingMetadata);
+      results.success++;
+    } catch (err) {
+      results.failed++;
+      results.errors.push({ path: item.imagePath, error: err.message });
+      log.error(`Failed: ${path.basename(item.imagePath)}: ${err.message}`);
+    }
+    processed++;
+    process.stdout.write(`\r[INFO] Progress: ${processed}/${total} (${results.success} success, ${results.failed} failed)    `);
   }
+  
+  // Worker function that continuously picks up work
+  async function worker() {
+    while (currentIndex < items.length) {
+      const index = currentIndex++;
+      if (index < items.length) {
+        await processItem(items[index]);
+      }
+    }
+  }
+  
+  // Start N concurrent workers
+  const workers = [];
+  for (let i = 0; i < Math.min(concurrency, items.length); i++) {
+    workers.push(worker());
+  }
+  
+  await Promise.all(workers);
+  console.log(''); // New line after progress
   
   return results;
 }
@@ -147,9 +168,11 @@ async function main() {
     return;
   }
   
+  const effectiveConcurrency = Math.min(concurrency, incomplete.length);
+  
   console.log('\n' + '='.repeat(50));
   log.info(`Found ${incomplete.length} image(s) needing AI analysis`);
-  log.info(`Concurrency: ${concurrency}`);
+  log.info(`Concurrent requests: ${effectiveConcurrency}`);
   console.log('='.repeat(50) + '\n');
   
   const answer = await askConfirmation(`Proceed with analyzing ${incomplete.length} image(s)? [y/N] `);
@@ -160,14 +183,10 @@ async function main() {
   }
   
   console.log('');
-  log.info('Starting batch processing...');
+  log.info(`Starting batch processing with ${effectiveConcurrency} concurrent request(s)...`);
   
   const startTime = Date.now();
-  const results = await processWithConcurrency(
-    incomplete,
-    concurrency,
-    analyzeImageWithAI
-  );
+  const results = await processWithConcurrency(incomplete, effectiveConcurrency);
   
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
   

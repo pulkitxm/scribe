@@ -53,6 +53,9 @@ echo "Created config.json"
 try cp "$SCRIPT_DIR/../vision.js" "$MACOS_DIR/vision.js"
 echo "Copied vision.js"
 
+try cp -r "$SCRIPT_DIR/../js-scripts" "$MACOS_DIR/js-scripts"
+echo "Copied js-scripts/"
+
 if [ -f "$SCRIPT_DIR/../.env" ]; then
     try cp "$SCRIPT_DIR/../.env" "$MACOS_DIR/.env"
     echo "Copied .env"
