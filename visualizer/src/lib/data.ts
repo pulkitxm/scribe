@@ -1,4 +1,5 @@
 import fs from "fs";
+import { execSync } from "child_process";
 import path from "path";
 import Fuse from "fuse.js";
 import { Screenshot, ScreenshotData, DailyStats, FilterOptions } from "@/types/screenshot";
@@ -341,11 +342,12 @@ export function getExtendedStats(screenshots: Screenshot[]) {
             tags: {},
             workspaceTypes: {},
             avgConfidence: 0,
+            totalSize: 0,
         };
     }
 
-    const categories: Record<string, number> = {};
-    const apps: Record<string, number> = {};
+    const categories: Record<string, { count: number, totalProductivity: number }> = {};
+    const apps: Record<string, { count: number, totalFocus: number }> = {};
     const hourlyDistribution: Record<number, number> = {};
     const hourlyContextSwitches: Record<number, number> = {};
     const workTypes: Record<string, number> = {};
@@ -370,6 +372,10 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     let cpuSamples = 0;
     let ramSamples = 0;
 
+    // let ramSamples = 0;
+
+    // let totalSize = 0; // Calculated separately now
+
     const sorted = [...screenshots].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     let prevItem: Screenshot | null = null;
@@ -380,6 +386,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         totalProductivity += item.data.scores.productivity_score;
         totalDistraction += item.data.scores.distraction_risk;
         totalConfidence += item.data.confidence;
+        // totalSize += item.size;
 
         // System Stats
         if (item.data.system_metadata?.stats) {
@@ -410,7 +417,11 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         }
 
         // ... existing aggregation properties ...
-        categories[item.data.category] = (categories[item.data.category] || 0) + 1;
+        if (!categories[item.data.category]) {
+            categories[item.data.category] = { count: 0, totalProductivity: 0 };
+        }
+        categories[item.data.category].count += 1;
+        categories[item.data.category].totalProductivity += item.data.scores.productivity_score;
 
         if (item.data.workspace_type) {
             workspaceTypes[item.data.workspace_type] = (workspaceTypes[item.data.workspace_type] || 0) + 1;
@@ -418,7 +429,11 @@ export function getExtendedStats(screenshots: Screenshot[]) {
 
         if (item.data.evidence && item.data.evidence.apps_visible) {
             for (const app of item.data.evidence.apps_visible) {
-                apps[app] = (apps[app] || 0) + 1;
+                if (!apps[app]) {
+                    apps[app] = { count: 0, totalFocus: 0 };
+                }
+                apps[app].count += 1;
+                apps[app].totalFocus += item.data.scores.focus_score;
             }
         }
 
@@ -471,8 +486,18 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         avgRam: ramSamples > 0 ? Math.round(totalRam / ramSamples) : 0,
         avgBattery: batterySamples > 0 ? Math.round(totalBattery / batterySamples) : 0,
         totalScreenshots: screenshots.length,
-        categories,
-        apps,
+        categories: Object.fromEntries(
+            Object.entries(categories).map(([k, v]) => [k, {
+                count: v.count,
+                avgProductivity: Math.round(v.totalProductivity / v.count)
+            }])
+        ),
+        apps: Object.fromEntries(
+            Object.entries(apps).map(([k, v]) => [k, {
+                count: v.count,
+                avgFocus: Math.round(v.totalFocus / v.count)
+            }])
+        ),
         hourlyDistribution,
         hourlyContextSwitches,
         workTypes,
@@ -483,10 +508,57 @@ export function getExtendedStats(screenshots: Screenshot[]) {
         workspaceTypes,
         networks,
         avgConfidence: Math.round((totalConfidence / screenshots.length) * 100),
+        totalSize: 0, // Will be overridden in page.tsx
     };
 }
 
+
+export function getTotalScribeSize(): number {
+    const folder = getScribeFolder();
+    if (!folder) return 0;
+    try {
+        // du -sk returns size in KB
+        const output = execSync(`du -sk "${folder}"`, { encoding: 'utf-8' });
+        const match = output.match(/^(\d+)/);
+        if (match) {
+            return parseInt(match[1], 10) * 1024; // Convert KB to Bytes
+        }
+    } catch (e) {
+        console.error("Failed to calculate folder size:", e);
+    }
+    return 0;
+}
+
+
+
+function getDirectorySizes(baseFolder: string): Map<string, number> {
+    const sizes = new Map<string, number>();
+    try {
+        // du -d 1 -k returns size in KB for each subdirectory
+        const output = execSync(`du -d 1 -k "${baseFolder}"`, { encoding: 'utf-8' });
+        const lines = output.split('\n');
+
+        for (const line of lines) {
+            const match = line.trim().match(/^(\d+)\s+(.+)$/);
+            if (match) {
+                const sizeKB = parseInt(match[1], 10);
+                const fullPath = match[2];
+                const folderName = path.basename(fullPath);
+                // Correct for cases where path might be absolute
+                if (folderName && folderName !== "." && folderName !== "..") {
+                    sizes.set(folderName, sizeKB * 1024); // Convert to Bytes
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Failed to calculate directory sizes:", e);
+    }
+    return sizes;
+}
+
 export function getDailyStats(screenshots: Screenshot[]): DailyStats[] {
+    const folder = getScribeFolder();
+    const folderSizes = folder ? getDirectorySizes(folder) : new Map<string, number>();
     const grouped: Record<string, Screenshot[]> = {};
 
     for (const ss of screenshots) {
@@ -533,6 +605,7 @@ export function getDailyStats(screenshots: Screenshot[]): DailyStats[] {
             categories,
             apps,
             workTypes,
+            size: folderSizes.get(date) || 0,
         };
     });
 }

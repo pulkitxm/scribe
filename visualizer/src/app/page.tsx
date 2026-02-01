@@ -1,18 +1,18 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getAppStats } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getAppStats, getTotalScribeSize } from "@/lib/data";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import DashboardStats from "@/components/DashboardStats";
 import DashboardFilters from "@/components/DashboardFilters";
 import HourlyChart from "@/components/HourlyChart";
 import CategoryChart from "@/components/CategoryChart";
 import ProductivityChart from "@/components/ProductivityChart";
 import { FilterOptions } from "@/types/screenshot";
-import { Lightbulb, Zap, Clock, Target } from "lucide-react";
+import { Zap } from "lucide-react";
 import SmartInsights from "@/components/SmartInsights";
 import AppEfficiencyChart from "@/components/AppEfficiencyChart";
 
@@ -87,6 +87,7 @@ async function DashboardContent({
   const filters = getFiltersFromParams(range, category);
   const screenshots = getAllScreenshots(filters);
   const stats = getExtendedStats(screenshots);
+  stats.totalSize = getTotalScribeSize();
   const appStats = getAppStats(screenshots);
 
   const filteredDailyStats = getDailyStats(screenshots);
@@ -133,63 +134,7 @@ async function DashboardContent({
         currentCategory={category}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Screenshots
-              </div>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold text-foreground">
-              {stats.totalScreenshots.toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Avg Focus
-              </div>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold text-foreground">
-              {stats.avgFocus}
-            </div>
-            <Progress value={stats.avgFocus} className="h-1 mt-3" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Productivity
-              </div>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold text-foreground">
-              {stats.avgProductivity}
-            </div>
-            <Progress value={stats.avgProductivity} className="h-1 mt-3" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Context
-              </div>
-              <Lightbulb className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold text-foreground">
-              {Object.keys(stats.workTypes).length}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Work Types Detected</div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardStats stats={stats} dailyStats={filteredDailyStats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">

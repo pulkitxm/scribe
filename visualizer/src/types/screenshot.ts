@@ -58,6 +58,7 @@ export interface DailyStats {
   categories: Record<string, number>;
   apps: Record<string, number>;
   workTypes: Record<string, number>;
+  size?: number;
 }
 
 export interface FilterOptions {
