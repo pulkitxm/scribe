@@ -8,23 +8,34 @@ struct Analyzer {
         }
         
         let executableDir = getExecutableDir()
-        let visionScriptPath = "\(executableDir)/vision.js"
+        let analyzeWithAI = getEnvVar("ANALYZE_WITH_AI")?.lowercased() != "false"
+        
+        let scriptPath: String
+        if analyzeWithAI {
+            scriptPath = "\(executableDir)/vision.js"
+        } else {
+            scriptPath = "\(executableDir)/js-scripts/save-metadata.js"
+        }
 
-        if !FileManager.default.fileExists(atPath: visionScriptPath) {
-             Logger.shared.log("vision.js not found at: \(visionScriptPath)")
+        if !FileManager.default.fileExists(atPath: scriptPath) {
+             Logger.shared.log("Script not found at: \(scriptPath)")
              return
         }
         
-        runNode(nodePath: nodePath, scriptPath: visionScriptPath, imagePath: path, captureDuration: captureDuration, convertDuration: convertDuration)
+        runNode(nodePath: nodePath, scriptPath: scriptPath, imagePath: path, captureDuration: captureDuration, convertDuration: convertDuration, analyzeWithAI: analyzeWithAI)
     }
 
-    private static func runNode(nodePath: String, scriptPath: String, imagePath: String, captureDuration: TimeInterval, convertDuration: TimeInterval) {
+    private static func runNode(nodePath: String, scriptPath: String, imagePath: String, captureDuration: TimeInterval, convertDuration: TimeInterval, analyzeWithAI: Bool) {
         let startAnalysis = Date()
         let nodeProcess = Process()
         nodeProcess.executableURL = URL(fileURLWithPath: nodePath)
         nodeProcess.arguments = [scriptPath, imagePath]
 
-        Logger.shared.log("Processing screenshot...")
+        if analyzeWithAI {
+            Logger.shared.log("Processing screenshot...")
+        } else {
+            Logger.shared.log("Saving metadata...")
+        }
         
         let pipe = Pipe()
         nodeProcess.standardOutput = pipe
@@ -177,9 +188,17 @@ struct Analyzer {
         let totalDuration = captureDuration + convertDuration + analysisDuration
 
         if nodeProcess.terminationStatus == 0 {
-            Logger.shared.log(String(format: "Processed in %.1fs (Screen: %.1fs, Convert: %.1fs, Analyze: %.1fs)", totalDuration, captureDuration, convertDuration, analysisDuration))
+            if analyzeWithAI {
+                Logger.shared.log(String(format: "Processed in %.1fs (Screen: %.1fs, Convert: %.1fs, Analyze: %.1fs)", totalDuration, captureDuration, convertDuration, analysisDuration))
+            } else {
+                Logger.shared.log(String(format: "Saved in %.1fs (Screen: %.1fs, Convert: %.1fs, Save: %.1fs)", totalDuration, captureDuration, convertDuration, analysisDuration))
+            }
         } else {
-            Logger.shared.log("Analysis failed.")
+            if analyzeWithAI {
+                Logger.shared.log("Analysis failed.")
+            } else {
+                Logger.shared.log("Metadata save failed.")
+            }
         }
     }
 }

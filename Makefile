@@ -2,7 +2,7 @@ PLIST_NAME := com.scribe.service
 PLIST_PATH := $(HOME)/Library/LaunchAgents/$(PLIST_NAME).plist
 USER_ID := $(shell id -u)
 
-.PHONY: all install uninstall start stop restart status check-running help viz-start viz-stop viz-restart viz-status
+.PHONY: all install uninstall start stop restart status check-running help analyze viz-start viz-stop viz-restart viz-status
 
 all: help
 
@@ -18,6 +18,8 @@ help:
 	@echo "  make status        - Check if the service is running"
 	@echo "  make check-running - Alias for status"
 	@echo "  make dev           - Run the script directly for testing"
+	@echo "  make run-once      - Run once and exit"
+	@echo "  make analyze       - Batch analyze incomplete screenshots"
 	@echo "  make viz-start     - Start the visualizer (pnpm serve via pm2)"
 	@echo "  make viz-stop      - Stop the visualizer"
 	@echo "  make viz-restart   - Restart the visualizer"
@@ -33,6 +35,10 @@ dev:
 run-once:
 	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli --run-once
+
+analyze:
+	@echo "Analyzing incomplete screenshots..."
+	@node analyze.js --concurrency $(or $(CONCURRENCY),1)
 
 install:
 	@./scripts/install.sh
