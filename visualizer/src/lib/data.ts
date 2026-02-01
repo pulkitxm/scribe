@@ -88,8 +88,8 @@ export function getScreenshotsForDate(dateFolder: string): Screenshot[] {
         try {
             data = ScreenshotDataSchema.parse(rawData);
         } catch (error) {
-            console.error(`Validation Error in ${jsonPath}:`, error);
-            throw new Error(`Validation failed for ${jsonFile}: ${error}`);
+            console.warn(`Skipping incomplete file ${jsonPath}:`, error instanceof Error ? error.message : error);
+            return null;
         }
 
         const timestampMatch = jsonFile.match(/screenshot_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})/);
@@ -129,8 +129,8 @@ export function getScreenshotById(date: string, id: string): Screenshot | null {
     try {
         data = ScreenshotDataSchema.parse(rawData);
     } catch (error) {
-        console.error(`Validation Error in ${id}:`, error);
-        throw new Error(`Validation failed for ${id}: ${error}`);
+        console.warn(`Skipping incomplete screenshot ${id}:`, error instanceof Error ? error.message : error);
+        return null;
     }
     const imagePath = `${id}.webp`;
 

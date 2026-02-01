@@ -95,3 +95,7 @@ viz-delete:
 viz-logs:
 	@echo "Showing Visualizer logs..."
 	@pm2 logs visualizer
+
+make viz-dev:
+	@echo "Starting Visualizer in development mode..."
+	@cd visualizer && pnpm dev

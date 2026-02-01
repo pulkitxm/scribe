@@ -94,6 +94,7 @@ function validateJSON(json) {
   json.evidence.key_windows_or_panels = safeStringArray(json.evidence.key_windows_or_panels);
   json.evidence.web_domains_visible = safeStringArray(json.evidence.web_domains_visible);
   json.evidence.text_snippets = safeStringArray(json.evidence.text_snippets);
+  json.evidence.raw_text_content = safeString(json.evidence.raw_text_content);
 
   if (!json.context || typeof json.context !== 'object') json.context = {};
   json.context.intent_guess = safeString(json.context.intent_guess);

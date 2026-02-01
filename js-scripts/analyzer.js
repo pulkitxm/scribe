@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { preprocessImage, getImageBase64 } = require('./image-processor');
+const { preprocessImage, getImageBase64, extractTextWithOCR } = require('./image-processor');
 const { callOllama } = require('./ollama');
 const { parseAndValidateJSON } = require('./validator');
 const { buildTimestamp, buildSystemMetadata, buildVisualization, buildSummary } = require('./metadata');
@@ -16,6 +16,10 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
 
   const processedImagePath = preprocessImage(imagePath);
   const imageBase64 = getImageBase64(processedImagePath);
+
+  // Extract text using OCR (runs independently of LLM)
+  log.info('Extracting text with OCR...');
+  const ocrText = extractTextWithOCR(processedImagePath);
 
   if (processedImagePath !== imagePath && fs.existsSync(processedImagePath)) {
     try { fs.unlinkSync(processedImagePath); } catch (e) { }
@@ -42,6 +46,11 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
       // Always build visualization and summary from AI results
       resultJSON.visualization = buildVisualization(category, productivityScore, codeLanguage);
       resultJSON.summary = buildSummary(category, resultJSON.short_description);
+
+      // Add OCR-extracted text (independent of LLM)
+      if (ocrText && ocrText.length > 0) {
+        resultJSON.evidence.raw_text_content = ocrText;
+      }
 
       const cleanedJSON = cleanObject(resultJSON);
 
