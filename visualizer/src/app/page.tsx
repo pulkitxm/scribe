@@ -112,6 +112,21 @@ async function DashboardContent({
     );
   }
 
+  // Determine data presentation based on filter state
+  const isFiltered = range && range !== "all";
+
+  // For productivity chart: if filtered, show all. If not (default view), show recent 14 days.
+  const productivityData = isFiltered
+    ? filteredDailyStats
+    : filteredDailyStats.slice(-14);
+
+  // For category chart: if filtered, show all. If not (default view), show top 8.
+  const categoryLimit = isFiltered ? undefined : 8;
+
+  // For app chart: if filtered, show all and lower threshold. If not, show top 10 with higher threshold.
+  const appLimit = isFiltered ? undefined : 10;
+  const appMinCount = isFiltered ? 1 : 10;
+
   return (
     <div className="space-y-8">
       <div className="border-b border-border pb-6 flex justify-between items-end">
@@ -138,7 +153,7 @@ async function DashboardContent({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">
-          <AppEfficiencyChart data={appStats} />
+          <AppEfficiencyChart data={appStats} limit={appLimit} minCount={appMinCount} />
         </div>
         <div className="min-h-[350px]">
           <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
@@ -175,10 +190,10 @@ async function DashboardContent({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">
-          <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
+          <ProductivityChart data={productivityData} title="Productivity Trend" />
         </div>
         <div className="min-h-[350px]">
-          <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
+          <CategoryChart data={stats.workTypes} title="Work Context Distribution" limit={categoryLimit} />
         </div>
       </div>
 
@@ -187,7 +202,7 @@ async function DashboardContent({
           <HourlyChart data={stats.hourlyContextSwitches} title="Context Switch Rate (Switches/Hr)" />
         </div>
         <div className="min-h-[350px]">
-          <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" />
+          <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" limit={categoryLimit} />
         </div>
       </div>
 

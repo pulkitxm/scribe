@@ -12,9 +12,13 @@ interface AppStat {
     count: number;
 }
 
-export default function AppEfficiencyChart({ data }: { data: AppStat[] }) {
+export default function AppEfficiencyChart({ data, limit, minCount = 5 }: { data: AppStat[], limit?: number, minCount?: number }) {
     // Filter out low usage apps
-    const topApps = data.filter(d => d.count > 10).sort((a, b) => b.efficiency - a.efficiency).slice(0, 10);
+    let topApps = data.filter(d => d.count >= minCount).sort((a, b) => b.efficiency - a.efficiency);
+
+    if (limit) {
+        topApps = topApps.slice(0, limit);
+    }
 
     return (
         <Card>

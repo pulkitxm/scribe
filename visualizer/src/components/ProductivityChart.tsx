@@ -25,7 +25,7 @@ interface Props {
 }
 
 export default function ProductivityChart({ data, title }: Props) {
-    const chartData = [...data].reverse().slice(-14);
+    const chartData = data;
 
     if (chartData.length === 0) {
         return (

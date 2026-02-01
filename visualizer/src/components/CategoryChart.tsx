@@ -6,13 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface Props {
     data: Record<string, number>;
     title: string;
+    limit?: number;
 }
 
-export default function CategoryChart({ data, title }: Props) {
-    const chartData = Object.entries(data)
+export default function CategoryChart({ data, title, limit }: Props) {
+    let chartDataRaw = Object.entries(data)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 8);
+        .sort((a, b) => b.value - a.value);
+
+    if (limit) {
+        chartDataRaw = chartDataRaw.slice(0, limit);
+    }
+
+    const chartData = chartDataRaw;
 
     const COLORS = [
         "hsl(var(--chart-1))",
