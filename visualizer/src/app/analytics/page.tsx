@@ -9,8 +9,10 @@ export default async function AnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);
 
-    const getTop = (obj: Record<string, number>) =>
-        Object.entries(obj).sort((a, b) => b[1] - a[1])[0] || ["None", 0];
+    const getTop = (obj: Record<string, any>) =>
+        Object.entries(obj)
+            .map(([k, v]) => [k, typeof v === 'number' ? v : v.count] as [string, number])
+            .sort((a, b) => b[1] - a[1])[0] || ["None", 0];
 
     const topApp = getTop(stats.apps);
     const topLang = getTop(stats.languages);

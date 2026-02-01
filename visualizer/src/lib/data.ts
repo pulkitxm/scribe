@@ -859,9 +859,15 @@ export function getSmartInsights(screenshots: Screenshot[], stats: ReturnType<ty
     }
 
     // --- 5. App Dominance ---
-    const topAppEntry = Object.entries(stats.apps).sort((a, b) => b[1] - a[1])[0];
+    const topAppEntry = Object.entries(stats.apps).sort((a, b) => {
+        const countA = typeof a[1] === 'number' ? a[1] : a[1].count;
+        const countB = typeof b[1] === 'number' ? b[1] : b[1].count;
+        return countB - countA;
+    })[0];
+
     if (topAppEntry) {
-        const percentage = Math.round((topAppEntry[1] / stats.totalScreenshots) * 100);
+        const count = typeof topAppEntry[1] === 'number' ? topAppEntry[1] : topAppEntry[1].count;
+        const percentage = Math.round((count / stats.totalScreenshots) * 100);
         if (percentage > 30) {
             insights.push({
                 type: "neutral",
@@ -948,7 +954,12 @@ export function getSmartInsights(screenshots: Screenshot[], stats: ReturnType<ty
     }
 
     // --- 11. Primary Context ---
-    const topCategory = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
+    const topCategory = Object.entries(stats.categories).sort((a, b) => {
+        const countA = typeof a[1] === 'number' ? a[1] : a[1].count;
+        const countB = typeof b[1] === 'number' ? b[1] : b[1].count;
+        return countB - countA;
+    })[0];
+
     if (topCategory) {
         insights.push({
             type: "neutral",

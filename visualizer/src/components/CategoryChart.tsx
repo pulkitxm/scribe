@@ -4,14 +4,19 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
-    data: Record<string, number>;
+    data: Record<string, number | { count: number; avgProductivity?: number }>;
     title: string;
     limit?: number;
 }
 
 export default function CategoryChart({ data, title, limit }: Props) {
     let chartDataRaw = Object.entries(data)
-        .map(([name, value]) => ({ name, value }))
+        .map(([name, value]) => {
+            if (typeof value === 'number') {
+                return { name, value };
+            }
+            return { name, value: value.count };
+        })
         .sort((a, b) => b.value - a.value);
 
     if (limit) {

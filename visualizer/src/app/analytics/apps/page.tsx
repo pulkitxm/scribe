@@ -12,8 +12,11 @@ export default async function AppsAnalyticsPage() {
     const stats = getExtendedStats(screenshots);
 
     const apps = Object.entries(stats.apps)
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, count]) => ({ name, count }));
+        .map(([name, value]) => ({
+            name,
+            count: typeof value === 'number' ? value : value.count
+        }))
+        .sort((a, b) => b.count - a.count);
 
     return (
         <div className="space-y-6">

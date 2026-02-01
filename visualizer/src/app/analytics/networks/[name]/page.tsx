@@ -34,9 +34,12 @@ export default async function NetworkDetailPage({ params }: PageProps) {
 
     // Top Apps used on this network
     const apps = Object.entries(stats.apps)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }));
+        .map(([name, value]) => ({
+            name,
+            count: typeof value === 'number' ? value : value.count
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
     // Top Projects worked on this network
     const projects = Object.entries(stats.repos)

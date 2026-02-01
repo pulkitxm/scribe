@@ -32,9 +32,12 @@ export default async function WorkspaceDetailPage({ params }: PageProps) {
     const dailyStats = getDailyStats(screenshots);
 
     const apps = Object.entries(stats.apps)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }));
+        .map(([name, value]) => ({
+            name,
+            count: typeof value === 'number' ? value : value.count
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
     const projects = Object.entries(stats.repos)
         .sort((a, b) => b[1] - a[1])
