@@ -7,7 +7,7 @@ import { ScreenshotDataSchema } from "@/lib/schemas";
 let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
 let cacheTimestamp: number = 0;
-const CACHE_DURATION = 60000;
+const CACHE_DURATION = 2000;
 
 function getScribeFolder(): string {
     if (cachedFolder) return cachedFolder;
@@ -693,13 +693,51 @@ export interface Insight {
     description: string;
 }
 
-export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): Insight[] {
+export function getSmartInsights(screenshots: Screenshot[], stats: ReturnType<typeof getExtendedStats>): Insight[] {
     const insights: Insight[] = [];
 
+    // Sort screenshots by time (newest first)
+    const sorted = [...screenshots].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    const latest = sorted[0];
+
+    // --- 1. Current Context (The "Now" Insight) ---
+    // Look at the last 3 screenshots to find a non-empty, meaningful analysis
+    // This prevents "black screen" or temporary glitches from dominating the insight
+    const recentWithAnalysis = sorted.slice(0, 3).find(s =>
+        s.data.detailed_analysis &&
+        s.data.detailed_analysis.length > 20 &&
+        !s.data.detailed_analysis.toLowerCase().includes("black screen") &&
+        !s.data.detailed_analysis.toLowerCase().includes("no visible content")
+    ) || latest;
+
+    if (recentWithAnalysis && recentWithAnalysis.data.detailed_analysis) {
+        insights.push({
+            type: "info",
+            icon: "activity",
+            title: "Current Activity",
+            description: recentWithAnalysis.data.short_description || recentWithAnalysis.data.detailed_analysis.split(".")[0] + "."
+        });
+    }
+
+    // --- 2. Project & Code Context ---
+    // Look back 5 screenshots if latest is empty
+    const recentContext = sorted.slice(0, 5).find(s => s.data.context?.code_context?.repo_or_project);
+    const currentProject = recentContext?.data.context?.code_context?.repo_or_project;
+    const currentLang = recentContext?.data.context?.code_context?.language;
+
+    if (currentProject) {
+        insights.push({
+            type: "neutral",
+            icon: "code",
+            title: "Project Focus",
+            description: `Currently working on ${currentProject}${currentLang ? ` in ${currentLang}` : ""}.`
+        });
+    }
+
+    // --- 3. Peak Flow (Time Analysis) ---
     const hourly = stats.hourlyDistribution;
     let bestHour = -1;
     let maxActivity = 0;
-
     Object.entries(hourly).forEach(([hour, count]) => {
         if (count > maxActivity) {
             maxActivity = count;
@@ -710,50 +748,145 @@ export function getSmartInsights(stats: ReturnType<typeof getExtendedStats>): In
     if (bestHour !== -1) {
         const period = bestHour < 12 ? "morning" : bestHour < 17 ? "afternoon" : "evening";
         insights.push({
-            type: "info",
+            type: "positive",
             icon: "clock",
-            title: "Peak Productivity",
-            description: `You are most active in the ${period} around ${bestHour}:00.`
+            title: "Peak Flow",
+            description: `You're most productive around ${bestHour}:00 in the ${period}.`
         });
     }
 
-    const topCat = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
-    if (topCat) {
+    // --- 4. Context Switching / Focus ---
+    // Count switches per hour roughly
+    let totalSwitches = 0;
+    Object.values(stats.hourlyContextSwitches).forEach(c => totalSwitches += c);
+    const avgSwitchesPerHour = totalSwitches / (Object.keys(stats.hourlyDistribution).length || 1);
+
+    if (avgSwitchesPerHour > 10) {
         insights.push({
             type: "neutral",
-            icon: "chart",
-            title: "Primary Focus",
-            description: `${topCat[0]} accounts for ${Math.round(topCat[1] / stats.totalScreenshots * 100)}% of your time.`
+            icon: "shuffle",
+            title: "Dynamic Workflow",
+            description: "High rate of context switching detected."
         });
-    }
-
-    if (stats.avgFocus > 75) {
+    } else if (stats.avgFocus > 75) {
         insights.push({
             type: "positive",
             icon: "zap",
-            title: "High Focus",
-            description: "Great job! Your average focus score is consistently high."
+            title: "Deep Work Session",
+            description: "Extended periods of high focus detected."
         });
-    } else if (stats.avgDistraction > 30) {
+    } else {
+        // Fallback for balanced workflow
         insights.push({
-            type: "negative",
-            icon: "alert",
-            title: "High Distraction",
-            description: "Distraction risk is elevated. Consider blocking notifications."
+            type: "neutral",
+            icon: "check",
+            title: "Steady Flow",
+            description: "Balanced rhythm between focus and collaboration."
         });
     }
 
-    const topLang = Object.entries(stats.languages).sort((a, b) => b[1] - a[1])[0];
-    if (topLang) {
+    // --- 5. App Dominance ---
+    const topAppEntry = Object.entries(stats.apps).sort((a, b) => b[1] - a[1])[0];
+    if (topAppEntry) {
+        const percentage = Math.round((topAppEntry[1] / stats.totalScreenshots) * 100);
+        if (percentage > 30) {
+            insights.push({
+                type: "neutral",
+                icon: "laptop",
+                title: "Primary Tool",
+                description: `${topAppEntry[0]} was your most used app (${percentage}% of session).`
+            });
+        }
+    }
+
+    // --- 6. Learning & Growth ---
+    // Check if learning topic appears in recent screenshots
+    const recentLearning = sorted.slice(0, 20).find(s => s.data.context?.learning_context?.learning_topic);
+    if (recentLearning?.data.context?.learning_context?.learning_topic) {
+        insights.push({
+            type: "positive",
+            icon: "book",
+            title: "Knowledge Gathering",
+            description: `Workflow included research or learning about "${recentLearning.data.context.learning_context.learning_topic}".`
+        });
+    }
+
+    // --- 7. Vibe Check (Music/Audio) ---
+    // Look for Spotify/Music in open apps or audio output
+    const musicApp = sorted.slice(0, 10).find(s =>
+        (s.data.evidence?.apps_visible?.some(a => a.toLowerCase().includes("spotify") || a.toLowerCase().includes("music")))
+    );
+    if (musicApp) {
+        insights.push({
+            type: "neutral",
+            icon: "music",
+            title: "Audio Environment",
+            description: "Session accompanied by audio/music playback."
+        });
+    }
+
+    // --- 8. Meeting Heavy ---
+    const meetingCount = sorted.filter(s => s.data.context?.communication_context?.meeting_indicator).length;
+    if (meetingCount > 5) { // Threshold
         insights.push({
             type: "info",
-            icon: "code",
-            title: "Top Language",
-            description: `You are writing a lot of ${topLang[0]} code recently.`
+            icon: "users",
+            title: "Collaboration Heavy",
+            description: "Significant portion of the workflow involved meetings or calls."
         });
     }
 
-    return insights;
+    // --- 9. Distractions / Focus Clarity ---
+    if (stats.avgDistraction > 30) {
+        const distractionApps: Record<string, number> = {};
+        sorted.forEach(s => {
+            if (s.data.scores.distraction_risk > 50) {
+                const app = s.data.system_metadata?.active_app || "Unknown";
+                distractionApps[app] = (distractionApps[app] || 0) + 1;
+            }
+        });
+        const topDistractor = Object.entries(distractionApps).sort((a, b) => b[1] - a[1])[0];
+        if (topDistractor) {
+            insights.push({
+                type: "neutral",
+                icon: "alert",
+                title: "Attention Shift",
+                description: `${topDistractor[0]} frequently captured attention during this session.`
+            });
+        }
+    } else {
+        // Fallback for low distraction
+        insights.push({
+            type: "positive",
+            icon: "shield",
+            title: "Focus Clarity",
+            description: "Low distraction levels detected throughout the session."
+        });
+    }
+
+    // --- 10. Productivity Pulse ---
+    if (stats.avgProductivity > 0) {
+        insights.push({
+            type: stats.avgProductivity > 70 ? "positive" : "neutral",
+            icon: "chart",
+            title: "Productivity Pulse",
+            description: `Average productivity score is ${stats.avgProductivity}/100.`
+        });
+    }
+
+    // --- 11. Primary Context ---
+    const topCategory = Object.entries(stats.categories).sort((a, b) => b[1] - a[1])[0];
+    if (topCategory) {
+        insights.push({
+            type: "neutral",
+            icon: "layers",
+            title: "Main Context",
+            description: `Most activity categorized as "${topCategory[0]}".`
+        });
+    }
+
+    // Limit to top 8
+    return insights.slice(0, 8);
 }
 
 

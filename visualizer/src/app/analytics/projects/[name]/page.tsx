@@ -34,7 +34,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
     const stats = getExtendedStats(screenshots);
     const dailyStats = getDailyStats(screenshots);
-    const insights = getSmartInsights(stats);
+    const insights = getSmartInsights(screenshots, stats);
 
     const apps = Object.entries(stats.apps)
         .sort((a, b) => b[1] - a[1])

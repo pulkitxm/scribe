@@ -9,6 +9,16 @@ export const AudioDeviceSchema = z.object({
 
 export type AudioDevice = z.infer<typeof AudioDeviceSchema>;
 
+export const VideoDeviceSchema = z.object({
+    name: z.string(),
+    manufacturer: z.string().optional(),
+    unique_id: z.string().optional(),
+    is_connected: z.boolean().optional(),
+    is_suspended: z.boolean().optional(),
+});
+
+export type VideoDevice = z.infer<typeof VideoDeviceSchema>;
+
 export const SystemMetadataSchema = z.object({
     active_app: z.string(),
     opened_apps: z.array(z.string()),
@@ -18,6 +28,9 @@ export const SystemMetadataSchema = z.object({
         inputs: z.array(AudioDeviceSchema),
         outputs: z.array(AudioDeviceSchema),
     }),
+    video: z.object({
+        sources: z.array(VideoDeviceSchema).optional().default([]),
+    }).optional(),
     stats: z.object({
         battery: z.object({
             percentage: z.number(),
@@ -28,7 +41,6 @@ export const SystemMetadataSchema = z.object({
             used: z.number(),
             free: z.number(),
         }),
-
         storage: z.object({
             total: z.number(),
             used: z.number(),
@@ -44,6 +56,11 @@ export const SystemMetadataSchema = z.object({
             type: z.string().optional(),
             signal_strength: z.number().optional(),
             ssid: z.string().optional(),
+            local_ip: z.string().optional(),
+            rx_bytes: z.number().optional(),
+            tx_bytes: z.number().optional(),
+            link_speed: z.number().optional(),
+            channel: z.number().optional(),
         }),
         display: z.object({
             dark_mode: z.boolean(),
@@ -72,6 +89,7 @@ export const EvidenceSchema = z.object({
     key_windows_or_panels: z.array(z.string()).optional().default([]),
     web_domains_visible: z.array(z.string()).optional().default([]),
     text_snippets: z.array(z.string()).optional().default([]),
+    raw_text_content: z.string().optional(),
 });
 
 export type Evidence = z.infer<typeof EvidenceSchema>;
@@ -146,6 +164,32 @@ export const ContextSchema = z.object({
 
 export type Context = z.infer<typeof ContextSchema>;
 
+export const TimestampSchema = z.object({
+    iso: z.string(),
+    unix_ms: z.number(),
+    timezone: z.string(),
+    day_of_week: z.string(),
+    time_of_day: z.string(),
+});
+
+export type Timestamp = z.infer<typeof TimestampSchema>;
+
+export const VisualizationSchema = z.object({
+    color_code: z.string().optional(),
+    emoji: z.string().optional(),
+    priority_level: z.string().optional(),
+    display_badge: z.string().optional(),
+});
+
+export type Visualization = z.infer<typeof VisualizationSchema>;
+
+export const SummarySchema = z.object({
+    one_liner: z.string(),
+    voice_friendly: z.string().optional(),
+});
+
+export type Summary = z.infer<typeof SummarySchema>;
+
 export const ScreenshotDataSchema = z.object({
     overall_activity_score: z.number(),
     category: z.string(),
@@ -158,7 +202,8 @@ export const ScreenshotDataSchema = z.object({
         active_app_guess: "Unknown",
         key_windows_or_panels: [],
         web_domains_visible: [],
-        text_snippets: []
+        text_snippets: [],
+        raw_text_content: ""
     }),
     context: ContextSchema.optional().default({
         intent_guess: "",
@@ -175,6 +220,11 @@ export const ScreenshotDataSchema = z.object({
     dedupe_signature: z.string().optional().default(""),
     confidence: z.number(),
     system_metadata: SystemMetadataSchema.optional(),
+
+    // New top-level fields
+    timestamp: TimestampSchema.optional(), // Optional for now to maintain backward compat if needed, or make refined based on data
+    visualization: VisualizationSchema.optional(),
+    summary: SummarySchema.optional(),
 });
 
 export type ScreenshotData = z.infer<typeof ScreenshotDataSchema>;

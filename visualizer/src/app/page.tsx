@@ -91,14 +91,15 @@ async function DashboardContent({
 
   const filteredDailyStats = getDailyStats(screenshots);
   const highFocusScreenshots = getHighFocusScreenshots(4);
-  const insights = getSmartInsights(stats);
-
   const allScreenshots = getAllScreenshots();
+  const globalStats = getExtendedStats(allScreenshots);
+  const insights = getSmartInsights(allScreenshots, globalStats);
+
   const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
 
   filteredDailyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  if (screenshots.length === 0) {
+  if (screenshots.length === 0 && allScreenshots.length === 0) {
     return (
       <div className="text-center py-16">
         <div className="text-4xl mb-4 opacity-50">📊</div>
@@ -123,6 +124,8 @@ async function DashboardContent({
           {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
+
+      <SmartInsights insights={insights} />
 
       <DashboardFilters
         categories={categories}
@@ -187,8 +190,6 @@ async function DashboardContent({
           </CardContent>
         </Card>
       </div>
-
-      <SmartInsights insights={insights} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AppEfficiencyChart data={appStats} />

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Code, Monitor, Cpu, Volume2, Wifi, Battery, FileText, GraduationCap, MessageSquare, Gamepad, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, Code, Monitor, Cpu, Volume2, Wifi, Battery, FileText, GraduationCap, MessageSquare, Gamepad, ZoomIn, Video, Activity, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +26,28 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const { data } = screenshot;
 
-    const timestamp = new Date(screenshot.timestamp).toLocaleString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
+    const timestamp = data.timestamp ?
+        new Date(data.timestamp.unix_ms).toLocaleString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        })
+        : new Date(screenshot.timestamp).toLocaleString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
+
+    const displayTitle = data.visualization?.display_badge || data.short_description;
+    const displaySummary = data.summary?.one_liner || data.short_description;
 
     return (
         <div className="space-y-6">
@@ -55,7 +68,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                     <Separator orientation="vertical" className="h-6" />
                     <div>
                         <h1 className="text-lg font-semibold text-foreground">{timestamp}</h1>
-                        <p className="text-sm text-muted-foreground">{data.short_description}</p>
+                        <p className="text-sm text-muted-foreground">{displaySummary}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -232,10 +245,45 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                                             <span>{data.system_metadata.stats.network.ssid}</span>
                                         </div>
                                     )}
+                                    {data.system_metadata.stats.network.local_ip && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">IP Address</span>
+                                            <span className="font-mono text-xs">{data.system_metadata.stats.network.local_ip}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Signal</span>
                                         <span>{data.system_metadata.stats.network.signal_strength}%</span>
                                     </div>
+                                    {/* Advanced Network Stats */}
+                                    {(data.system_metadata.stats.network.link_speed || data.system_metadata.stats.network.channel) && (
+                                        <div className="pt-2 border-t grid grid-cols-2 gap-2 text-xs">
+                                            {data.system_metadata.stats.network.link_speed && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-muted-foreground text-[10px]">Link Speed</span>
+                                                    <span>{data.system_metadata.stats.network.link_speed} Mbps</span>
+                                                </div>
+                                            )}
+                                            {data.system_metadata.stats.network.channel && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-muted-foreground text-[10px]">Channel</span>
+                                                    <span>{data.system_metadata.stats.network.channel}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {(data.system_metadata.stats.network.rx_bytes !== undefined || data.system_metadata.stats.network.tx_bytes !== undefined) && (
+                                        <div className="pt-2 border-t text-xs space-y-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground flex items-center gap-1"><Activity className="h-3 w-3" /> Data Received</span>
+                                                <span>{data.system_metadata.stats.network.rx_bytes ? (data.system_metadata.stats.network.rx_bytes / 1024 / 1024).toFixed(1) : 0} MB</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-muted-foreground flex items-center gap-1"><Activity className="h-3 w-3" /> Data Sent</span>
+                                                <span>{data.system_metadata.stats.network.tx_bytes ? (data.system_metadata.stats.network.tx_bytes / 1024 / 1024).toFixed(1) : 0} MB</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
 
@@ -274,6 +322,31 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Video Devices */}
+                            {data.system_metadata.video?.sources && data.system_metadata.video.sources.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                            <Video className="h-4 w-4" /> Video Devices
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        {data.system_metadata.video.sources.map((dev, i) => (
+                                            <div key={i} className="flex flex-col gap-1 pb-2 border-b last:border-0 last:pb-0">
+                                                <div className="flex justify-between items-start">
+                                                    <span className="font-medium truncate max-w-[200px]" title={dev.name}>{dev.name}</span>
+                                                    {dev.is_connected && <Badge variant="outline" className="text-[10px] border-green-500 text-green-500">Connected</Badge>}
+                                                </div>
+                                                <div className="flex justify-between text-xs text-muted-foreground">
+                                                    <span>{dev.manufacturer}</span>
+                                                    <span>{dev.is_suspended ? "Suspended" : "Active"}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             <Card>
                                 <CardHeader>
@@ -378,6 +451,16 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                                         className="block px-3 py-2 bg-muted rounded text-xs font-mono break-all hover:bg-primary/10 hover:text-primary no-underline"
                                     />
                                 ))}
+                                {data.evidence.raw_text_content && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
+                                            <FileJson className="h-3 w-3" /> Raw Text Content
+                                        </div>
+                                        <div className="bg-muted/50 p-2 rounded text-[10px] font-mono whitespace-pre-wrap max-h-[150px] overflow-y-auto">
+                                            {data.evidence.raw_text_content}
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}

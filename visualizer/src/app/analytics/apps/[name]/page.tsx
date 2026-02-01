@@ -35,7 +35,7 @@ export default async function AppDetailPage({ params }: PageProps) {
 
     const stats = getExtendedStats(screenshots);
     const dailyStats = getDailyStats(screenshots);
-    const insights = getSmartInsights(stats);
+    const insights = getSmartInsights(screenshots, stats);
 
     const projects = Object.entries(stats.repos || {})
         .sort((a, b) => (b[1] as number) - (a[1] as number))
