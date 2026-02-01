@@ -191,12 +191,16 @@ export const SummarySchema = z.object({
 export type Summary = z.infer<typeof SummarySchema>;
 
 export const ScreenshotDataSchema = z.object({
-    overall_activity_score: z.number(),
-    category: z.string(),
-    workspace_type: z.string(),
-    short_description: z.string(),
-    detailed_analysis: z.string(),
-    scores: ScoresSchema,
+    overall_activity_score: z.number().optional().default(0),
+    category: z.string().optional().default("Uncategorized"),
+    workspace_type: z.string().optional().default("Unknown"),
+    short_description: z.string().optional().default("No description available"),
+    detailed_analysis: z.string().optional().default("No detailed analysis available"),
+    scores: ScoresSchema.optional().default({
+        focus_score: 0,
+        productivity_score: 0,
+        distraction_risk: 0
+    }),
     evidence: EvidenceSchema.optional().default({
         apps_visible: [],
         active_app_guess: "Unknown",
@@ -218,7 +222,7 @@ export const ScreenshotDataSchema = z.object({
     privacy_notes: z.array(z.string()).optional().default([]),
     summary_tags: z.array(z.string()).optional().default([]),
     dedupe_signature: z.string().optional().default(""),
-    confidence: z.number(),
+    confidence: z.number().optional().default(0),
     system_metadata: SystemMetadataSchema.optional(),
 
     // New top-level fields

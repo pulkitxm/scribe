@@ -192,8 +192,12 @@ async function DashboardContent({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AppEfficiencyChart data={appStats} />
-        <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
+        <div className="min-h-[350px]">
+          <AppEfficiencyChart data={appStats} />
+        </div>
+        <div className="min-h-[350px]">
+          <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -225,13 +229,21 @@ async function DashboardContent({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
-        <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
+        <div className="min-h-[350px]">
+          <ProductivityChart data={filteredDailyStats} title="Productivity Trend" />
+        </div>
+        <div className="min-h-[350px]">
+          <CategoryChart data={stats.workTypes} title="Work Context Distribution" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HourlyChart data={stats.hourlyContextSwitches} title="Context Switch Rate (Switches/Hr)" />
-        <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" />
+        <div className="min-h-[350px]">
+          <HourlyChart data={stats.hourlyContextSwitches} title="Context Switch Rate (Switches/Hr)" />
+        </div>
+        <div className="min-h-[350px]">
+          <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" />
+        </div>
       </div>
 
       <section>

@@ -43,44 +43,46 @@ export default function CategoryChart({ data, title }: Props) {
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
-            <CardContent className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
-                            paddingAngle={2}
-                            dataKey="value"
-                            stroke="hsl(var(--background))"
-                            strokeWidth={2}
-                        >
-                            {chartData.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: "hsl(var(--card))",
-                                borderColor: "hsl(var(--border))",
-                                borderRadius: "var(--radius)",
-                                color: "hsl(var(--foreground))",
-                            }}
-                            labelStyle={{ color: "hsl(var(--foreground))" }}
-                            itemStyle={{ color: "hsl(var(--foreground))" }}
-                        />
-                        <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            iconType="circle"
-                            formatter={(value) => (
-                                <span className="text-foreground text-sm font-medium ml-1">{value}</span>
-                            )}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
+            <CardContent>
+                <div style={{ width: "100%", height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <PieChart>
+                            <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={100}
+                                paddingAngle={2}
+                                dataKey="value"
+                                stroke="hsl(var(--background))"
+                                strokeWidth={2}
+                            >
+                                {chartData.map((_, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "hsl(var(--card))",
+                                    borderColor: "hsl(var(--border))",
+                                    borderRadius: "var(--radius)",
+                                    color: "hsl(var(--foreground))",
+                                }}
+                                labelStyle={{ color: "hsl(var(--foreground))" }}
+                                itemStyle={{ color: "hsl(var(--foreground))" }}
+                            />
+                            <Legend
+                                verticalAlign="bottom"
+                                height={36}
+                                iconType="circle"
+                                formatter={(value) => (
+                                    <span className="text-foreground text-sm font-medium ml-1">{value}</span>
+                                )}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );
