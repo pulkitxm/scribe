@@ -123,6 +123,7 @@ async function GalleryContent({
   const filters: FilterOptions = {};
 
   if (date) {
+    filters.dateFolder = date;
     const parts = date.split("-");
     if (parts.length === 3) {
       const d = new Date(

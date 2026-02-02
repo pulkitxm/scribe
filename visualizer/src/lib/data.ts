@@ -181,17 +181,21 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
   const dates = getAllDates();
   let allScreenshots: Screenshot[] = [];
 
-  for (const date of dates) {
-    const screenshots = getScreenshotsForDate(date);
-    allScreenshots = allScreenshots.concat(screenshots);
+  if (filters?.dateFolder) {
+    allScreenshots = getScreenshotsForDate(filters.dateFolder);
+  } else {
+    for (const date of dates) {
+      const screenshots = getScreenshotsForDate(date);
+      allScreenshots = allScreenshots.concat(screenshots);
+    }
   }
 
   if (filters) {
-    if (filters.startDate) {
+    if (filters.startDate && !filters.dateFolder) {
       const start = new Date(filters.startDate);
       allScreenshots = allScreenshots.filter((s) => s.timestamp >= start);
     }
-    if (filters.endDate) {
+    if (filters.endDate && !filters.dateFolder) {
       const end = new Date(filters.endDate);
       end.setHours(23, 59, 59);
       allScreenshots = allScreenshots.filter((s) => s.timestamp <= end);
@@ -1359,7 +1363,7 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
       avgFocus:
         externalDisplayStats.withExternal.count > 0
           ? externalDisplayStats.withExternal.totalFocus /
-            externalDisplayStats.withExternal.count
+          externalDisplayStats.withExternal.count
           : 0,
       count: externalDisplayStats.withExternal.count,
     },
@@ -1367,7 +1371,7 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
       avgFocus:
         externalDisplayStats.withoutExternal.count > 0
           ? externalDisplayStats.withoutExternal.totalFocus /
-            externalDisplayStats.withoutExternal.count
+          externalDisplayStats.withoutExternal.count
           : 0,
       count: externalDisplayStats.withoutExternal.count,
     },

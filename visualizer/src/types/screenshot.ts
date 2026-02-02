@@ -81,4 +81,5 @@ export interface FilterOptions {
   highCpu?: boolean;
   hasErrors?: boolean;
   network?: string;
+  dateFolder?: string;
 }
