@@ -1363,7 +1363,7 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
       avgFocus:
         externalDisplayStats.withExternal.count > 0
           ? externalDisplayStats.withExternal.totalFocus /
-          externalDisplayStats.withExternal.count
+            externalDisplayStats.withExternal.count
           : 0,
       count: externalDisplayStats.withExternal.count,
     },
@@ -1371,7 +1371,7 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
       avgFocus:
         externalDisplayStats.withoutExternal.count > 0
           ? externalDisplayStats.withoutExternal.totalFocus /
-          externalDisplayStats.withoutExternal.count
+            externalDisplayStats.withoutExternal.count
           : 0,
       count: externalDisplayStats.withoutExternal.count,
     },

@@ -3,14 +3,12 @@
 import { useEffect, useState, Suspense } from "react";
 import Editor from "@monaco-editor/react";
 import { Download, FileText, Activity } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useAtom } from "jotai";
+import { logTypeAtom } from "@/lib/store";
 
 function LogsContent() {
   const [logs, setLogs] = useState<string>("");
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const type = searchParams.get("type") || "app";
+  const [type, setType] = useAtom(logTypeAtom);
 
   const downloadLogs = () => {
     const blob = new Blob([logs], { type: "text/plain" });
@@ -43,12 +41,6 @@ function LogsContent() {
     return () => clearInterval(interval);
   }, [type]);
 
-  const handleTypeChange = (newType: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("type", newType);
-    router.push(`?${params.toString()}`);
-  };
-
   return (
     <div className="fixed left-0 right-0 bottom-0 top-14 bg-[#1e1e1e]">
       <Editor
@@ -73,28 +65,30 @@ function LogsContent() {
         }}
         loading={<div className="text-white p-4">Loading editor...</div>}
       />
-      <div className="absolute bottom-2 right-4 flex items-center gap-3 z-10">
+      <div className="absolute bottom-2 right-4 flex flex-col-reverse items-end gap-3 z-10">
         <div className="text-xs text-neutral-500 bg-[#1e1e1e]/80 px-2 py-1 rounded backdrop-blur-sm">
           Auto-refreshing every 1s
         </div>
 
-        <div className="flex bg-[#2d2d2d] rounded-lg p-1 shadow-lg border border-neutral-700">
+        <div className="flex bg-[#2d2d2d] rounded-lg p-1 shadow-lg border border-neutral-700 flex gap-2 p-2">
           <button
-            onClick={() => handleTypeChange("app")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${type === "app"
+            onClick={() => setType("app")}
+            className={`cursor-pointer px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+              type === "app"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-neutral-400 hover:text-white hover:bg-neutral-700"
-              }`}
+            }`}
           >
             <FileText size={14} />
             App Logs
           </button>
           <button
-            onClick={() => handleTypeChange("analyze")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${type === "analyze"
+            onClick={() => setType("analyze")}
+            className={`cursor-pointer px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+              type === "analyze"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-neutral-400 hover:text-white hover:bg-neutral-700"
-              }`}
+            }`}
           >
             <Activity size={14} />
             Analyze Logs
