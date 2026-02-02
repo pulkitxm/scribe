@@ -7,3 +7,4 @@ outputs-dev/
 scribe-cli
 scribe_cli
 *.md
+concat_list_*.txt
