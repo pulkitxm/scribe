@@ -1,7 +1,4 @@
-import {
-  ScreenshotData as ScreenshotDataZod, 
-} from "@/lib/schemas";
-
+import { ScreenshotData as ScreenshotDataZod } from "@/lib/schemas";
 
 export type {
   ScreenshotData,
@@ -14,7 +11,7 @@ export type {
   CommunicationContext,
   EntertainmentContext,
   SystemMetadata,
-  AudioDevice
+  AudioDevice,
 } from "@/lib/schemas";
 
 import { ScreenshotData } from "@/lib/schemas";
@@ -31,7 +28,7 @@ export interface Session {
   avgProductivityScore: number;
   avgDistractionScore: number;
   screenshots: Screenshot[];
-  workType?: string; 
+  workType?: string;
   project?: string;
   tags: string[];
   contextSwitches: number;
@@ -77,7 +74,7 @@ export interface FilterOptions {
   workspace?: string;
   text?: string;
   tag?: string;
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  timeOfDay?: "morning" | "afternoon" | "evening" | "night";
   hasCode?: boolean;
   isMeeting?: boolean;
   lowBattery?: boolean;

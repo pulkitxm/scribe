@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start -p 65535",
     "lint": "eslint",
-    "serve": "pnpm build && pnpm start"
+    "serve": "pnpm build && pnpm start",
+    "format": "prettier --write .",
+    "check-format": "prettier --check ."
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -31,6 +33,7 @@
     "moment": "^2.30.1",
     "next": "16.1.4",
     "photoswipe": "^5.4.4",
+    "prettier": "^3.8.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",

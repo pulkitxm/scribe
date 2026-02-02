@@ -1,7 +1,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllScreenshots, getDailyStats, getExtendedStats, getHighFocusScreenshots, getSmartInsights, getAppStats, getTotalScribeSize } from "@/lib/data";
+import {
+  getAllScreenshots,
+  getDailyStats,
+  getExtendedStats,
+  getHighFocusScreenshots,
+  getSmartInsights,
+  getAppStats,
+  getTotalScribeSize,
+} from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +24,7 @@ import { Zap } from "lucide-react";
 import SmartInsights from "@/components/SmartInsights";
 import AppEfficiencyChart from "@/components/AppEfficiencyChart";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   searchParams: Promise<{
@@ -47,7 +55,10 @@ function DashboardSkeleton() {
   );
 }
 
-function getFiltersFromParams(range?: string, category?: string): FilterOptions {
+function getFiltersFromParams(
+  range?: string,
+  category?: string,
+): FilterOptions {
   const filters: FilterOptions = {};
 
   if (range && range !== "all") {
@@ -96,15 +107,21 @@ async function DashboardContent({
   const globalStats = getExtendedStats(allScreenshots);
   const insights = getSmartInsights(allScreenshots, globalStats);
 
-  const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
+  const categories = [...new Set(allScreenshots.map((s) => s.data.category))]
+    .filter(Boolean)
+    .sort();
 
-  filteredDailyStats.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  filteredDailyStats.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
 
   if (screenshots.length === 0 && allScreenshots.length === 0) {
     return (
       <div className="text-center py-16">
         <div className="text-4xl mb-4 opacity-50">📊</div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No Data Available</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          No Data Available
+        </h3>
         <p className="text-sm text-muted-foreground">
           Start capturing screenshots to see your productivity insights
         </p>
@@ -112,18 +129,14 @@ async function DashboardContent({
     );
   }
 
-  
   const isFiltered = range && range !== "all";
 
-  
   const productivityData = isFiltered
     ? filteredDailyStats
     : filteredDailyStats.slice(-14);
 
-  
   const categoryLimit = isFiltered ? undefined : 8;
 
-  
   const appLimit = isFiltered ? undefined : 10;
   const appMinCount = isFiltered ? 1 : 10;
 
@@ -137,7 +150,12 @@ async function DashboardContent({
           </p>
         </div>
         <div className="text-sm text-muted-foreground">
-          {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </div>
       </div>
 
@@ -153,36 +171,58 @@ async function DashboardContent({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">
-          <AppEfficiencyChart data={appStats} limit={appLimit} minCount={appMinCount} />
+          <AppEfficiencyChart
+            data={appStats}
+            limit={appLimit}
+            minCount={appMinCount}
+          />
         </div>
         <div className="min-h-[350px]">
-          <HourlyChart data={stats.hourlyDistribution} title="Activity by Hour" />
+          <HourlyChart
+            data={stats.hourlyDistribution}
+            title="Activity by Hour"
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Link href="/analytics/apps" className="cursor-pointer">
-          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer hover:bg-accent/50"
+          >
             <span className="mr-2">💻</span> Apps
           </Button>
         </Link>
         <Link href="/analytics/languages" className="cursor-pointer">
-          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer hover:bg-accent/50"
+          >
             <span className="mr-2">📝</span> Languages
           </Button>
         </Link>
         <Link href="/analytics/projects" className="cursor-pointer">
-          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer hover:bg-accent/50"
+          >
             <span className="mr-2">📁</span> Projects
           </Button>
         </Link>
         <Link href="/analytics/domains" className="cursor-pointer">
-          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer hover:bg-accent/50"
+          >
             <span className="mr-2">🌐</span> Domains
           </Button>
         </Link>
         <Link href="/analytics/workspaces" className="cursor-pointer">
-          <Button variant="outline" className="w-full justify-start cursor-pointer hover:bg-accent/50">
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer hover:bg-accent/50"
+          >
             <span className="mr-2">🖥️</span> Workspaces
           </Button>
         </Link>
@@ -190,19 +230,33 @@ async function DashboardContent({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">
-          <ProductivityChart data={productivityData} title="Productivity Trend" />
+          <ProductivityChart
+            data={productivityData}
+            title="Productivity Trend"
+          />
         </div>
         <div className="min-h-[350px]">
-          <CategoryChart data={stats.workTypes} title="Work Context Distribution" limit={categoryLimit} />
+          <CategoryChart
+            data={stats.workTypes}
+            title="Work Context Distribution"
+            limit={categoryLimit}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="min-h-[350px]">
-          <HourlyChart data={stats.hourlyContextSwitches} title="Context Switch Rate (Switches/Hr)" />
+          <HourlyChart
+            data={stats.hourlyContextSwitches}
+            title="Context Switch Rate (Switches/Hr)"
+          />
         </div>
         <div className="min-h-[350px]">
-          <CategoryChart data={stats.workspaceTypes} title="Workspace Usage" limit={categoryLimit} />
+          <CategoryChart
+            data={stats.workspaceTypes}
+            title="Workspace Usage"
+            limit={categoryLimit}
+          />
         </div>
       </div>
 
@@ -212,7 +266,10 @@ async function DashboardContent({
             <Zap className="h-4 w-4 text-primary" />
             Recent Flow States (High Focus)
           </h2>
-          <Link href="/gallery?minFocus=80" className="text-xs text-primary hover:underline">
+          <Link
+            href="/gallery?minFocus=80"
+            className="text-xs text-primary hover:underline"
+          >
             View all
           </Link>
         </div>
@@ -232,7 +289,9 @@ async function DashboardContent({
                   </div>
                 </div>
                 <CardContent className="p-3">
-                  <div className="text-xs font-medium truncate">{s.data.short_description}</div>
+                  <div className="text-xs font-medium truncate">
+                    {s.data.short_description}
+                  </div>
                   <div className="text-[10px] text-muted-foreground mt-1">
                     {new Date(s.timestamp).toLocaleTimeString()}
                   </div>

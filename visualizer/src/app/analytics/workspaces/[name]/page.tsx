@@ -10,123 +10,123 @@ import ProductivityChart from "@/components/ProductivityChart";
 import RankingTable from "@/components/RankingTable";
 import RecentScreenshots from "@/components/RecentScreenshots";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface PageProps {
-    params: Promise<{
-        name: string;
-    }>;
+  params: Promise<{
+    name: string;
+  }>;
 }
 
 export default async function WorkspaceDetailPage({ params }: PageProps) {
-    const { name } = await params;
-    const decodedName = decodeURIComponent(name);
+  const { name } = await params;
+  const decodedName = decodeURIComponent(name);
 
-    const screenshots = getAllScreenshots({ workspace: decodedName });
+  const screenshots = getAllScreenshots({ workspace: decodedName });
 
-    if (screenshots.length === 0) {
-        notFound();
-    }
+  if (screenshots.length === 0) {
+    notFound();
+  }
 
-    const stats = getExtendedStats(screenshots);
-    const dailyStats = getDailyStats(screenshots);
+  const stats = getExtendedStats(screenshots);
+  const dailyStats = getDailyStats(screenshots);
 
-    const apps = Object.entries(stats.apps)
-        .map(([name, value]) => ({
-            name,
-            count: typeof value === 'number' ? value : value.count
-        }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+  const apps = Object.entries(stats.apps)
+    .map(([name, value]) => ({
+      name,
+      count: typeof value === "number" ? value : value.count,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
 
-    const projects = Object.entries(stats.repos)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, count]) => ({ name, count }));
+  const projects = Object.entries(stats.repos)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => ({ name, count }));
 
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4 border-b border-border pb-6">
-                <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                    <Link href="/analytics/workspaces">
-                        <ChevronLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-foreground">{decodedName}</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Workspace Insights
-                    </p>
-                </div>
-                <Button variant="outline" asChild className="gap-2 cursor-pointer">
-                    <Link href={`/gallery?workspace=${encodeURIComponent(decodedName)}`}>
-                        <Filter className="h-4 w-4" />
-                        View in Gallery
-                    </Link>
-                </Button>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold text-foreground">
-                            {stats.totalScreenshots.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-                            Activity
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold text-foreground">
-                            {stats.avgFocus}
-                        </div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-                            Focus Score
-                        </div>
-                        <Progress value={stats.avgFocus} className="h-1 mt-2" />
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ProductivityChart data={dailyStats} title="Productivity Trend" />
-                <HourlyChart data={stats.hourlyDistribution} title="Usage Patterns" />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="h-full">
-                    <CardHeader>
-                        <CardTitle>Top Apps</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RankingTable
-                            items={apps}
-                            total={stats.totalScreenshots}
-                            label="App"
-                            icon="💻"
-                            linkPrefix="/analytics/apps"
-                        />
-                    </CardContent>
-                </Card>
-                <Card className="h-full">
-                    <CardHeader>
-                        <CardTitle>Active Projects</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RankingTable
-                            items={projects}
-                            total={stats.totalScreenshots}
-                            label="Project"
-                            icon="📁"
-                            linkPrefix="/analytics/projects"
-                        />
-                    </CardContent>
-                </Card>
-            </div>
-
-            <RecentScreenshots filter={{ workspace: decodedName }} />
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4 border-b border-border pb-6">
+        <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+          <Link href="/analytics/workspaces">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-foreground">{decodedName}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Workspace Insights
+          </p>
         </div>
-    );
+        <Button variant="outline" asChild className="gap-2 cursor-pointer">
+          <Link href={`/gallery?workspace=${encodeURIComponent(decodedName)}`}>
+            <Filter className="h-4 w-4" />
+            View in Gallery
+          </Link>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-foreground">
+              {stats.totalScreenshots.toLocaleString()}
+            </div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
+              Activity
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-foreground">
+              {stats.avgFocus}
+            </div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
+              Focus Score
+            </div>
+            <Progress value={stats.avgFocus} className="h-1 mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProductivityChart data={dailyStats} title="Productivity Trend" />
+        <HourlyChart data={stats.hourlyDistribution} title="Usage Patterns" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Top Apps</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RankingTable
+              items={apps}
+              total={stats.totalScreenshots}
+              label="App"
+              icon="💻"
+              linkPrefix="/analytics/apps"
+            />
+          </CardContent>
+        </Card>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Active Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RankingTable
+              items={projects}
+              total={stats.totalScreenshots}
+              label="Project"
+              icon="📁"
+              linkPrefix="/analytics/projects"
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <RecentScreenshots filter={{ workspace: decodedName }} />
+    </div>
+  );
 }
