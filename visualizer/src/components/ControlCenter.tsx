@@ -12,23 +12,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface HelperStats {
-  status: "running" | "stopped" | "loading";
-  uptime: string;
-  successCount: number;
-  errorCount: number;
-}
+import { HelperStats } from "@/lib/control";
 
-export default function ControlCenter() {
+export default function ControlCenter({
+  initialStats,
+}: {
+  initialStats?: HelperStats;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [stats, setStats] = useState<HelperStats>({
-    status: "loading",
-    uptime: "0s",
-    successCount: 0,
-    errorCount: 0,
-  });
+  const [stats, setStats] = useState<HelperStats>(
+    initialStats || {
+      status: "loading",
+      uptime: "0s",
+      successCount: 0,
+      errorCount: 0,
+    },
+  );
 
   const fetchStats = async () => {
     try {

@@ -13,17 +13,21 @@ export const metadata: Metadata = {
   description: "Analyze your productivity with screenshot insights",
 };
 
-export default function RootLayout({
+import { getFullStatus } from "@/lib/control";
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialStats = await getFullStatus();
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}
       >
-        <Navigation />
+        <Navigation initialStats={initialStats} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
           {children}
         </main>
