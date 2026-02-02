@@ -59,27 +59,27 @@ function isIncompleteJSON(jsonPath) {
   try {
     const content = fs.readFileSync(jsonPath, 'utf8');
     const json = JSON.parse(content);
-    
+
     return !json.detailed_analysis || !json.overall_activity_score || !json.category;
   } catch (e) {
-    return false; 
+    return false;
   }
 }
 
 function findIncompleteScreenshots(dir) {
   const incomplete = [];
-  
+
   function scan(currentDir) {
     const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
-      
+
       if (entry.isDirectory()) {
         scan(fullPath);
       } else if (entry.isFile() && entry.name.endsWith('.webp')) {
         const jsonPath = fullPath.replace(/\.webp$/, '.json');
-        
+
         if (fs.existsSync(jsonPath) && isIncompleteJSON(jsonPath)) {
           incomplete.push({
             imagePath: fullPath,
@@ -89,7 +89,7 @@ function findIncompleteScreenshots(dir) {
       }
     }
   }
-  
+
   scan(dir);
   return incomplete;
 }
@@ -101,12 +101,12 @@ async function processWithConcurrency(items, concurrency) {
     failed: 0,
     errors: []
   };
-  
+
   let processed = 0;
   let currentIndex = 0;
   const total = items.length;
-  
-  
+
+
   async function processItem(item) {
     try {
       const existingMetadata = JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));
@@ -118,10 +118,12 @@ async function processWithConcurrency(items, concurrency) {
       log.error(`Failed: ${path.basename(item.imagePath)}: ${err.message}`);
     }
     processed++;
-    process.stdout.write(`\r[INFO] Progress: ${processed}/${total} (${results.success} success, ${results.failed} failed)    `);
+    if (processed % 1 === 0 || processed === total) {
+      log.info(`Progress: ${processed}/${total} (${results.success} success, ${results.failed} failed)`);
+    }
   }
-  
-  
+
+
   async function worker() {
     while (currentIndex < items.length) {
       const index = currentIndex++;
@@ -130,16 +132,16 @@ async function processWithConcurrency(items, concurrency) {
       }
     }
   }
-  
-  
+
+
   const workers = [];
   for (let i = 0; i < Math.min(concurrency, items.length); i++) {
     workers.push(worker());
   }
-  
+
   await Promise.all(workers);
-  console.log(''); 
-  
+  console.log('');
+
   return results;
 }
 
@@ -149,7 +151,7 @@ function askConfirmation(question) {
     input: process.stdin,
     output: process.stdout
   });
-  
+
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
@@ -160,56 +162,68 @@ function askConfirmation(question) {
 
 async function main() {
   log.info(`Scanning for incomplete screenshots in: ${scribeFolder}`);
-  
+
   const incomplete = findIncompleteScreenshots(scribeFolder);
-  
+
   if (incomplete.length === 0) {
     log.success('No incomplete screenshots found. All done!');
     return;
   }
-  
+
   const effectiveConcurrency = Math.min(concurrency, incomplete.length);
-  
+
   console.log('\n' + '='.repeat(50));
   log.info(`Found ${incomplete.length} image(s) needing AI analysis`);
   log.info(`Concurrent requests: ${effectiveConcurrency}`);
   console.log('='.repeat(50) + '\n');
-  
+
   let answer = 'n';
   if (skipConfirmation) {
     answer = 'y';
   } else {
     answer = await askConfirmation(`Proceed with analyzing ${incomplete.length} image(s)? [y/N] `);
   }
-  
+
   if (answer !== 'y' && answer !== 'yes') {
     log.info('Aborted.');
     return;
   }
-  
+
   console.log('');
   log.info(`Starting batch processing with ${effectiveConcurrency} concurrent request(s)...`);
-  
+
   const startTime = Date.now();
   const results = await processWithConcurrency(incomplete, effectiveConcurrency);
-  
+
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-  
+
   console.log('\n' + '='.repeat(50));
   log.success(`Batch processing complete in ${duration}s`);
   log.info(`Total: ${incomplete.length} | Success: ${results.success} | Failed: ${results.failed}`);
-  
+
   if (results.failed > 0) {
     console.log('\nFailed files:');
     results.errors.forEach(err => {
       console.log(`  - ${path.basename(err.path)}: ${err.error}`);
     });
   }
-  
+
   console.log('='.repeat(50));
 }
 
+process.on('uncaughtException', (err) => {
+  log.error(`Uncaught Exception: ${err.message}`);
+  log.error(err.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 main().catch(err => {
   log.error(`Fatal error: ${err.message}`);
+  log.error(err.stack);
   process.exit(1);
 });

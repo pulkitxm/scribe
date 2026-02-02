@@ -8,11 +8,18 @@ const colors = {
   cyan: '\x1b[36m'
 };
 
+const getTimestamp = () => {
+  const now = new Date();
+  return now.toISOString().replace('T', ' ').substring(0, 19);
+};
+
+const useColors = process.stdout.isTTY;
+
 const log = {
-  info: (msg) => console.log(`${colors.cyan}[INFO]${colors.reset} ${msg}`),
-  success: (msg) => console.log(`${colors.green}[SUCCESS]${colors.reset} ${msg}`),
-  error: (msg) => console.error(`${colors.red}[ERROR]${colors.reset} ${msg}`),
-  warn: (msg) => console.warn(`${colors.yellow}[WARN]${colors.reset} ${msg}`)
+  info: (msg) => console.log(`${useColors ? colors.cyan : ''}[${getTimestamp()}] [INFO]${useColors ? colors.reset : ''} ${msg}`),
+  success: (msg) => console.log(`${useColors ? colors.green : ''}[${getTimestamp()}] [SUCCESS]${useColors ? colors.reset : ''} ${msg}`),
+  error: (msg) => console.error(`${useColors ? colors.red : ''}[${getTimestamp()}] [ERROR]${useColors ? colors.reset : ''} ${msg}`),
+  warn: (msg) => console.warn(`${useColors ? colors.yellow : ''}[${getTimestamp()}] [WARN]${useColors ? colors.reset : ''} ${msg}`)
 };
 
 function clamp(n, min, max) {
