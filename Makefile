@@ -98,4 +98,6 @@ viz-logs:
 
 make viz-dev:
 	@echo "Starting Visualizer in development mode..."
-	@cd visualizer && pnpm dev
+
+get-daily-sizes:
+	@du -d 1 -k "$(FOLDER)"

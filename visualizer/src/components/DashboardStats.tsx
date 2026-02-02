@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Target, Zap, Lightbulb } from "lucide-react";
+import DailyStatsTable from "./DailyStatsTable";
 
 interface DashboardStatsProps {
     stats: any;
@@ -26,14 +27,7 @@ function formatBytes(bytes: number, decimals = 2) {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-function parseDateFolder(dateStr: string) {
-    const parts = dateStr.split("-");
-    // Expecting DD-MM-YYYY
-    if (parts.length === 3) {
-        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    }
-    return new Date(dateStr); // Fallback
-}
+
 
 export default function DashboardStats({ stats, dailyStats }: DashboardStatsProps) {
     const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -61,18 +55,8 @@ export default function DashboardStats({ stats, dailyStats }: DashboardStatsProp
 
                     <div>
                         <h4 className="text-sm font-semibold mb-2">Day-wise Split</h4>
-                        <ScrollArea className="h-[200px]">
-                            <div className="space-y-2">
-                                {dailyStats.map((day) => (
-                                    <div key={day.date} className="flex justify-between items-center text-sm p-2 rounded hover:bg-muted">
-                                        <span>{parseDateFolder(day.date).toLocaleDateString()}</span>
-                                        <div className="flex gap-4">
-                                            <span className="text-muted-foreground">{day.totalScreenshots} shots</span>
-                                            {day.size && <span className="text-muted-foreground">{formatBytes(day.size)}</span>}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        <ScrollArea className="h-[300px]">
+                            <DailyStatsTable dailyStats={dailyStats} />
                         </ScrollArea>
                     </div>
                 </div>
@@ -154,7 +138,7 @@ export default function DashboardStats({ stats, dailyStats }: DashboardStatsProp
             icon: Lightbulb,
             progress: null,
             details: (
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[60vh] pr-4">
                     <div className="space-y-6">
                         <p>Detected contexts based on your activity.</p>
 
@@ -227,7 +211,7 @@ export default function DashboardStats({ stats, dailyStats }: DashboardStatsProp
             </div>
 
             <Dialog open={!!selectedCard} onOpenChange={(open) => !open && setSelectedCard(null)}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             {selectedData?.icon && <selectedData.icon className="h-5 w-5" />}
@@ -237,7 +221,7 @@ export default function DashboardStats({ stats, dailyStats }: DashboardStatsProp
                             Detailed breakdown for {selectedData?.label.toLowerCase()}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
+                    <div className="py-4 flex-1 overflow-y-auto">
                         {selectedData?.details}
                     </div>
                 </DialogContent>

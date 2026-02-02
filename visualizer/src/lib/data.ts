@@ -534,8 +534,8 @@ export function getTotalScribeSize(): number {
 function getDirectorySizes(baseFolder: string): Map<string, number> {
     const sizes = new Map<string, number>();
     try {
-        // du -d 1 -k returns size in KB for each subdirectory
-        const output = execSync(`du -d 1 -k "${baseFolder}"`, { encoding: 'utf-8' });
+        // Use make to get directory sizes
+        const output = execSync(`make -C .. get-daily-sizes FOLDER="${baseFolder}"`, { encoding: 'utf-8' });
         const lines = output.split('\n');
 
         for (const line of lines) {
