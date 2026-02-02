@@ -3,6 +3,7 @@ scribe
 *.log
 .env
 outputs-dev/
+outputs/
 *.mp4
 scribe-cli
 scribe_cli
