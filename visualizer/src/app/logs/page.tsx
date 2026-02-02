@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Editor from "@monaco-editor/react";
-import { Download } from "lucide-react";
+import { Download, FileText, Activity } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-export default function LogsPage() {
+function LogsContent() {
   const [logs, setLogs] = useState<string>("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const type = searchParams.get("type") || "app";
 
   const downloadLogs = () => {
     const blob = new Blob([logs], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `scribe-logs-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+    a.download = `scribe-${type}-logs-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -21,7 +26,7 @@ export default function LogsPage() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("/api/logs");
+      const res = await fetch(`/api/logs?type=${type}`);
       if (res.ok) {
         const data = await res.json();
         const content = data.content || "";
@@ -36,7 +41,13 @@ export default function LogsPage() {
     fetchLogs();
     const interval = setInterval(fetchLogs, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [type]);
+
+  const handleTypeChange = (newType: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("type", newType);
+    router.push(`?${params.toString()}`);
+  };
 
   return (
     <div className="fixed left-0 right-0 bottom-0 top-14 bg-[#1e1e1e]">
@@ -62,16 +73,50 @@ export default function LogsPage() {
         }}
         loading={<div className="text-white p-4">Loading editor...</div>}
       />
-      <div className="absolute bottom-2 right-4 text-xs text-neutral-500 z-10 bg-[#1e1e1e] px-2 py-1 rounded">
-        Auto-refreshing every 1s
+      <div className="absolute bottom-2 right-4 flex items-center gap-3 z-10">
+        <div className="text-xs text-neutral-500 bg-[#1e1e1e]/80 px-2 py-1 rounded backdrop-blur-sm">
+          Auto-refreshing every 1s
+        </div>
+
+        <div className="flex bg-[#2d2d2d] rounded-lg p-1 shadow-lg border border-neutral-700">
+          <button
+            onClick={() => handleTypeChange("app")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${type === "app"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-neutral-400 hover:text-white hover:bg-neutral-700"
+              }`}
+          >
+            <FileText size={14} />
+            App Logs
+          </button>
+          <button
+            onClick={() => handleTypeChange("analyze")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${type === "analyze"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-neutral-400 hover:text-white hover:bg-neutral-700"
+              }`}
+          >
+            <Activity size={14} />
+            Analyze Logs
+          </button>
+        </div>
+
+        <button
+          onClick={downloadLogs}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2.5 shadow-lg cursor-pointer transition-colors"
+          title="Download logs"
+        >
+          <Download size={18} />
+        </button>
       </div>
-      <button
-        onClick={downloadLogs}
-        className="absolute bottom-10 right-4 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg cursor-pointer"
-        title="Download logs"
-      >
-        <Download size={20} />
-      </button>
     </div>
+  );
+}
+
+export default function LogsPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-white">Loading...</div>}>
+      <LogsContent />
+    </Suspense>
   );
 }

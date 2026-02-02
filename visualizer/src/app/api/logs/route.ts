@@ -2,9 +2,17 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const logFilePath = path.join(process.cwd(), "../logs/app.log");
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type") || "app";
+
+    let filename = "app.log";
+    if (type === "analyze") {
+      filename = "analyse.log";
+    }
+
+    const logFilePath = path.join(process.cwd(), `../logs/${filename}`);
 
     if (!fs.existsSync(logFilePath)) {
       return NextResponse.json(
