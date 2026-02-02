@@ -55,7 +55,7 @@ private func getSystemVolumeAndMute() -> (volume: Int, isMuted: Bool) {
         if task.terminationStatus == 0 {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                // Output format: "25, false"
+                
                 let parts = output.components(separatedBy: ", ")
                 if parts.count == 2 {
                     let volume = Int(parts[0]) ?? 0
@@ -65,7 +65,7 @@ private func getSystemVolumeAndMute() -> (volume: Int, isMuted: Bool) {
             }
         }
     } catch {
-        // Silently fail and return defaults
+        
     }
     return (0, false)
 }
@@ -116,7 +116,7 @@ private func getCoreAudioDevices() -> [AudioDevice] {
         let manufacturer = getDeviceStringProperty(id: id, selector: kAudioDevicePropertyDeviceManufacturerCFString)
         let transportType = getDeviceTransportType(id: id)
         
-        // Check input/output channels
+        
         let inputChannels = getDeviceBufferFrameSize(id: id, scope: kAudioObjectPropertyScopeInput)
         let outputChannels = getDeviceBufferFrameSize(id: id, scope: kAudioObjectPropertyScopeOutput)
         
@@ -202,10 +202,10 @@ private func getDeviceBufferFrameSize(id: AudioDeviceID, scope: AudioObjectPrope
         
         let status = AudioObjectGetPropertyData(id, &address, 0, nil, &propertySize, bufferList)
         if status == noErr {
-            // Need to correctly parse AudioBufferList to count channels. 
-            // For simplicity in this context, detecting presence of streams via Size > 0 is often enough to indicate capability
-            // But strict check: UnsafeRawPointer(bufferList).bindMemory(to: AudioBufferList.self, capacity: 1).pointee
-            // A simpler way to check if device supports input/output is checking kAudioDevicePropertyStreams
+            
+            
+            
+            
              
              var streamSize: UInt32 = 0
              var streamAddress = AudioObjectPropertyAddress(
@@ -214,7 +214,7 @@ private func getDeviceBufferFrameSize(id: AudioDeviceID, scope: AudioObjectPrope
                 mElement: kAudioObjectPropertyElementMain
              )
              AudioObjectGetPropertyDataSize(id, &streamAddress, 0, nil, &streamSize)
-             return streamSize // >0 means has streams
+             return streamSize 
         }
     }
     return 0

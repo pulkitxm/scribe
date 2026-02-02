@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface ScoreDistributionChartProps {
-    data: Array<{ range: string; count: number }>; // Pre-binned data
+    data: Array<{ range: string; count: number }>; 
     title?: string;
     scoreType?: "focus" | "productivity" | "distraction";
 }
@@ -27,7 +27,7 @@ export default function ScoreDistributionChart({
         );
     }
 
-    // Create bins with colors: 0-20, 20-40, 40-60, 60-80, 80-100
+    
     const colorMap = [
         { range: "0-20", color: "#ef4444" },
         { range: "20-40", color: "#f59e0b" },
@@ -36,7 +36,7 @@ export default function ScoreDistributionChart({
         { range: "80-100", color: "#10b981" }
     ];
 
-    // Apply colors to data
+    
     const binsWithColors = data.map(d => {
         const colorEntry = colorMap.find(c => c.range === d.range);
         return {
@@ -47,12 +47,12 @@ export default function ScoreDistributionChart({
 
     const total = data.reduce((sum, d) => sum + d.count, 0);
 
-    // Calculate approximate average from bins
+    
     const avgScore = Math.round(
         data.reduce((sum, d, i) => sum + (i * 20 + 10) * d.count, 0) / total
     );
 
-    // Calculate approximate median
+    
     let cumulative = 0;
     let medianScore = 0;
     for (let i = 0; i < data.length; i++) {
@@ -63,10 +63,10 @@ export default function ScoreDistributionChart({
         }
     }
 
-    // Color based on scoreType
+    
     let colorScheme = binsWithColors;
     if (scoreType === "distraction") {
-        // Reverse colors for distraction (low is good)
+        
         colorScheme = binsWithColors.map((b, i) => ({
             ...b,
             color: colorMap[colorMap.length - 1 - i].color

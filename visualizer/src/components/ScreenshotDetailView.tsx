@@ -108,7 +108,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
                 <div className="space-y-6">
-                    {/* Main Image */}
+                    {}
                     <Card>
                         <CardContent className="p-0 relative group">
                             <div
@@ -143,7 +143,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         ]}
                     />
 
-                    {/* AI Analysis */}
+                    {}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -161,7 +161,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </CardContent>
                     </Card>
 
-                    {/* Actions Observed */}
+                    {}
                     {data.actions_observed && data.actions_observed.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -182,7 +182,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </Card>
                     )}
 
-                    {/* System Hardware & Stats (Expanded) */}
+                    {}
                     {data.system_metadata && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card>
@@ -255,7 +255,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                                         <span className="text-muted-foreground">Signal</span>
                                         <span>{data.system_metadata.stats.network.signal_strength}%</span>
                                     </div>
-                                    {/* Advanced Network Stats */}
+                                    {}
                                     {(data.system_metadata.stats.network.link_speed || data.system_metadata.stats.network.channel) && (
                                         <div className="pt-2 border-t grid grid-cols-2 gap-2 text-xs">
                                             {data.system_metadata.stats.network.link_speed && (
@@ -323,7 +323,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                                 </CardContent>
                             </Card>
 
-                            {/* Video Devices */}
+                            {}
                             {data.system_metadata.video?.sources && data.system_metadata.video.sources.length > 0 && (
                                 <Card>
                                     <CardHeader>
@@ -384,7 +384,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </div>
                     )}
 
-                    {/* Detailed Context (Learning, Communication, Entertainment) */}
+                    {}
                     {(data.context.learning_context?.learning_topic || data.context.communication_context?.communication_type || data.context.entertainment_context?.entertainment_type) && (
                         <Card>
                             <CardHeader>
@@ -435,7 +435,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </Card>
                     )}
 
-                    {/* Text Snippets */}
+                    {}
                     {data.evidence?.text_snippets && data.evidence.text_snippets.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -466,9 +466,9 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                     )}
                 </div>
 
-                {/* Sidebar */}
+                {}
                 <div className="space-y-6">
-                    {/* Scores */}
+                    {}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -500,7 +500,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </CardContent>
                     </Card>
 
-                    {/* Basic Details */}
+                    {}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -528,7 +528,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </CardContent>
                     </Card>
 
-                    {/* Code Context Sidebar */}
+                    {}
                     {data.context.code_context?.language && (
                         <Card>
                             <CardHeader>
@@ -573,7 +573,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </Card>
                     )}
 
-                    {/* Apps */}
+                    {}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -593,7 +593,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </CardContent>
                     </Card>
 
-                    {/* Domains */}
+                    {}
                     {data.evidence?.web_domains_visible && data.evidence.web_domains_visible.length > 0 && (
                         <Card>
                             <CardHeader>
@@ -619,7 +619,7 @@ export default function ScreenshotDetailView({ screenshot, prevScreenshot, nextS
                         </Card>
                     )}
 
-                    {/* Tags */}
+                    {}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

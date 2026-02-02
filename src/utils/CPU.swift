@@ -45,7 +45,7 @@ public func getCPUUsage() -> CPUInfo {
             }
         }
     } catch {
-        // Silently fail and return defaults
+        
     }
     return CPUInfo(totalCores: totalCores, usagePercent: 0, idlePercent: 100)
 }

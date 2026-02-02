@@ -8,7 +8,7 @@ interface BatteryChartProps {
         hour: number;
         battery: number;
         count: number;
-        isPlugged?: boolean; // Optional: track plugged state
+        isPlugged?: boolean; 
     }>;
 }
 
@@ -31,13 +31,13 @@ export default function BatteryChart({ data }: BatteryChartProps) {
     const minBattery = Math.min(...batteryValues);
     const lowBatteryPeriods = data.filter(d => d.battery < 20).length;
 
-    // Calculate drain rate (if we have sequential data)
+    
     let drainRate = 0;
     if (data.length > 1) {
         const nonZeroDiffs = [];
         for (let i = 1; i < data.length; i++) {
             const diff = data[i - 1].battery - data[i].battery;
-            if (diff > 0 && diff < 50) { // Reasonable drain (not plugged in jump)
+            if (diff > 0 && diff < 50) { 
                 nonZeroDiffs.push(diff);
             }
         }
@@ -46,13 +46,13 @@ export default function BatteryChart({ data }: BatteryChartProps) {
         }
     }
 
-    // Identify plugged periods (when battery increases)
+    
     const dataWithPluggedInfo = data.map((d, i) => {
         if (i === 0) return { ...d, pluggedIndicator: 0 };
         const diff = d.battery - data[i - 1].battery;
         return {
             ...d,
-            pluggedIndicator: diff > 5 ? 10 : 0 // Show bar if significant increase
+            pluggedIndicator: diff > 5 ? 10 : 0 
         };
     });
 
@@ -99,7 +99,7 @@ export default function BatteryChart({ data }: BatteryChartProps) {
                             contentStyle={{ backgroundColor: "#1f2937", border: "none", borderRadius: "8px" }}
                             itemStyle={{ color: "#e5e7eb" }}
                             formatter={(value: number | undefined, name: string | undefined) => {
-                                if (name === 'pluggedIndicator') return null; // Hide plugged indicator in tooltip
+                                if (name === 'pluggedIndicator') return null; 
                                 if (value === undefined) return ['0%', 'Battery Level'];
                                 return [`${value.toFixed(0)}%`, 'Battery Level'];
                             }}
@@ -107,7 +107,7 @@ export default function BatteryChart({ data }: BatteryChartProps) {
                         />
                         <Legend />
 
-                        {/* Low battery threshold */}
+                        {}
                         <ReferenceLine
                             y={20}
                             stroke="#ef4444"
@@ -121,7 +121,7 @@ export default function BatteryChart({ data }: BatteryChartProps) {
                             label={{ value: 'Avg', position: 'right', fontSize: 10 }}
                         />
 
-                        {/* Plugged in indicators (subtle bars) */}
+                        {}
                         <Bar
                             dataKey="pluggedIndicator"
                             name="Charging"
@@ -130,7 +130,7 @@ export default function BatteryChart({ data }: BatteryChartProps) {
                             radius={[4, 4, 0, 0]}
                         />
 
-                        {/* Battery level line */}
+                        {}
                         <Line
                             type="monotone"
                             dataKey="battery"

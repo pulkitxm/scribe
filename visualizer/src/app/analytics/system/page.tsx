@@ -22,7 +22,7 @@ export default function SystemPage() {
     const systemStats = getSystemContextStats(screenshots);
     const extendedStats = getExtendedStats(screenshots);
 
-    // Calculate KPI averages
+    
     const avgCPU = extendedStats.avgCpu;
     const avgRAM = extendedStats.avgRam;
     const avgBattery = extendedStats.avgBattery;
@@ -30,7 +30,7 @@ export default function SystemPage() {
         ? systemStats.signalData.reduce((sum, d) => sum + d.signalStrength, 0) / systemStats.signalData.length
         : 0;
 
-    // Convert signal strength from dBm to percentage (-30 is best, -90 is worst)
+    
     const signalPercent = avgNetworkSignal ? Math.max(0, Math.min(100, ((avgNetworkSignal + 90) / 60) * 100)) : 0;
 
     return (
@@ -49,7 +49,7 @@ export default function SystemPage() {
                 </div>
             </div>
 
-            {/* KPI Cards */}
+            {}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="pb-2">
@@ -100,7 +100,7 @@ export default function SystemPage() {
                 </Card>
             </div>
 
-            {/* Hardware Performance Section */}
+            {}
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Cpu className="h-5 w-5 text-primary" />
@@ -112,7 +112,7 @@ export default function SystemPage() {
                 </div>
             </section>
 
-            {/* Power & Audio Section */}
+            {}
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Battery className="h-5 w-5 text-primary" />
@@ -124,7 +124,7 @@ export default function SystemPage() {
                 </div>
             </section>
 
-            {/* Connectivity & Storage Section */}
+            {}
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Wifi className="h-5 w-5 text-primary" />
@@ -151,7 +151,7 @@ export default function SystemPage() {
                 </div>
             </section>
 
-            {/* Environment & Activity Section */}
+            {}
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Monitor className="h-5 w-5 text-primary" />
@@ -170,7 +170,7 @@ export default function SystemPage() {
                 </div>
             </section>
 
-            {/* Context Analytics (Original SystemAnalyticsDashboard) */}
+            {}
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold">Context Analytics</h2>
                 <SystemAnalyticsDashboard stats={systemStats} />

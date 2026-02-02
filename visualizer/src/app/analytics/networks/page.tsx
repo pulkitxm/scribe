@@ -11,7 +11,7 @@ export default async function NetworksAnalyticsPage() {
     const screenshots = getAllScreenshots();
     const stats = getExtendedStats(screenshots);
 
-    // Ensure stats.networks exists, defaulting to empty object if not
+    
     const networksData = (stats as any).networks || {};
 
     const networks = Object.entries(networksData)

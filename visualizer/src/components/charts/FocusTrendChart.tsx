@@ -28,13 +28,13 @@ export default function FocusTrendChart({ data, title = "Focus & Productivity Tr
         );
     }
 
-    // Take last N days
+    
     const recentData = data.slice(-days);
 
     const avgFocus = recentData.reduce((sum, d) => sum + d.avgFocusScore, 0) / recentData.length;
     const avgProd = recentData.reduce((sum, d) => sum + d.avgProductivityScore, 0) / recentData.length;
 
-    // Format dates for display
+    
     const formattedData = recentData.map(d => ({
         ...d,
         dateLabel: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

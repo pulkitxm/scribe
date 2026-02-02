@@ -26,7 +26,7 @@ export default function NetworkSignalChart({ data, disconnectionCount = 0 }: Net
         );
     }
 
-    // Calculate signal quality percentage from dBm (-30 is best, -90 is worst)
+    
     const dBmToPercent = (dbm: number) => {
         const clamped = Math.max(-90, Math.min(-30, dbm));
         return ((clamped + 90) / 60) * 100;

@@ -1,8 +1,8 @@
 import {
-  ScreenshotData as ScreenshotDataZod, // Import just to re-exported or used? No, define exported types.
+  ScreenshotData as ScreenshotDataZod, 
 } from "@/lib/schemas";
 
-// Re-export inferred types from schemas
+
 export type {
   ScreenshotData,
   Scores,
@@ -31,7 +31,7 @@ export interface Session {
   avgProductivityScore: number;
   avgDistractionScore: number;
   screenshots: Screenshot[];
-  workType?: string; // e.g. "coding", "meeting"
+  workType?: string; 
   project?: string;
   tags: string[];
   contextSwitches: number;

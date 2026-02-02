@@ -6,7 +6,7 @@ const os = require('os');
 const { analyzeImageWithAI } = require('./js-scripts/analyzer');
 const { log } = require('./js-scripts/utils');
 
-// Load .env file from project root
+
 const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
@@ -22,7 +22,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-// Parse command line arguments
+
 const args = process.argv.slice(2);
 let concurrency = 1;
 let scribeFolder = process.env.SCRIBE_FOLDER;
@@ -56,10 +56,10 @@ function isIncompleteJSON(jsonPath) {
   try {
     const content = fs.readFileSync(jsonPath, 'utf8');
     const json = JSON.parse(content);
-    // Check if AI analysis fields are missing
+    
     return !json.detailed_analysis || !json.overall_activity_score || !json.category;
   } catch (e) {
-    return false; // If JSON is invalid, skip it
+    return false; 
   }
 }
 
@@ -91,10 +91,7 @@ function findIncompleteScreenshots(dir) {
   return incomplete;
 }
 
-/**
- * Process items with true concurrent async execution
- * Maintains N concurrent API requests at all times for maximum throughput
- */
+
 async function processWithConcurrency(items, concurrency) {
   const results = {
     success: 0,
@@ -106,7 +103,7 @@ async function processWithConcurrency(items, concurrency) {
   let currentIndex = 0;
   const total = items.length;
   
-  // Process a single item
+  
   async function processItem(item) {
     try {
       const existingMetadata = JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));
@@ -121,7 +118,7 @@ async function processWithConcurrency(items, concurrency) {
     process.stdout.write(`\r[INFO] Progress: ${processed}/${total} (${results.success} success, ${results.failed} failed)    `);
   }
   
-  // Worker function that continuously picks up work
+  
   async function worker() {
     while (currentIndex < items.length) {
       const index = currentIndex++;
@@ -131,14 +128,14 @@ async function processWithConcurrency(items, concurrency) {
     }
   }
   
-  // Start N concurrent workers
+  
   const workers = [];
   for (let i = 0; i < Math.min(concurrency, items.length); i++) {
     workers.push(worker());
   }
   
   await Promise.all(workers);
-  console.log(''); // New line after progress
+  console.log(''); 
   
   return results;
 }

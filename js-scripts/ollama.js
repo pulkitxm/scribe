@@ -169,7 +169,7 @@ Use a single category label only.`;
         temperature: 0,
         top_p: 0.9,
         num_ctx: 8192,
-        num_predict: 3072  // Increased to allow more text extraction
+        num_predict: 3072  
       }
     });
 

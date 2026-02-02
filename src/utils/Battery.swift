@@ -19,7 +19,7 @@ private func runPmsetBatt() -> String? {
             return String(data: data, encoding: .utf8)
         }
     } catch {
-        // Silently fail
+        
     }
     return nil
 }

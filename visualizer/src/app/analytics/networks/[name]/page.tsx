@@ -22,7 +22,7 @@ export default async function NetworkDetailPage({ params }: PageProps) {
     const { name } = await params;
     const decodedName = decodeURIComponent(name);
 
-    // Fetch screenshots filtered by network
+    
     const screenshots = getAllScreenshots({ network: decodedName });
 
     if (screenshots.length === 0) {
@@ -32,7 +32,7 @@ export default async function NetworkDetailPage({ params }: PageProps) {
     const stats = getExtendedStats(screenshots);
     const dailyStats = getDailyStats(screenshots);
 
-    // Top Apps used on this network
+    
     const apps = Object.entries(stats.apps)
         .map(([name, value]) => ({
             name,
@@ -41,7 +41,7 @@ export default async function NetworkDetailPage({ params }: PageProps) {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-    // Top Projects worked on this network
+    
     const projects = Object.entries(stats.repos)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)

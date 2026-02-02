@@ -5,15 +5,15 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 interface IdleTimeChartProps {
     distributionData?: Array<{
-        range: string; // "0-5s", "5-30s", "30s-5m", "5m+"
+        range: string; 
         count: number;
-        isBreak?: boolean; // True for >5min idle periods
+        isBreak?: boolean; 
     }>;
     hourlyIdleData?: Array<{
         hour: number;
         avgIdleSeconds: number;
-        activeMinutes: number; // Calculated active work time
-        passiveMinutes: number; // Idle time
+        activeMinutes: number; 
+        passiveMinutes: number; 
     }>;
 }
 
@@ -34,7 +34,7 @@ export default function IdleTimeChart({ distributionData, hourlyIdleData }: Idle
         );
     }
 
-    // Calculate totals
+    
     const totalCaptures = hasDistribution ? distributionData.reduce((sum, d) => sum + d.count, 0) : 0;
     const breakCount = hasDistribution ? distributionData.filter(d => d.isBreak).reduce((sum, d) => sum + d.count, 0) : 0;
     const breakPercent = totalCaptures > 0 ? (breakCount / totalCaptures) * 100 : 0;
@@ -43,12 +43,12 @@ export default function IdleTimeChart({ distributionData, hourlyIdleData }: Idle
     const totalPassiveTime = hasHourlyData ? hourlyIdleData.reduce((sum, d) => sum + d.passiveMinutes, 0) : 0;
     const activePercent = totalActiveTime + totalPassiveTime > 0 ? (totalActiveTime / (totalActiveTime + totalPassiveTime)) * 100 : 0;
 
-    // Color based on idle range
+    
     const getColor = (range: string, isBreak?: boolean) => {
-        if (isBreak) return "#ef4444"; // red for breaks
-        if (range.includes("0-5")) return "#10b981"; // green for active
-        if (range.includes("5-30")) return "#3b82f6"; // blue for short idle
-        return "#f59e0b"; // amber for moderate idle
+        if (isBreak) return "#ef4444"; 
+        if (range.includes("0-5")) return "#10b981"; 
+        if (range.includes("5-30")) return "#3b82f6"; 
+        return "#f59e0b"; 
     };
 
     return (

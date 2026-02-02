@@ -225,8 +225,8 @@ export const ScreenshotDataSchema = z.object({
     confidence: z.number().optional().default(0),
     system_metadata: SystemMetadataSchema.optional(),
 
-    // New top-level fields
-    timestamp: TimestampSchema.optional(), // Optional for now to maintain backward compat if needed, or make refined based on data
+    
+    timestamp: TimestampSchema.optional(), 
     visualization: VisualizationSchema.optional(),
     summary: SummarySchema.optional(),
 });

@@ -12,8 +12,8 @@ public struct VideoDevice {
 public func getVideoDevices() -> [VideoDevice] {
     var devices: [VideoDevice] = []
     
-    // Discover video devices (cameras)
-    // We target built-in wide angle camera (common webcams) and external devices
+    
+    
     let discoverySession = AVCaptureDevice.DiscoverySession(
         deviceTypes: [.builtInWideAngleCamera, .external],
         mediaType: .video,

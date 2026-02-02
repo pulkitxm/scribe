@@ -17,7 +17,7 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
   const processedImagePath = preprocessImage(imagePath);
   const imageBase64 = getImageBase64(processedImagePath);
 
-  // Extract text using OCR (runs independently of LLM)
+  
   log.info('Extracting text with OCR...');
   const ocrText = extractTextWithOCR(processedImagePath);
 
@@ -33,21 +33,21 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
       const responseText = await callOllama(imageBase64, attempt > 0);
       const resultJSON = parseAndValidateJSON(responseText);
 
-      // Build complete metadata
+      
       const category = resultJSON.category || 'unknown';
       const productivityScore = resultJSON.scores?.productivity_score || 0;
       const codeLanguage = resultJSON.context?.code_context?.language || '';
 
-      // If we have existing metadata (from batch processing), use it
-      // Otherwise build fresh metadata from environment variables
+      
+      
       resultJSON.timestamp = existingMetadata?.timestamp || buildTimestamp();
       resultJSON.system_metadata = existingMetadata?.system_metadata || buildSystemMetadata();
       
-      // Always build visualization and summary from AI results
+      
       resultJSON.visualization = buildVisualization(category, productivityScore, codeLanguage);
       resultJSON.summary = buildSummary(category, resultJSON.short_description);
 
-      // Add OCR-extracted text (independent of LLM)
+      
       if (ocrText && ocrText.length > 0) {
         resultJSON.evidence.raw_text_content = ocrText;
       }

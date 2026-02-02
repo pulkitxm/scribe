@@ -55,7 +55,7 @@ export default function DashboardFilters({
                 </Tabs>
             </div>
 
-            {/* Category */}
+            {}
             <Select
                 value={currentCategory || "all"}
                 onValueChange={(v) => updateFilter("category", v)}

@@ -112,18 +112,18 @@ async function DashboardContent({
     );
   }
 
-  // Determine data presentation based on filter state
+  
   const isFiltered = range && range !== "all";
 
-  // For productivity chart: if filtered, show all. If not (default view), show recent 14 days.
+  
   const productivityData = isFiltered
     ? filteredDailyStats
     : filteredDailyStats.slice(-14);
 
-  // For category chart: if filtered, show all. If not (default view), show top 8.
+  
   const categoryLimit = isFiltered ? undefined : 8;
 
-  // For app chart: if filtered, show all and lower threshold. If not, show top 10 with higher threshold.
+  
   const appLimit = isFiltered ? undefined : 10;
   const appMinCount = isFiltered ? 1 : 10;
 

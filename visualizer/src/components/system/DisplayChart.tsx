@@ -10,7 +10,7 @@ interface DisplayChartProps {
         lightModeCount: number;
     }>;
     monitorUsage?: Array<{
-        type: string; // "Single", "Dual", "Multiple"
+        type: string; 
         count: number;
     }>;
     externalDisplayCorrelation?: {
@@ -37,7 +37,7 @@ export default function DisplayChart({ darkModeByHour, monitorUsage, externalDis
         );
     }
 
-    // Calculate dark mode percentage
+    
     let darkModePercent = 0;
     if (hasDarkModeData) {
         const totalDark = darkModeByHour.reduce((sum, d) => sum + d.darkModeCount, 0);
@@ -45,7 +45,7 @@ export default function DisplayChart({ darkModeByHour, monitorUsage, externalDis
         darkModePercent = ((totalDark / (totalDark + totalLight)) * 100);
     }
 
-    // Format data for stacked bar chart
+    
     const darkModeData = hasDarkModeData
         ? darkModeByHour.map(d => ({
             hour: d.hour,

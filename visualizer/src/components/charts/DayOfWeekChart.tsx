@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface DayOfWeekChartProps {
-    data: Array<{ day: string; count: number }>; // [{ day: "Monday", count: 45 }, ...]
+    data: Array<{ day: string; count: number }>; 
     title?: string;
 }
 
@@ -34,17 +34,17 @@ export default function DayOfWeekChart({ data, title = "Usage by Day of Week" }:
         );
     }
 
-    // Convert array to record for easier lookup
+    
     const dataRecord: Record<string, number> = {};
     data.forEach(d => {
         dataRecord[d.day] = d.count;
     });
 
-    // Sort by day order
+    
     const sortedData = DAY_ORDER
         .filter(day => dataRecord[day] !== undefined)
         .map(day => ({
-            day: day.substring(0, 3), // "Mon", "Tue", etc.
+            day: day.substring(0, 3), 
             fullDay: day,
             count: dataRecord[day] || 0
         }));

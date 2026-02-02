@@ -8,7 +8,7 @@ interface AudioVolumeChartProps {
         hour: number;
         volume: number;
         count: number;
-        mutedCount?: number; // Track muted periods
+        mutedCount?: number; 
     }>;
 }
 
@@ -31,11 +31,11 @@ export default function AudioVolumeChart({ data }: AudioVolumeChartProps) {
     const maxVolume = Math.max(...volumeValues);
     const minVolume = Math.min(...volumeValues);
 
-    // Identify silent periods (volume = 0)
+    
     const silentPeriods = data.filter(d => d.volume === 0).length;
     const lowVolumePeriods = data.filter(d => d.volume > 0 && d.volume < 20).length;
 
-    // Calculate peak hours
+    
     const peakHours = data.filter(d => d.volume > 50).map(d => d.hour);
     const avgPeakHour = peakHours.length > 0 ? Math.round(peakHours.reduce((a, b) => a + b, 0) / peakHours.length) : 12;
 
@@ -90,7 +90,7 @@ export default function AudioVolumeChart({ data }: AudioVolumeChartProps) {
                         />
                         <Legend />
 
-                        {/* Reference lines */}
+                        {}
                         <ReferenceLine
                             y={50}
                             stroke="#10b981"

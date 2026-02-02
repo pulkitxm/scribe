@@ -44,7 +44,7 @@ private func getDisplayBrightness() -> Int {
             }
         }
     } catch {
-        // Fall through to alternative method
+        
     }
     
     do {
@@ -79,7 +79,7 @@ private func getDisplayBrightness() -> Int {
             }
         }
     } catch {
-        // Silently fail
+        
     }
     
     return -1
@@ -106,7 +106,7 @@ private func getDarkModeStatus() -> Bool {
             }
         }
     } catch {
-        // Silently fail
+        
     }
     
     return false

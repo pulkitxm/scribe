@@ -188,7 +188,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     const dates = getAllDates();
     const allScreenshots = getAllScreenshots();
 
-    // Extract unique values for filters
+    
     const categories = [...new Set(allScreenshots.map((s) => s.data.category))].filter(Boolean).sort();
     const tags = [...new Set(allScreenshots.flatMap((s) => s.data.summary_tags || []))].sort();
 
@@ -238,7 +238,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 currentLowBattery={params.lowBattery}
                 currentHighCpu={params.highCpu}
                 currentHasErrors={params.hasErrors}
-                // @ts-ignore
+                
                 currentNetwork={params.network}
             />
 

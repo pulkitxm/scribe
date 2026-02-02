@@ -5,7 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface RAMChartProps {
     data: Array<{ hour: number; ram: number; count: number }>;
-    totalRAM?: number; // Total RAM in GB
+    totalRAM?: number; 
 }
 
 export default function RAMChart({ data, totalRAM = 32 }: RAMChartProps) {
@@ -27,13 +27,13 @@ export default function RAMChart({ data, totalRAM = 32 }: RAMChartProps) {
     const maxRAM = Math.max(...ramValues);
     const peakHour = data.find(d => d.ram === maxRAM)?.hour || 0;
 
-    // Calculate percentages
+    
     const avgPercent = (avgRAM / totalRAM) * 100;
     const maxPercent = (maxRAM / totalRAM) * 100;
 
-    // Thresholds
-    const warningThreshold = totalRAM * 0.8; // 80%
-    const criticalThreshold = totalRAM * 0.9; // 90%
+    
+    const warningThreshold = totalRAM * 0.8; 
+    const criticalThreshold = totalRAM * 0.9; 
 
     return (
         <Card>
@@ -85,7 +85,7 @@ export default function RAMChart({ data, totalRAM = 32 }: RAMChartProps) {
                         />
                         <Legend />
 
-                        {/* Threshold lines */}
+                        {}
                         <ReferenceLine
                             y={warningThreshold}
                             stroke="#f59e0b"

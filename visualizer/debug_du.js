@@ -14,7 +14,7 @@ function getScribeFolder() {
         }
     }
 
-    // Fallback logic
+    
     const fallback = path.join(process.cwd(), "..", "outputs-dev");
     console.log("Checking fallback:", fallback);
     if (fs.existsSync(fallback)) {

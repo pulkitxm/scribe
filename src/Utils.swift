@@ -38,7 +38,7 @@ public func resolvePath(for tool: String) -> String? {
             }
         }
     } catch {
-        // Fall through to check common paths
+        
     }
     
     let commonPaths = [

@@ -32,11 +32,11 @@ interface SortConfig {
 
 function parseDateFolder(dateStr: string) {
     const parts = dateStr.split("-");
-    // Expecting DD-MM-YYYY
+    
     if (parts.length === 3) {
         return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
     }
-    return new Date(dateStr); // Fallback
+    return new Date(dateStr); 
 }
 
 function formatBytes(bytes: number, decimals = 2) {

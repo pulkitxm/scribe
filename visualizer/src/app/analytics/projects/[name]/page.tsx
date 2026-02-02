@@ -49,7 +49,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         .slice(0, 5)
         .map(([name, count]) => ({ name, count }));
 
-    // Calculate day-of-week distribution
+    
     const dayOfWeekData = screenshots.reduce((acc, s) => {
         const day = new Date(s.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
         acc[day] = (acc[day] || 0) + 1;
@@ -58,7 +58,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
     const dayOfWeekChartData = Object.entries(dayOfWeekData).map(([day, count]) => ({ day, count }));
 
-    // Calculate score distributions
+    
     const focusDistribution = [0, 0, 0, 0, 0];
     const productivityDistribution = [0, 0, 0, 0, 0];
     const distractionDistribution = [0, 0, 0, 0, 0];

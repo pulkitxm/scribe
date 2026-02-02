@@ -40,7 +40,7 @@ export default function ControlCenter() {
         return () => clearInterval(interval);
     }, []);
 
-    // Close dropdown when clicking outside
+    
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -59,7 +59,7 @@ export default function ControlCenter() {
                 method: "POST",
                 body: JSON.stringify({ command: action }),
             });
-            // Verification fetch after short delay
+            
             setTimeout(fetchStats, 1500);
         } catch (error) {
             console.error("Failed to toggle service", error);

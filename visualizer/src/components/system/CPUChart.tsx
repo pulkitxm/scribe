@@ -27,14 +27,14 @@ export default function CPUChart({ data }: CPUChartProps) {
     const minCPU = Math.min(...cpuValues);
     const peakHour = data.find(d => d.cpu === maxCPU)?.hour || 0;
 
-    // Determine color based on CPU value
+    
     const getColor = (value: number) => {
-        if (value < 30) return "#10b981"; // green
-        if (value < 70) return "#f59e0b"; // yellow
-        return "#ef4444"; // red
+        if (value < 30) return "#10b981"; 
+        if (value < 70) return "#f59e0b"; 
+        return "#ef4444"; 
     };
 
-    // Add gradient color to data points
+    
     const enhancedData = data.map(d => ({
         ...d,
         color: getColor(d.cpu)
@@ -81,7 +81,7 @@ export default function CPUChart({ data }: CPUChartProps) {
                         />
                         <Legend />
 
-                        {/* Reference lines for thresholds */}
+                        {}
                         <ReferenceLine y={30} stroke="#10b981" strokeDasharray="3 3" label={{ value: 'Low', position: 'right', fontSize: 10 }} />
                         <ReferenceLine y={70} stroke="#ef4444" strokeDasharray="3 3" label={{ value: 'High', position: 'right', fontSize: 10 }} />
                         <ReferenceLine y={avgCPU} stroke="#8b5cf6" strokeDasharray="5 5" label={{ value: 'Avg', position: 'right', fontSize: 10 }} />

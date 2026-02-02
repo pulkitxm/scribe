@@ -51,7 +51,7 @@ function parseAndValidateJSON(responseString) {
     const json = JSON.parse(clean);
     return validateJSON(json);
   } catch (e) {
-    // Attempt repairs
+    
     const repairs = [
       clean + '}',
       clean + '"}',
