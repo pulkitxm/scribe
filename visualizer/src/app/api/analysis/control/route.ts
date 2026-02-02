@@ -20,17 +20,9 @@ export async function POST(req: Request) {
         }
 
         let cmd = '';
-        // Using make commands from the root directory
-        // We append --yes to analyze to skip confirmation if it accepts it via make
-        // But Makefile runs: pm2 start ... -- --yes
-        // So `make analyze YES=1` or just `make analyze` with `analyze.js` logic handled.
-        // The Makefile for analyze says:
-        // @pm2 start analyze.js ... $(if $(YES),--yes,)
-        // So we can pass YES=1 env var or just rely on the args.
 
         switch (command) {
             case 'start':
-                // Ensure we pass YES=1 to avoid interaction if the script asks (though analyze.js handles flags)
                 cmd = `make analyze YES=true`;
                 break;
             case 'stop':

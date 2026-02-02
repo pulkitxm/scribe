@@ -6,7 +6,6 @@ import util from 'util';
 
 const execAsync = util.promisify(exec);
 
-// Path to the project root (assuming visualizer is in /visualizer)
 const PROJECT_ROOT = path.resolve(process.cwd(), '..');
 const LOG_FILE = path.join(PROJECT_ROOT, 'logs', 'analyse.log');
 
@@ -28,7 +27,6 @@ async function getAnalysisStats() {
             return { processed: 0, total: 0, success: 0, failed: 0 };
         }
 
-        // Read the last 5KB of the file to find the latest progress
         const statsResult = await fs.promises.stat(LOG_FILE);
         const size = statsResult.size;
         const bufferSize = Math.min(5000, size);
@@ -42,7 +40,6 @@ async function getAnalysisStats() {
         const content = buffer.toString('utf-8');
         const lines = content.split('\n').reverse();
 
-        // Look for progress line: Progress: 1/1876 (1 success, 0 failed)
         const progressRegex = /Progress: (\d+)\/(\d+) \((\d+) success, (\d+) failed\)/;
 
         for (const line of lines) {

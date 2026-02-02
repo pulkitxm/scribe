@@ -1,7 +1,7 @@
 import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
-import Fuse from "fuse.js";
+import Fuse, { IFuseOptions } from "fuse.js";
 import {
   Screenshot,
   ScreenshotData,
@@ -246,21 +246,45 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
       const words = query.split(/\s+/).filter(Boolean);
       const normalizedQuery = query.toLowerCase().trim();
 
-      const fuseOptions = {
+      const fuseOptions: IFuseOptions<Screenshot> = {
         keys: [
-          { name: "data.category", weight: 2.0 },
-          { name: "data.summary_tags", weight: 1.5 },
-          { name: "data.evidence.text_snippets", weight: 1.0 },
-          { name: "data.evidence.web_domains_visible", weight: 0.5 },
-          { name: "data.evidence.apps_visible", weight: 0.5 },
+          { name: "data.category", weight: 3.0 },
+          { name: "data.summary_tags", weight: 2.5 },
+          
+          { name: "data.short_description", weight: 2.0 },
+          { name: "data.detailed_analysis", weight: 1.8 },
+          { name: "data.summary.one_liner", weight: 2.0 },
+          
+          { name: "data.context.intent_guess", weight: 1.5 },
+          { name: "data.context.topic_or_game_or_media", weight: 1.5 },
+          { name: "data.context.work_context.work_type", weight: 1.3 },
+          { name: "data.context.work_context.project_or_doc", weight: 1.3 },
+          { name: "data.context.code_context.language", weight: 1.2 },
+          { name: "data.context.code_context.repo_or_project", weight: 1.2 },
+          { name: "data.context.learning_context.learning_topic", weight: 1.2 },
+          { name: "data.context.learning_context.source_type", weight: 1.0 },
+          { name: "data.context.communication_context.communication_type", weight: 1.2 },
+          { name: "data.context.communication_context.platform_guess", weight: 1.0 },
+          { name: "data.context.entertainment_context.entertainment_type", weight: 1.0 },
+          { name: "data.context.entertainment_context.platform_guess", weight: 1.0 },
+          
+          { name: "data.evidence.text_snippets", weight: 1.5 },
+          { name: "data.evidence.key_windows_or_panels", weight: 1.3 },
+          { name: "data.evidence.web_domains_visible", weight: 1.0 },
+          { name: "data.evidence.apps_visible", weight: 1.0 },
+          { name: "data.evidence.active_app_guess", weight: 1.2 },
+          
+          { name: "data.actions_observed", weight: 0.8 },
+          { name: "data.workspace_type", weight: 0.7 },
+          { name: "data.system_metadata.active_app", weight: 1.0 },
+          { name: "data.system_metadata.opened_apps", weight: 0.6 },
         ],
-        threshold: 0.4,
-        distance: 100,
         findAllMatches: true,
         useExtendedSearch: true,
       };
 
       const exactMatches: Screenshot[] = [];
+      const strongMatches: Screenshot[] = [];
       const otherScreenshots: Screenshot[] = [];
 
       for (const s of allScreenshots) {
@@ -268,12 +292,22 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
         const tagsLower = (s.data.summary_tags || []).map((t) =>
           t.toLowerCase(),
         );
+        const shortDescLower = s.data.short_description?.toLowerCase() || "";
+        const intentLower = s.data.context.intent_guess?.toLowerCase() || "";
+        const topicLower = s.data.context.topic_or_game_or_media?.toLowerCase() || "";
 
         if (
           categoryLower === normalizedQuery ||
           tagsLower.includes(normalizedQuery)
         ) {
           exactMatches.push(s);
+        }
+        else if (
+          shortDescLower.includes(normalizedQuery) ||
+          intentLower.includes(normalizedQuery) ||
+          topicLower.includes(normalizedQuery)
+        ) {
+          strongMatches.push(s);
         } else {
           otherScreenshots.push(s);
         }
@@ -284,7 +318,11 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
       const fuseQuery = words.length > 1 ? words.join(" | ") : query;
       const fuseResults = fuse.search(fuseQuery);
 
-      allScreenshots = [...exactMatches, ...fuseResults.map((r) => r.item)];
+      allScreenshots = [
+        ...exactMatches,
+        ...strongMatches,
+        ...fuseResults.map((r) => r.item),
+      ];
     }
     if (filters.tag) {
       const query = filters.tag.toLowerCase();

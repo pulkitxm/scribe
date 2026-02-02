@@ -37,8 +37,11 @@ run-once:
 	@./scribe_cli --run-once
 
 analyze:
-	@echo "Analyzing incomplete screenshots..."
-	@pm2 start analyze.js --name scribe-analyzer --output logs/analyse.log --error logs/analyse.log -- --concurrency $(or $(THREADS),$(CONCURRENCY),1) $(if $(FOLDER),--folder "$(FOLDER)",) $(if $(YES),--yes,)
+	@echo "Analyzing incomplete screenshots with GPU acceleration..."
+	@echo "GPU Status:"
+	@ollama ps 2>/dev/null || echo "  Ollama not running - GPU acceleration unavailable"
+	@echo ""
+	@pm2 start analyze.js --name scribe-analyzer --output logs/analyse.log --error logs/analyse.log -- --concurrency $(or $(THREADS),$(CONCURRENCY),4) $(if $(FOLDER),--folder "$(FOLDER)",) $(if $(YES),--yes,)
 
 analyze-stop:
 	@echo "Stopping analysis..."
@@ -51,6 +54,18 @@ analyze-restart:
 analyze-status:
 	@echo "Checking analysis status..."
 	@pm2 status scribe-analyzer
+
+analyze-gpu-status:
+	@echo "=== GPU Acceleration Status ==="
+	@echo ""
+	@echo "Ollama Models:"
+	@ollama ps 2>/dev/null || echo "  ❌ Ollama not running"
+	@echo ""
+	@echo "GPU Hardware:"
+	@system_profiler SPDisplaysDataType 2>/dev/null | grep -A 3 "Chipset Model" | head -4 || echo "  Unable to detect GPU"
+	@echo ""
+	@echo "Note: Analysis uses Ollama with vision models for GPU-accelerated inference."
+	@echo "      Default concurrency: 4 (adjust with THREADS=N or CONCURRENCY=N)"
 
 analyze-logs:
 	@echo "Showing analysis logs..."
