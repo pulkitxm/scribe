@@ -26,6 +26,7 @@ if (fs.existsSync(envPath)) {
 const args = process.argv.slice(2);
 let concurrency = 1;
 let scribeFolder = process.env.SCRIBE_FOLDER;
+let skipConfirmation = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--concurrency' && i + 1 < args.length) {
@@ -38,6 +39,8 @@ for (let i = 0; i < args.length; i++) {
   } else if (args[i] === '--folder' && i + 1 < args.length) {
     scribeFolder = args[i + 1];
     i++;
+  } else if ((args[i] === '--yes' || args[i] === '-y')) {
+    skipConfirmation = true;
   }
 }
 
@@ -172,7 +175,12 @@ async function main() {
   log.info(`Concurrent requests: ${effectiveConcurrency}`);
   console.log('='.repeat(50) + '\n');
   
-  const answer = await askConfirmation(`Proceed with analyzing ${incomplete.length} image(s)? [y/N] `);
+  let answer = 'n';
+  if (skipConfirmation) {
+    answer = 'y';
+  } else {
+    answer = await askConfirmation(`Proceed with analyzing ${incomplete.length} image(s)? [y/N] `);
+  }
   
   if (answer !== 'y' && answer !== 'yes') {
     log.info('Aborted.');

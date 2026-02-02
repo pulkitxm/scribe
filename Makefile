@@ -38,7 +38,28 @@ run-once:
 
 analyze:
 	@echo "Analyzing incomplete screenshots..."
-	@node analyze.js --concurrency $(or $(THREADS),$(CONCURRENCY),1) $(if $(FOLDER),--folder "$(FOLDER)",)
+	@pm2 start analyze.js --name scribe-analyzer --output logs/analyse.log --error logs/analyse.log -- --concurrency $(or $(THREADS),$(CONCURRENCY),1) $(if $(FOLDER),--folder "$(FOLDER)",) $(if $(YES),--yes,)
+
+analyze-stop:
+	@echo "Stopping analysis..."
+	@pm2 stop scribe-analyzer
+
+analyze-restart:
+	@echo "Restarting analysis..."
+	@pm2 restart scribe-analyzer
+
+analyze-status:
+	@echo "Checking analysis status..."
+	@pm2 status scribe-analyzer
+
+analyze-logs:
+	@echo "Showing analysis logs..."
+	@pm2 logs scribe-analyzer
+
+analyze-delete:
+	@echo "Deleting analysis..."
+	@pm2 delete scribe-analyzer
+	@echo "Analysis deleted."
 
 install:
 	@./scripts/install.sh
