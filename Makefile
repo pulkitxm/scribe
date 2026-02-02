@@ -124,3 +124,7 @@ make viz-dev:
 get-daily-sizes:
 	@echo "Getting daily sizes..."
 	@du -d 1 -k "$(FOLDER)"
+
+videos:
+	@echo "Creating daily video..."
+	python3 scripts/images_to_video.py --input './outputs' --output './output_video.mp4' --fps 15

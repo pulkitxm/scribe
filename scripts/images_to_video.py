@@ -5,6 +5,73 @@ import subprocess
 import glob
 import sys
 import platform
+import json
+import hashlib
+from pathlib import Path
+
+def get_file_hash(filepath):
+    """Get MD5 hash of a file."""
+    hash_md5 = hashlib.md5()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def load_index(index_path):
+    """Load the index file containing processed images metadata."""
+    if os.path.exists(index_path):
+        try:
+            with open(index_path, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Warning: Could not parse index file {index_path}, starting fresh")
+            return {"images": {}, "version": "1.0"}
+    return {"images": {}, "version": "1.0"}
+
+def save_index(index_path, index_data):
+    """Save the index file."""
+    with open(index_path, 'w') as f:
+        json.dump(index_data, f, indent=2)
+
+def get_image_metadata(image_path):
+    """Get metadata for an image file."""
+    stat = os.stat(image_path)
+    return {
+        "path": image_path,
+        "mtime": stat.st_mtime,
+        "size": stat.st_size,
+        "hash": get_file_hash(image_path)
+    }
+
+def detect_changes(images, index_data):
+    """Detect new or changed images compared to index."""
+    indexed_images = index_data.get("images", {})
+    new_images = []
+    changed_images = []
+    unchanged_images = []
+    
+    for img_path in images:
+        img_key = os.path.basename(img_path)
+        
+        if img_key not in indexed_images:
+            new_images.append(img_path)
+        else:
+            # Check if file has changed
+            old_meta = indexed_images[img_key]
+            stat = os.stat(img_path)
+            
+            # Quick check: mtime and size
+            if old_meta["mtime"] != stat.st_mtime or old_meta["size"] != stat.st_size:
+                # Verify with hash
+                current_hash = get_file_hash(img_path)
+                if current_hash != old_meta["hash"]:
+                    changed_images.append(img_path)
+                else:
+                    unchanged_images.append(img_path)
+            else:
+                unchanged_images.append(img_path)
+    
+    return new_images, changed_images, unchanged_images
 
 def detect_gpu_encoder():
     """Detect available GPU encoder for ffmpeg."""
@@ -43,20 +110,46 @@ def detect_gpu_encoder():
         print(f"Warning: Could not detect GPU encoder: {e}")
         return "libx264", "CPU (software)"
 
-def create_video_from_images(input_dir, output_file, fps, use_gpu=True):
+def create_video_from_images(input_dir, output_file, fps, use_gpu=True, force_rebuild=False):
+    """Create or update video from images with incremental processing."""
     
+    # Setup index file path
+    index_dir = os.path.join(input_dir, ".video_index")
+    os.makedirs(index_dir, exist_ok=True)
+    index_path = os.path.join(index_dir, "index.json")
+    
+    # Load existing index
+    index_data = load_index(index_path)
+    
+    # Get all current images
     images = glob.glob(os.path.join(input_dir, "*.webp"))
     
     if not images:
         print(f"No .webp images found in {input_dir}")
         return
-
     
     images.sort()
-
-    print(f"Found {len(images)} images.")
-
+    print(f"Found {len(images)} total images in {input_dir}")
     
+    # Detect changes
+    if not force_rebuild and os.path.exists(output_file):
+        new_images, changed_images, unchanged_images = detect_changes(images, index_data)
+        
+        print(f"  New images: {len(new_images)}")
+        print(f"  Changed images: {len(changed_images)}")
+        print(f"  Unchanged images: {len(unchanged_images)}")
+        
+        if not new_images and not changed_images:
+            print(f"No changes detected. Video is up to date: {output_file}")
+            return
+        
+        # For incremental update, we need to rebuild with all images
+        # but we know which ones changed
+        print(f"Changes detected. Rebuilding video with {len(images)} images...")
+    else:
+        print(f"Building video from scratch with {len(images)} images...")
+    
+    # Create concat list file
     import uuid
     list_file_path = f"concat_list_{uuid.uuid4().hex}.txt"
     with open(list_file_path, "w") as f:
@@ -77,13 +170,6 @@ def create_video_from_images(input_dir, output_file, fps, use_gpu=True):
     
     try:
         # Create video using ffmpeg
-        # -y: overwrite output file
-        # -f concat: use concatenation format
-        # -safe 0: allow unsafe file paths (required for absolute paths)
-        # -i lists_file_path: input file containing list of images
-        # -c:v encoder: video codec/encoder to use
-        # -fps_mode vfr: variable frame rate to match input durations
-        # -pix_fmt yuv420p: pixel format for compatibility
         cmd = [
             "ffmpeg",
             "-y", 
@@ -97,34 +183,38 @@ def create_video_from_images(input_dir, output_file, fps, use_gpu=True):
         
         # Add encoder-specific options
         if encoder == "h264_videotoolbox":
-            # VideoToolbox specific options for quality
-            cmd.extend(["-b:v", "5M"])  # 5 Mbps bitrate
+            cmd.extend(["-b:v", "5M"])
         elif encoder == "h264_nvenc":
-            # NVENC specific options
             cmd.extend(["-preset", "p4", "-b:v", "5M"])
         elif encoder == "h264_amf":
-            # AMF specific options
             cmd.extend(["-quality", "balanced", "-b:v", "5M"])
         elif encoder == "h264_qsv":
-            # QSV specific options
             cmd.extend(["-preset", "medium", "-b:v", "5M"])
         elif encoder == "libx264":
-            # Software encoder options
             cmd.extend(["-preset", "medium", "-crf", "23"])
         
         cmd.append(output_file)
         
-        print(f"Running command: {' '.join(cmd)}")
-        print("Encoding video, this might take a while...")
+        print(f"Encoding video...")
         subprocess.run(cmd, check=True)
         print(f"Video created successfully: {output_file}")
+        
+        # Update index with all current images
+        print("Updating index...")
+        index_data["images"] = {}
+        for img_path in images:
+            img_key = os.path.basename(img_path)
+            index_data["images"][img_key] = get_image_metadata(img_path)
+        
+        save_index(index_path, index_data)
+        print(f"Index updated with {len(images)} images")
 
     except subprocess.CalledProcessError as e:
         print(f"Error creating video: {e}")
         # If GPU encoding failed, try falling back to CPU
         if use_gpu and encoder != "libx264":
             print("GPU encoding failed. Retrying with CPU encoder...")
-            create_video_from_images(input_dir, output_file, fps, use_gpu=False)
+            create_video_from_images(input_dir, output_file, fps, use_gpu=False, force_rebuild=force_rebuild)
             return
     finally:
         # Clean up the list file
@@ -132,15 +222,19 @@ def create_video_from_images(input_dir, output_file, fps, use_gpu=True):
             os.remove(list_file_path)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert webp images to video using ffmpeg with GPU acceleration.")
+    parser = argparse.ArgumentParser(
+        description="Convert webp images to video using ffmpeg with GPU acceleration and incremental updates."
+    )
     parser.add_argument("--input", required=True, help="Input directory containing .webp images or subdirectories of images")
     parser.add_argument("--output", required=True, help="Output video file path (for single dir) or output directory (for recursive)")
     parser.add_argument("--fps", type=float, default=1.0, help="Frames per second")
     parser.add_argument("--no-gpu", action="store_true", help="Disable GPU acceleration and use CPU encoding")
+    parser.add_argument("--force", action="store_true", help="Force rebuild even if no changes detected")
 
     args = parser.parse_args()
 
     use_gpu = not args.no_gpu
+    force_rebuild = args.force
 
     # Create videos directory if it doesn't exist
     videos_dir = "./videos"
@@ -155,24 +249,36 @@ if __name__ == "__main__":
         # Direct mode - save to videos folder
         output_filename = os.path.basename(args.output)
         output_path = os.path.join(videos_dir, output_filename)
-        create_video_from_images(args.input, output_path, args.fps, use_gpu)
+        print(f"\n{'='*60}")
+        print(f"Processing: {args.input}")
+        print(f"{'='*60}")
+        create_video_from_images(args.input, output_path, args.fps, use_gpu, force_rebuild)
     else:
         # Recursive mode
         print(f"No .webp images found in root of {args.input}. Checking subdirectories...")
 
         found_subdirs = False
-        for item in os.listdir(args.input):
+        subdirs = sorted([item for item in os.listdir(args.input) 
+                         if os.path.isdir(os.path.join(args.input, item)) 
+                         and not item.startswith('.')])
+        
+        for item in subdirs:
             sub_dir = os.path.join(args.input, item)
-            if os.path.isdir(sub_dir):
-                # Check if this subdir has images
-                sub_images = glob.glob(os.path.join(sub_dir, "*.webp"))
-                if sub_images:
-                    found_subdirs = True
-                    # Output filename is the folder name, saved to videos directory
-                    output_filename = f"{item}.mp4"
-                    output_path = os.path.join(videos_dir, output_filename)
-                    print(f"Processing subdirectory: {item} -> {output_path}")
-                    create_video_from_images(sub_dir, output_path, args.fps, use_gpu)
+            # Check if this subdir has images
+            sub_images = glob.glob(os.path.join(sub_dir, "*.webp"))
+            if sub_images:
+                found_subdirs = True
+                # Output filename is the folder name, saved to videos directory
+                output_filename = f"{item}.mp4"
+                output_path = os.path.join(videos_dir, output_filename)
+                print(f"\n{'='*60}")
+                print(f"Processing subdirectory: {item}")
+                print(f"{'='*60}")
+                create_video_from_images(sub_dir, output_path, args.fps, use_gpu, force_rebuild)
         
         if not found_subdirs:
             print(f"No subdirectories with .webp images found in {args.input}")
+        else:
+            print(f"\n{'='*60}")
+            print(f"All videos saved to: {videos_dir}")
+            print(f"{'='*60}")
