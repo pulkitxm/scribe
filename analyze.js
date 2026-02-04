@@ -27,6 +27,7 @@ const args = process.argv.slice(2);
 let concurrency = 1;
 let scribeFolder = process.env.SCRIBE_FOLDER;
 let skipConfirmation = false;
+let liveMode = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--concurrency' && i + 1 < args.length) {
@@ -41,6 +42,8 @@ for (let i = 0; i < args.length; i++) {
     i++;
   } else if ((args[i] === '--yes' || args[i] === '-y')) {
     skipConfirmation = true;
+  } else if (args[i] === '--live') {
+    liveMode = true;
   }
 }
 
@@ -95,7 +98,7 @@ function findIncompleteScreenshots(dir) {
 }
 
 
-async function processWithConcurrency(items, concurrency) {
+async function processWithConcurrency(items, concurrency, liveMode, scribeFolder) {
   const results = {
     success: 0,
     failed: 0,
@@ -104,7 +107,7 @@ async function processWithConcurrency(items, concurrency) {
 
   let processed = 0;
   let currentIndex = 0;
-  const total = items.length;
+  let total = items.length;
 
 
   async function processItem(item) {
@@ -118,6 +121,19 @@ async function processWithConcurrency(items, concurrency) {
       log.error(`Failed: ${path.basename(item.imagePath)}: ${err.message}`);
     }
     processed++;
+    
+    // In live mode, rescan for new incomplete screenshots
+    if (liveMode && processed % 5 === 0) {
+      const newIncomplete = findIncompleteScreenshots(scribeFolder);
+      const newTotal = newIncomplete.length;
+      if (newTotal > total) {
+        const newItems = newIncomplete.slice(total);
+        items.push(...newItems);
+        total = newTotal;
+        log.info(`Live update: Found ${newTotal - total + newItems.length} new incomplete screenshot(s)`);
+      }
+    }
+    
     if (processed % 1 === 0 || processed === total) {
       log.info(`Progress: ${processed}/${total} (${results.success} success, ${results.failed} failed)`);
     }
@@ -175,6 +191,9 @@ async function main() {
   console.log('\n' + '='.repeat(50));
   log.info(`Found ${incomplete.length} image(s) needing AI analysis`);
   log.info(`Concurrent requests: ${effectiveConcurrency}`);
+  if (liveMode) {
+    log.info(`Live mode: ENABLED (will scan for new screenshots during processing)`);
+  }
   console.log('='.repeat(50) + '\n');
 
   let answer = 'n';
@@ -193,7 +212,7 @@ async function main() {
   log.info(`Starting batch processing with ${effectiveConcurrency} concurrent request(s)...`);
 
   const startTime = Date.now();
-  const results = await processWithConcurrency(incomplete, effectiveConcurrency);
+  const results = await processWithConcurrency(incomplete, effectiveConcurrency, liveMode, scribeFolder);
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 

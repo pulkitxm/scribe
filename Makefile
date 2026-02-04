@@ -41,7 +41,7 @@ analyze:
 	@echo "GPU Status:"
 	@ollama ps 2>/dev/null || echo "  Ollama not running - GPU acceleration unavailable"
 	@echo ""
-	@pm2 start analyze.js --name scribe-analyzer --output logs/analyse.log --error logs/analyse.log -- --concurrency $(or $(THREADS),$(CONCURRENCY),4) $(if $(FOLDER),--folder "$(FOLDER)",) $(if $(YES),--yes,)
+	@pm2 start analyze.js --name scribe-analyzer --output logs/analyse.log --error logs/analyse.log -- --concurrency $(or $(THREADS),$(CONCURRENCY),4) $(if $(FOLDER),--folder "$(FOLDER)",) $(if $(YES),--yes,) $(if $(LIVE),--live,)
 
 analyze-stop:
 	@echo "Stopping analysis..."
@@ -140,6 +140,6 @@ get-daily-sizes:
 	@echo "Getting daily sizes..."
 	@du -d 1 -k "$(FOLDER)"
 
-videos:
+add-videos:
 	@echo "Creating daily video..."
 	python3 scripts/images_to_video.py --input './outputs' --output './output_video.mp4' --fps 15
