@@ -129,8 +129,9 @@ async function processWithConcurrency(items, concurrency, liveMode, scribeFolder
       if (newTotal > total) {
         const newItems = newIncomplete.slice(total);
         items.push(...newItems);
+        const addedCount = newTotal - total;
         total = newTotal;
-        log.info(`Live update: Found ${newTotal - total + newItems.length} new incomplete screenshot(s)`);
+        log.info(`Live update: Found ${addedCount} new incomplete screenshot(s), total now: ${total}`);
       }
     }
     
