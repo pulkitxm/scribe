@@ -135,7 +135,7 @@ async function DashboardContent({
     ? filteredDailyStats
     : filteredDailyStats.slice(-14);
 
-  const categoryLimit = isFiltered ? undefined : 8;
+  const categoryLimit = isFiltered ? 20 : 8;
 
   const appLimit = isFiltered ? undefined : 10;
   const appMinCount = isFiltered ? 1 : 10;

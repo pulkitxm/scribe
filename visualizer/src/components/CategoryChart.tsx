@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import type { DefaultLegendContentProps } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   title: string;
   limit?: number;
 }
+
+const DEFAULT_CATEGORY_LIMIT = 12;
 
 export default function CategoryChart({ data, title, limit }: Props) {
   let chartDataRaw = Object.entries(data)
@@ -26,9 +29,8 @@ export default function CategoryChart({ data, title, limit }: Props) {
     })
     .sort((a, b) => b.value - a.value);
 
-  if (limit) {
-    chartDataRaw = chartDataRaw.slice(0, limit);
-  }
+  const effectiveLimit = limit ?? DEFAULT_CATEGORY_LIMIT;
+  chartDataRaw = chartDataRaw.slice(0, effectiveLimit);
 
   const chartData = chartDataRaw;
 
@@ -42,6 +44,25 @@ export default function CategoryChart({ data, title, limit }: Props) {
     "hsl(var(--border))",
     "hsl(var(--muted))",
   ];
+
+  const renderLegend = (props: DefaultLegendContentProps) => {
+    const payload = props.payload ?? [];
+    return (
+      <div className="flex justify-center overflow-y-auto max-h-24 mt-2">
+        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 list-none m-0 p-0">
+          {payload.map((entry, index) => (
+            <li key={index} className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <span
+                className="inline-block shrink-0 w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span>{entry.value}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
 
   if (chartData.length === 0) {
     return (
@@ -100,13 +121,7 @@ export default function CategoryChart({ data, title, limit }: Props) {
               />
               <Legend
                 verticalAlign="bottom"
-                height={36}
-                iconType="circle"
-                formatter={(value) => (
-                  <span className="text-foreground text-sm font-medium ml-1">
-                    {value}
-                  </span>
-                )}
+                content={renderLegend}
               />
             </PieChart>
           </ResponsiveContainer>
