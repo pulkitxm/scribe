@@ -42,6 +42,12 @@ struct Analyzer {
         nodeProcess.standardError = pipe
         
         var env = ProcessInfo.processInfo.environment
+        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin"]
+        let currentPath = env["PATH"] ?? ""
+        let pathAdditions = extraPaths.filter { FileManager.default.fileExists(atPath: $0) }.joined(separator: ":")
+        if !pathAdditions.isEmpty {
+            env["PATH"] = pathAdditions + ":" + currentPath
+        }
         env["SCRIBE_ACTIVE_APP"] = getActiveAppName()
         env["SCRIBE_OPENED_APPS"] = getOpenedApps().joined(separator: ", ")
         env["SCRIBE_BATTERY"] = getBatteryLevel()
