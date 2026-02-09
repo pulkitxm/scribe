@@ -793,9 +793,11 @@ export default function ScreenshotDetailView({
                     {data.location.name}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground font-mono">
-                  {data.location.latitude.toFixed(6)}, {data.location.longitude.toFixed(6)}
-                </p>
+                <Link
+                  href={`/gallery?location=${encodeURIComponent(`${data.location.latitude.toFixed(2)},${data.location.longitude.toFixed(2)}`)}`}
+                 className="text-xs text-muted-foreground font-mono block hover:underline decoration-primary underline-offset-4">
+                  {data.location.latitude.toFixed(2)}, {data.location.longitude.toFixed(2)}
+                </Link>
                 <a
                   href={`https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}`}
                   target="_blank"
@@ -821,7 +823,6 @@ export default function ScreenshotDetailView({
             </Card>
           )}
 
-          {}
           {data.context.code_context?.language && (
             <Card>
               <CardHeader>

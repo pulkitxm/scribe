@@ -59,6 +59,8 @@ interface GalleryFiltersProps {
   currentHighCpu?: string;
   currentHasErrors?: string;
   currentNetwork?: string;
+  currentLocationLat?: string;
+  currentLocationLon?: string;
 }
 
 interface ActiveFilter {
@@ -97,10 +99,14 @@ export default function GalleryFilters({
   currentHighCpu,
   currentHasErrors,
   currentNetwork,
+  currentLocationLat,
+  currentLocationLon,
 }: GalleryFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(currentText || "");
+  const [locationLat, setLocationLat] = useState(currentLocationLat ?? "");
+  const [locationLon, setLocationLon] = useState(currentLocationLon ?? "");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [focusRange, setFocusRange] = useState<[number, number]>([
     currentMinFocus ? parseInt(currentMinFocus) : 0,
@@ -126,6 +132,20 @@ export default function GalleryFilters({
     } else {
       params.delete(key);
     }
+    router.push(`/gallery?${params.toString()}`, { scroll: false });
+  };
+
+  const updateLocationFilter = (lat: string, lon: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (lat.trim() && lon.trim()) {
+      params.set("locationLat", lat.trim());
+      params.set("locationLon", lon.trim());
+      params.delete("location");
+    } else {
+      params.delete("locationLat");
+      params.delete("locationLon");
+    }
+    params.delete("page");
     router.push(`/gallery?${params.toString()}`, { scroll: false });
   };
 
@@ -158,7 +178,13 @@ export default function GalleryFilters({
 
   const removeFilter = (key: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete(key);
+    if (key === "locationLat" || key === "locationLon") {
+      params.delete("locationLat");
+      params.delete("locationLon");
+      params.delete("location");
+    } else {
+      params.delete(key);
+    }
     router.push(`/gallery?${params.toString()}`, { scroll: false });
   };
 
@@ -176,8 +202,15 @@ export default function GalleryFilters({
     setSearchValue(currentText || "");
   }, [currentText]);
 
+  useEffect(() => {
+    setLocationLat(currentLocationLat ?? "");
+    setLocationLon(currentLocationLon ?? "");
+  }, [currentLocationLat, currentLocationLon]);
+
   const clearFilters = () => {
     setSearchValue("");
+    setLocationLat("");
+    setLocationLon("");
     setFocusRange([0, 100]);
     router.push("/gallery", { scroll: false });
   };
@@ -262,6 +295,12 @@ export default function GalleryFilters({
       filters.push({ key: "hasErrors", label: "Has Errors", value: "Yes" });
     if (currentNetwork)
       filters.push({ key: "network", label: "Network", value: currentNetwork });
+    if (currentLocationLat && currentLocationLon)
+      filters.push({
+        key: "locationLat",
+        label: "Location",
+        value: `${currentLocationLat}, ${currentLocationLon}`,
+      });
     return filters;
   };
 
@@ -277,7 +316,8 @@ export default function GalleryFilters({
     currentIsMeeting === "true" ||
     currentLowBattery === "true" ||
     currentHighCpu === "true" ||
-    currentHasErrors === "true";
+    currentHasErrors === "true" ||
+    (currentLocationLat != null && currentLocationLat !== "" && currentLocationLon != null && currentLocationLon !== "");
 
   useEffect(() => {
     if (hasAdvancedFilters) {
@@ -523,6 +563,28 @@ export default function GalleryFilters({
                 <SelectItem value="night">🌙 Night (9pm-5am)</SelectItem>
               </SelectContent>
             </Select>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                Location
+              </span>
+              <Input
+                type="text"
+                placeholder="Latitude"
+                value={locationLat}
+                onChange={(e) => setLocationLat(e.target.value)}
+                onBlur={() => updateLocationFilter(locationLat, locationLon)}
+                className="w-[120px] bg-background/50"
+              />
+              <Input
+                type="text"
+                placeholder="Longitude"
+                value={locationLon}
+                onChange={(e) => setLocationLon(e.target.value)}
+                onBlur={() => updateLocationFilter(locationLat, locationLon)}
+                className="w-[120px] bg-background/50"
+              />
+            </div>
           </div>
 
           <div className="space-y-3 p-3 bg-muted/30 rounded-lg">

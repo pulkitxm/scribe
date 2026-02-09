@@ -46,6 +46,8 @@ interface PageProps {
     hasErrors?: string;
     network?: string;
     location?: string;
+    locationLat?: string;
+    locationLon?: string;
   }>;
 }
 
@@ -95,6 +97,8 @@ async function GalleryContent({
   hasErrors,
   network,
   location,
+  locationLat,
+  locationLon,
 }: {
   date?: string;
   tag?: string;
@@ -118,6 +122,8 @@ async function GalleryContent({
   hasErrors?: string;
   network?: string;
   location?: string;
+  locationLat?: string;
+  locationLon?: string;
 }) {
   const filters: FilterOptions = {};
 
@@ -186,7 +192,15 @@ async function GalleryContent({
   if (highCpu === "true") filters.highCpu = true;
   if (hasErrors === "true") filters.hasErrors = true;
   if (network) filters.network = network;
-  if (location) filters.location = location;
+  if (location) {
+    filters.location = location;
+  } else if (locationLat != null && locationLat !== "" && locationLon != null && locationLon !== "") {
+    const lat = parseFloat(locationLat);
+    const lon = parseFloat(locationLon);
+    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+      filters.location = `${Math.round(lat * 100) / 100},${Math.round(lon * 100) / 100}`;
+    }
+  }
 
   const {
     screenshots: initialScreenshots,
@@ -258,7 +272,19 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     params.app ||
     params.project ||
     params.network ||
-    params.location;
+    params.location ||
+    (params.locationLat && params.locationLon);
+
+  const locationLat =
+    params.locationLat ??
+    (params.location?.includes(",")
+      ? params.location.split(",")[0]?.trim()
+      : undefined);
+  const locationLon =
+    params.locationLon ??
+    (params.location?.includes(",")
+      ? params.location.split(",")[1]?.trim()
+      : undefined);
 
   return (
     <div className="space-y-6">
@@ -299,6 +325,8 @@ export default async function GalleryPage({ searchParams }: PageProps) {
         currentHighCpu={params.highCpu}
         currentHasErrors={params.hasErrors}
         currentNetwork={params.network}
+        currentLocationLat={locationLat}
+        currentLocationLon={locationLon}
       />
 
       <Suspense fallback={<GalleryGridSkeleton />}>
@@ -325,6 +353,8 @@ export default async function GalleryPage({ searchParams }: PageProps) {
           hasErrors={params.hasErrors}
           network={params.network}
           location={params.location}
+          locationLat={params.locationLat}
+          locationLon={params.locationLon}
         />
       </Suspense>
     </div>

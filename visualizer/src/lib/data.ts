@@ -235,13 +235,26 @@ export function applyFilters(
     result = result.filter((s) => s.data.workspace_type === filters.workspace);
   }
   if (filters.location) {
+    const locationFilter = filters.location.trim();
+    const normalizeLocationKey = (value: string) => {
+      const parts = value.split(",").map((p) => p.trim());
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0]);
+        const lon = parseFloat(parts[1]);
+        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+          return `${Math.round(lat * 100) / 100},${Math.round(lon * 100) / 100}`;
+        }
+      }
+      return value;
+    };
+    const normalizedFilter = normalizeLocationKey(locationFilter);
     result = result.filter((s) => {
       const loc = s.data.location;
       if (!loc) return false;
       const key =
         loc.name?.trim() ||
         `${Math.round(loc.latitude * 100) / 100},${Math.round(loc.longitude * 100) / 100}`;
-      return key === filters.location;
+      return key === normalizedFilter;
     });
   }
   if (filters.text) {
