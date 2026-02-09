@@ -20,6 +20,7 @@ help:
 	@echo "  make dev           - Run the script directly for testing"
 	@echo "  make run-once      - Run once and exit"
 	@echo "  make analyze       - Batch analyze incomplete screenshots"
+	@echo "  make analyze-count - Print number of unanalyzed images"
 	@echo "  make viz-start     - Start the visualizer (pnpm serve via pm2)"
 	@echo "  make viz-stop      - Stop the visualizer"
 	@echo "  make viz-restart   - Restart the visualizer"
@@ -35,6 +36,9 @@ dev:
 run-once:
 	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli --run-once
+
+analyze-count:
+	@node analyze.js --count-only $(if $(FOLDER),--folder "$(FOLDER)",)
 
 analyze:
 	@echo "Analyzing incomplete screenshots with GPU acceleration..."

@@ -28,6 +28,7 @@ let concurrency = 1;
 let scribeFolder = process.env.SCRIBE_FOLDER;
 let skipConfirmation = false;
 let liveMode = false;
+let countOnly = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--concurrency' && i + 1 < args.length) {
@@ -44,6 +45,8 @@ for (let i = 0; i < args.length; i++) {
     skipConfirmation = true;
   } else if (args[i] === '--live') {
     liveMode = true;
+  } else if (args[i] === '--count-only') {
+    countOnly = true;
   }
 }
 
@@ -56,6 +59,12 @@ if (!fs.existsSync(scribeFolder)) {
   log.error(`SCRIBE_FOLDER not found: ${scribeFolder}`);
   log.info('Set SCRIBE_FOLDER environment variable or use --folder flag');
   process.exit(1);
+}
+
+if (countOnly) {
+  const incomplete = findIncompleteScreenshots(scribeFolder);
+  console.log(incomplete.length);
+  process.exit(0);
 }
 
 function isIncompleteJSON(jsonPath) {
