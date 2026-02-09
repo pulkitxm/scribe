@@ -73,6 +73,14 @@ export default async function AnalyticsPage() {
       count: `${Object.keys(stats.networks || {}).length} networks`,
     },
     {
+      title: "Locations",
+      href: "/analytics/locations",
+      icon: "📍",
+      description: "Where screenshots were captured",
+      stat: `Top: ${getTop(stats.locations || {})[0] || "None"}`,
+      count: `${Object.keys(stats.locations || {}).length} locations`,
+    },
+    {
       title: "System Health",
       href: "/analytics/system",
       icon: "⚙️",

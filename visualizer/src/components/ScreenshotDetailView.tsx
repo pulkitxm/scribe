@@ -20,6 +20,7 @@ import {
   Video,
   Activity,
   FileJson,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -759,8 +760,66 @@ export default function ScreenshotDetailView({
                   {Math.round(data.confidence * 100)}%
                 </span>
               </div>
+              {data.location && (
+                <div className="flex justify-between items-center text-sm pt-3 border-t">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> Location
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline text-foreground decoration-primary underline-offset-4 truncate max-w-[180px] text-right"
+                    title={`${data.location.latitude}, ${data.location.longitude}`}
+                  >
+                    {data.location.name || `${data.location.latitude.toFixed(4)}, ${data.location.longitude.toFixed(4)}`}
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {}
+          {data.location && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4" /> Location
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data.location.name && (
+                  <p className="text-sm font-medium text-foreground">
+                    {data.location.name}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground font-mono">
+                  {data.location.latitude.toFixed(6)}, {data.location.longitude.toFixed(6)}
+                </p>
+                <a
+                  href={`https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  View on Google Maps →
+                </a>
+                <div className="rounded-lg overflow-hidden border border-border mt-2">
+                  <iframe
+                    title="Location map"
+                    src={`https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}&z=15&output=embed`}
+                    width="100%"
+                    height="240"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="w-full block"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {}
           {data.context.code_context?.language && (

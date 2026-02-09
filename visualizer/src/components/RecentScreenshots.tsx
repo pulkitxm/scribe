@@ -33,6 +33,7 @@ export default function RecentScreenshots({
   if (filter.workspace) queryParams.set("workspace", filter.workspace);
   if (filter.domain) queryParams.set("domain", filter.domain);
   if (filter.language) queryParams.set("language", filter.language);
+  if (filter.location) queryParams.set("location", filter.location);
 
   const galleryUrl = `/gallery?${queryParams.toString()}`;
 

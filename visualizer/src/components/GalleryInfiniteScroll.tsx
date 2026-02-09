@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useLayoutEffect,
-} from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { FilterOptions, Screenshot } from "@/types/screenshot";
 import type { GalleryCursor } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,9 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchScreenshots } from "@/app/gallery/actions";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-
-const ROW_HEIGHT_ESTIMATE = 300;
-const COLS = 4;
 
 interface GalleryInfiniteScrollProps {
   initialScreenshots: Screenshot[];
@@ -104,31 +94,10 @@ export default function GalleryInfiniteScroll({
     });
   }
 
-  const parentRef = useRef<HTMLDivElement>(null);
-  const [scrollMargin, setScrollMargin] = useState(0);
-  useLayoutEffect(() => {
-    if (parentRef.current) {
-      setScrollMargin(
-        parentRef.current.getBoundingClientRect().top + window.scrollY,
-      );
-    }
-  }, [screenshots.length]);
-
-  const rowCount = Math.ceil(screenshots.length / COLS);
-  const rowVirtualizer = useWindowVirtualizer({
-    count: rowCount,
-    estimateSize: () => ROW_HEIGHT_ESTIMATE,
-    overscan: 3,
-    scrollMargin,
-  });
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalHeight = rowVirtualizer.getTotalSize();
-  const margin = rowVirtualizer.options.scrollMargin;
-
   const renderCard = useCallback(
     (screenshot: Screenshot, index: number) => (
       <div key={`${screenshot.date}-${screenshot.id}-${index}`}>
-        <Card className="overflow-hidden transition-colors hover:border-foreground/20 h-full flex flex-col group">
+        <Card className="overflow-hidden transition-colors hover:border-foreground/20 flex flex-col group h-full">
           <div
             className="relative cursor-zoom-in"
             onClick={(e) => {
@@ -197,6 +166,17 @@ export default function GalleryInfiniteScroll({
                     {screenshot.data.evidence.active_app_guess}
                   </span>
                 )}
+                {screenshot.data.location && (
+                  <span
+                    className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded truncate max-w-[120px]"
+                    title={
+                      screenshot.data.location.name ||
+                      `${screenshot.data.location.latitude}, ${screenshot.data.location.longitude}`
+                    }
+                  >
+                    📍 {screenshot.data.location.name || "Location"}
+                  </span>
+                )}
               </div>
 
               {(screenshot.data.summary_tags || []).length > 0 && (
@@ -240,41 +220,10 @@ export default function GalleryInfiniteScroll({
 
   return (
     <div className="space-y-8">
-      <div
-        ref={parentRef}
-        style={{
-          height: totalHeight,
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        {virtualRows.map((virtualRow) => {
-          const start = virtualRow.index * COLS;
-          const rowScreenshots = screenshots.slice(
-            start,
-            Math.min(start + COLS, screenshots.length),
-          );
-          const isLastRow = virtualRow.index === rowCount - 1;
-          return (
-            <div
-              key={virtualRow.key}
-              ref={isLastRow ? lastElementRef : undefined}
-              data-index={virtualRow.index}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start - margin}px)`,
-              }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4"
-            >
-              {rowScreenshots.map((s, i) => renderCard(s, start + i))}
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {screenshots.map((s, i) => renderCard(s, i))}
       </div>
+      <div ref={lastElementRef} className="h-4" aria-hidden />
 
       <Lightbox
         open={lightboxIndex >= 0}

@@ -12,6 +12,7 @@ export type {
   EntertainmentContext,
   SystemMetadata,
   AudioDevice,
+  Location,
 } from "@/lib/schemas";
 
 import { ScreenshotData } from "@/lib/schemas";
@@ -82,4 +83,5 @@ export interface FilterOptions {
   hasErrors?: boolean;
   network?: string;
   dateFolder?: string;
+  location?: string;
 }

@@ -234,6 +234,16 @@ export function applyFilters(
   if (filters.workspace) {
     result = result.filter((s) => s.data.workspace_type === filters.workspace);
   }
+  if (filters.location) {
+    result = result.filter((s) => {
+      const loc = s.data.location;
+      if (!loc) return false;
+      const key =
+        loc.name?.trim() ||
+        `${Math.round(loc.latitude * 100) / 100},${Math.round(loc.longitude * 100) / 100}`;
+      return key === filters.location;
+    });
+  }
   if (filters.text) {
     const query = filters.text.trim();
     const words = query.split(/\s+/).filter(Boolean);
@@ -402,6 +412,47 @@ export function applyFilters(
   return result;
 }
 
+export interface LocationPoint {
+  lat: number;
+  lng: number;
+  count: number;
+  locationKey: string;
+}
+
+/**
+ * Returns one point per unique location (by name or rounded lat,lng) with
+ * representative coordinates and count, for map plotting.
+ */
+export function getLocationPoints(screenshots: Screenshot[]): LocationPoint[] {
+  const byKey = new Map<
+    string,
+    { lat: number; lng: number; count: number }
+  >();
+  for (const s of screenshots) {
+    const loc = s.data.location;
+    if (!loc) continue;
+    const key =
+      loc.name?.trim() ||
+      `${Math.round(loc.latitude * 100) / 100},${Math.round(loc.longitude * 100) / 100}`;
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      byKey.set(key, {
+        lat: loc.latitude,
+        lng: loc.longitude,
+        count: 1,
+      });
+    }
+  }
+  return Array.from(byKey.entries()).map(([locationKey, { lat, lng, count }]) => ({
+    lat,
+    lng,
+    count,
+    locationKey,
+  }));
+}
+
 export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
   const dates = getAllDates();
   let base: Screenshot[] = [];
@@ -468,6 +519,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
       domains: {},
       tags: {},
       workspaceTypes: {},
+      locations: {},
       avgConfidence: 0,
       totalSize: 0,
     };
@@ -486,6 +538,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
   const domains: Record<string, number> = {};
   const tags: Record<string, number> = {};
   const workspaceTypes: Record<string, number> = {};
+  const locations: Record<string, number> = {};
 
   let totalFocus = 0;
   let totalProductivity = 0;
@@ -609,6 +662,14 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     if (repo) {
       repos[repo] = (repos[repo] || 0) + 1;
     }
+
+    const loc = item.data.location;
+    if (loc) {
+      const key =
+        loc.name?.trim() ||
+        `${Math.round(loc.latitude * 100) / 100},${Math.round(loc.longitude * 100) / 100}`;
+      locations[key] = (locations[key] || 0) + 1;
+    }
   }
 
   return {
@@ -646,6 +707,7 @@ export function getExtendedStats(screenshots: Screenshot[]) {
     domains,
     tags,
     workspaceTypes,
+    locations,
     networks,
     avgConfidence: Math.round((totalConfidence / screenshots.length) * 100),
     totalSize: 0,

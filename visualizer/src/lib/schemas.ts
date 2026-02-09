@@ -178,6 +178,14 @@ export const TimestampSchema = z.object({
 
 export type Timestamp = z.infer<typeof TimestampSchema>;
 
+export const LocationSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  name: z.string().optional(),
+});
+
+export type Location = z.infer<typeof LocationSchema>;
+
 export const VisualizationSchema = z.object({
   color_code: z.string().optional(),
   emoji: z.string().optional(),
@@ -243,6 +251,7 @@ export const ScreenshotDataSchema = z.object({
   system_metadata: SystemMetadataSchema.optional(),
 
   timestamp: TimestampSchema.optional(),
+  location: LocationSchema.optional(),
   visualization: VisualizationSchema.optional(),
   summary: SummarySchema.optional(),
 });

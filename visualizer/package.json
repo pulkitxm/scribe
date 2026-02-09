@@ -12,6 +12,8 @@
     "check-format": "prettier --check ."
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
     "@tanstack/react-virtual": "^3.13.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.12",
@@ -43,8 +45,9 @@
     "yet-another-react-lightbox": "^3.28.0",
     "zod": "^4.3.6"
   },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
+"devDependencies": {
+  "@types/leaflet": "^1.9.8",
+  "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

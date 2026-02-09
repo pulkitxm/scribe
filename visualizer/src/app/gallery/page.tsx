@@ -45,6 +45,7 @@ interface PageProps {
     highCpu?: string;
     hasErrors?: string;
     network?: string;
+    location?: string;
   }>;
 }
 
@@ -93,6 +94,7 @@ async function GalleryContent({
   highCpu,
   hasErrors,
   network,
+  location,
 }: {
   date?: string;
   tag?: string;
@@ -115,6 +117,7 @@ async function GalleryContent({
   highCpu?: string;
   hasErrors?: string;
   network?: string;
+  location?: string;
 }) {
   const filters: FilterOptions = {};
 
@@ -183,6 +186,7 @@ async function GalleryContent({
   if (highCpu === "true") filters.highCpu = true;
   if (hasErrors === "true") filters.hasErrors = true;
   if (network) filters.network = network;
+  if (location) filters.location = location;
 
   const {
     screenshots: initialScreenshots,
@@ -253,7 +257,8 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     params.text ||
     params.app ||
     params.project ||
-    params.network;
+    params.network ||
+    params.location;
 
   return (
     <div className="space-y-6">
@@ -319,6 +324,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
           highCpu={params.highCpu}
           hasErrors={params.hasErrors}
           network={params.network}
+          location={params.location}
         />
       </Suspense>
     </div>
