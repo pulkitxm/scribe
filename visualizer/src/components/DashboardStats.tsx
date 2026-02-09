@@ -35,172 +35,181 @@ function formatBytes(bytes: number, decimals = 2) {
 function DashboardStats({ stats, dailyStats }: DashboardStatsProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
-  const cards = useMemo(() => [
-    {
-      id: "screenshots",
-      label: "Screenshots",
-      value: stats.totalScreenshots.toLocaleString(),
-      icon: Clock,
-      progress: null,
-      details: (
-        <div className="space-y-4">
-          <p>Total screenshots captured in the current filtered view.</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg bg-muted/20">
-              <div className="text-sm text-muted-foreground">Photos</div>
-              <div className="text-2xl font-bold">{stats.totalScreenshots}</div>
-            </div>
-            <div className="p-4 border rounded-lg bg-muted/20">
-              <div className="text-sm text-muted-foreground">Total Size</div>
-              <div className="text-2xl font-bold">
-                {formatBytes(stats.totalSize || 0)}
+  const cards = useMemo(
+    () => [
+      {
+        id: "screenshots",
+        label: "Screenshots",
+        value: stats.totalScreenshots.toLocaleString(),
+        icon: Clock,
+        progress: null,
+        details: (
+          <div className="space-y-4">
+            <p>Total screenshots captured in the current filtered view.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg bg-muted/20">
+                <div className="text-sm text-muted-foreground">Photos</div>
+                <div className="text-2xl font-bold">
+                  {stats.totalScreenshots}
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg bg-muted/20">
+                <div className="text-sm text-muted-foreground">Total Size</div>
+                <div className="text-2xl font-bold">
+                  {formatBytes(stats.totalSize || 0)}
+                </div>
               </div>
             </div>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Day-wise Split</h4>
-            <ScrollArea className="h-[300px]">
-              <DailyStatsTable dailyStats={dailyStats} />
-            </ScrollArea>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "focus",
-      label: "Avg Focus",
-      value: stats.avgFocus,
-      icon: Target,
-      progress: stats.avgFocus,
-      details: (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Focus score based on screen content & app usage.
-          </p>
-          <div className="flex items-center gap-4">
-            <div className="text-4xl font-bold text-primary">
-              {stats.avgFocus}
-            </div>
-            <span className="text-sm text-muted-foreground">/ 100</span>
-          </div>
-          <Progress value={stats.avgFocus} className="h-2" />
-
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Most Used Apps</h4>
-            <div className="space-y-1">
-              {Object.entries(stats.apps)
-                .sort(([, a], [, b]) => (b as any).count - (a as any).count)
-                .slice(0, 5)
-                .map(([app, data]: [string, any]) => (
-                  <div key={app} className="flex justify-between text-sm">
-                    <span>{app}</span>
-                    <div className="flex gap-2">
-                      <span className="font-mono">{data.avgFocus}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "productivity",
-      label: "Productivity",
-      value: stats.avgProductivity,
-      icon: Zap,
-      progress: stats.avgProductivity,
-      details: (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Productivity score based on categorized activity.
-          </p>
-          <div className="flex items-center gap-4">
-            <div className="text-4xl font-bold text-primary">
-              {stats.avgProductivity}
-            </div>
-            <span className="text-sm text-muted-foreground">/ 100</span>
-          </div>
-          <Progress value={stats.avgProductivity} className="h-2" />
-
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Top Categories</h4>
-            <div className="space-y-1">
-              {Object.entries(stats.categories)
-                .sort(([, a], [, b]) => (b as any).count - (a as any).count)
-                .slice(0, 5)
-                .map(([cat, data]: [string, any]) => (
-                  <div key={cat} className="flex justify-between text-sm">
-                    <span>{cat}</span>
-                    <div className="flex gap-2">
-                      <span className="font-mono">{data.avgProductivity}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "context",
-      label: "Context",
-      value: Object.keys(stats.workTypes).length,
-      subtext: "Work Types Detected",
-      icon: Lightbulb,
-      progress: null,
-      details: (
-        <ScrollArea className="h-[60vh] pr-4">
-          <div className="space-y-6">
-            <p>Detected contexts based on your activity.</p>
 
             <div>
-              <h4 className="text-sm font-semibold mb-2">Work Types</h4>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(stats.workTypes)
-                  .sort(([, a], [, b]) => (b as number) - (a as number))
-                  .map(([type, count]) => (
-                    <Badge
-                      key={type}
-                      variant="secondary"
-                      className="flex gap-2"
-                    >
-                      <span>{type}</span>
-                      <span className="opacity-50 text-[10px]">
-                        {count as number}
-                      </span>
-                    </Badge>
+              <h4 className="text-sm font-semibold mb-2">Day-wise Split</h4>
+              <ScrollArea className="h-[300px]">
+                <DailyStatsTable dailyStats={dailyStats} />
+              </ScrollArea>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: "focus",
+        label: "Avg Focus",
+        value: stats.avgFocus,
+        icon: Target,
+        progress: stats.avgFocus,
+        details: (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Focus score based on screen content & app usage.
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="text-4xl font-bold text-primary">
+                {stats.avgFocus}
+              </div>
+              <span className="text-sm text-muted-foreground">/ 100</span>
+            </div>
+            <Progress value={stats.avgFocus} className="h-2" />
+
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Most Used Apps</h4>
+              <div className="space-y-1">
+                {Object.entries(stats.apps)
+                  .sort(([, a], [, b]) => (b as any).count - (a as any).count)
+                  .slice(0, 5)
+                  .map(([app, data]: [string, any]) => (
+                    <div key={app} className="flex justify-between text-sm">
+                      <span>{app}</span>
+                      <div className="flex gap-2">
+                        <span className="font-mono">{data.avgFocus}</span>
+                      </div>
+                    </div>
                   ))}
               </div>
             </div>
+          </div>
+        ),
+      },
+      {
+        id: "productivity",
+        label: "Productivity",
+        value: stats.avgProductivity,
+        icon: Zap,
+        progress: stats.avgProductivity,
+        details: (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Productivity score based on categorized activity.
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="text-4xl font-bold text-primary">
+                {stats.avgProductivity}
+              </div>
+              <span className="text-sm text-muted-foreground">/ 100</span>
+            </div>
+            <Progress value={stats.avgProductivity} className="h-2" />
 
-            {Object.keys(stats.apps).length > 0 && (
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Top Apps</h4>
-                <div className="space-y-2">
-                  {Object.entries(stats.apps)
-                    .sort(([, a], [, b]) => (b as any).count - (a as any).count)
-                    .slice(0, 10)
-                    .map(([app, data]: [string, any]) => (
-                      <div
-                        key={app}
-                        className="flex justify-between items-center text-sm p-2 rounded hover:bg-muted"
-                      >
-                        <span>{app}</span>
-                        <span className="text-muted-foreground">
-                          {data.count} uses
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Top Categories</h4>
+              <div className="space-y-1">
+                {Object.entries(stats.categories)
+                  .sort(([, a], [, b]) => (b as any).count - (a as any).count)
+                  .slice(0, 5)
+                  .map(([cat, data]: [string, any]) => (
+                    <div key={cat} className="flex justify-between text-sm">
+                      <span>{cat}</span>
+                      <div className="flex gap-2">
+                        <span className="font-mono">
+                          {data.avgProductivity}
                         </span>
                       </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: "context",
+        label: "Context",
+        value: Object.keys(stats.workTypes).length,
+        subtext: "Work Types Detected",
+        icon: Lightbulb,
+        progress: null,
+        details: (
+          <ScrollArea className="h-[60vh] pr-4">
+            <div className="space-y-6">
+              <p>Detected contexts based on your activity.</p>
+
+              <div>
+                <h4 className="text-sm font-semibold mb-2">Work Types</h4>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(stats.workTypes)
+                    .sort(([, a], [, b]) => (b as number) - (a as number))
+                    .map(([type, count]) => (
+                      <Badge
+                        key={type}
+                        variant="secondary"
+                        className="flex gap-2"
+                      >
+                        <span>{type}</span>
+                        <span className="opacity-50 text-[10px]">
+                          {count as number}
+                        </span>
+                      </Badge>
                     ))}
                 </div>
               </div>
-            )}
-          </div>
-        </ScrollArea>
-      ),
-    },
-  ], [stats, dailyStats]);
+
+              {Object.keys(stats.apps).length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Top Apps</h4>
+                  <div className="space-y-2">
+                    {Object.entries(stats.apps)
+                      .sort(
+                        ([, a], [, b]) => (b as any).count - (a as any).count,
+                      )
+                      .slice(0, 10)
+                      .map(([app, data]: [string, any]) => (
+                        <div
+                          key={app}
+                          className="flex justify-between items-center text-sm p-2 rounded hover:bg-muted"
+                        >
+                          <span>{app}</span>
+                          <span className="text-muted-foreground">
+                            {data.count} uses
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        ),
+      },
+    ],
+    [stats, dailyStats],
+  );
 
   const selectedData = useMemo(
     () => cards.find((c) => c.id === selectedCard),

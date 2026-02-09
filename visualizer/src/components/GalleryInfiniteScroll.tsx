@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useLayoutEffect } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
@@ -102,7 +108,9 @@ export default function GalleryInfiniteScroll({
   const [scrollMargin, setScrollMargin] = useState(0);
   useLayoutEffect(() => {
     if (parentRef.current) {
-      setScrollMargin(parentRef.current.getBoundingClientRect().top + window.scrollY);
+      setScrollMargin(
+        parentRef.current.getBoundingClientRect().top + window.scrollY,
+      );
     }
   }, [screenshots.length]);
 
@@ -193,16 +201,14 @@ export default function GalleryInfiniteScroll({
 
               {(screenshot.data.summary_tags || []).length > 0 && (
                 <div className="flex flex-wrap gap-1 pt-1">
-                  {screenshot.data.summary_tags
-                    ?.slice(0, 3)
-                    .map((tag, i) => (
-                      <span
-                        key={i}
-                        className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
+                  {screenshot.data.summary_tags?.slice(0, 3).map((tag, i) => (
+                    <span
+                      key={i}
+                      className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
                   {(screenshot.data.summary_tags?.length || 0) > 3 && (
                     <span className="text-[10px] text-muted-foreground px-1">
                       +{screenshot.data.summary_tags!.length - 3}
@@ -254,14 +260,14 @@ export default function GalleryInfiniteScroll({
               key={virtualRow.key}
               ref={isLastRow ? lastElementRef : undefined}
               data-index={virtualRow.index}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start - margin}px)`,
-                }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start - margin}px)`,
+              }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4"
             >
               {rowScreenshots.map((s, i) => renderCard(s, start + i))}

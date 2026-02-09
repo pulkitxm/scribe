@@ -97,7 +97,12 @@ function RankingTableInner({
               {linkPrefix && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      asChild
+                    >
                       <Link
                         href={`${linkPrefix}/${encodeURIComponent(item.name)}`}
                       >
@@ -113,7 +118,12 @@ function RankingTableInner({
               {galleryFilterKey && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      asChild
+                    >
                       <Link
                         href={`/gallery?${galleryFilterKey}=${encodeURIComponent(item.name)}`}
                       >
@@ -178,7 +188,9 @@ function RankingTableInner({
               />
             </TableRow>
           )}
-          {useVirtual && virtualRows && virtualRows.length > 0 &&
+          {useVirtual &&
+            virtualRows &&
+            virtualRows.length > 0 &&
             virtualRows.map((virtualRow) => {
               const item = items[virtualRow.index];
               return (
@@ -200,9 +212,10 @@ function RankingTableInner({
                 </TableRow>
               );
             })}
-          {!useVirtual && items.map((item, index) => (
-            <TableRow key={item.name}>{renderCells(item, index)}</TableRow>
-          ))}
+          {!useVirtual &&
+            items.map((item, index) => (
+              <TableRow key={item.name}>{renderCells(item, index)}</TableRow>
+            ))}
         </TableBody>
       </Table>
     </div>
