@@ -12,6 +12,7 @@
     "check-format": "prettier --check ."
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.13.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",

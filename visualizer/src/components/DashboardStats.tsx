@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -30,16 +30,12 @@ function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default function DashboardStats({
-  stats,
-  dailyStats,
-}: DashboardStatsProps) {
+function DashboardStats({ stats, dailyStats }: DashboardStatsProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
-  const cards = [
+  const cards = useMemo(() => [
     {
       id: "screenshots",
       label: "Screenshots",
@@ -204,9 +200,12 @@ export default function DashboardStats({
         </ScrollArea>
       ),
     },
-  ];
+  ], [stats, dailyStats]);
 
-  const selectedData = cards.find((c) => c.id === selectedCard);
+  const selectedData = useMemo(
+    () => cards.find((c) => c.id === selectedCard),
+    [cards, selectedCard],
+  );
 
   return (
     <>
@@ -262,3 +261,5 @@ export default function DashboardStats({
     </>
   );
 }
+
+export default memo(DashboardStats);

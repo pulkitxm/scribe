@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  getAllDates,
-  getScreenshotsForDate,
-  getAllScreenshots,
-} from "@/lib/data";
+import { getAllDates, getAllScreenshots, getScreenshotsPage } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -188,12 +184,17 @@ async function GalleryContent({
   if (hasErrors === "true") filters.hasErrors = true;
   if (network) filters.network = network;
 
-  const screenshots = getAllScreenshots(filters);
-  const initialScreenshots = screenshots.slice(0, 48);
+  const {
+    screenshots: initialScreenshots,
+    nextCursor,
+    hasMore,
+  } = getScreenshotsPage(filters, 48, null);
 
   return (
     <GalleryInfiniteScroll
       initialScreenshots={initialScreenshots}
+      initialNextCursor={nextCursor}
+      initialHasMore={hasMore}
       initialFilters={filters}
     />
   );

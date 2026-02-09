@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   getAllScreenshots,
+  applyFilters,
   getDailyStats,
   getExtendedStats,
   getHighFocusScreenshots,
@@ -96,14 +97,14 @@ async function DashboardContent({
   category?: string;
 }) {
   const filters = getFiltersFromParams(range, category);
-  const screenshots = getAllScreenshots(filters);
+  const allScreenshots = getAllScreenshots();
+  const screenshots = applyFilters(allScreenshots, filters);
   const stats = getExtendedStats(screenshots);
   stats.totalSize = getTotalScribeSize();
   const appStats = getAppStats(screenshots);
 
   const filteredDailyStats = getDailyStats(screenshots);
   const highFocusScreenshots = getHighFocusScreenshots(4);
-  const allScreenshots = getAllScreenshots();
   const globalStats = getExtendedStats(allScreenshots);
   const insights = getSmartInsights(allScreenshots, globalStats);
 

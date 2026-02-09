@@ -105,7 +105,10 @@ export default function ControlCenter({
     }
   };
 
-  const handleAnalysisControl = async (command: string, shouldResetLogs = false) => {
+  const handleAnalysisControl = async (
+    command: string,
+    shouldResetLogs = false,
+  ) => {
     setIsLoading(true);
     try {
       await fetch("/api/analysis/control", {
@@ -123,7 +126,8 @@ export default function ControlCenter({
   };
 
   const isRunning = stats.status === "running";
-  const isAnalysisRunning = analysisStats.status === "online" || analysisStats.status === "launching";
+  const isAnalysisRunning =
+    analysisStats.status === "online" || analysisStats.status === "launching";
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -200,7 +204,9 @@ export default function ControlCenter({
             <div className="flex items-center justify-between">
               <h4 className="font-semibold leading-none">AI Analysis</h4>
               <div className="flex gap-2 items-center">
-                <span className="text-xs text-muted-foreground uppercase">{analysisStats.status}</span>
+                <span className="text-xs text-muted-foreground uppercase">
+                  {analysisStats.status}
+                </span>
                 <div
                   className={cn(
                     "h-2 w-2 rounded-full",
@@ -216,17 +222,27 @@ export default function ControlCenter({
                 <span className="font-mono">
                   {analysisStats.processed} / {analysisStats.total}
                   <span className="text-xs text-muted-foreground ml-1">
-                    ({Math.max(0, analysisStats.total - analysisStats.processed)} left)
+                    (
+                    {Math.max(0, analysisStats.total - analysisStats.processed)}{" "}
+                    left)
                   </span>
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground text-green-500">Success</span>
-                <span className="font-mono text-green-500">{analysisStats.success}</span>
+                <span className="text-muted-foreground text-green-500">
+                  Success
+                </span>
+                <span className="font-mono text-green-500">
+                  {analysisStats.success}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground text-red-500">Failed</span>
-                <span className="font-mono text-red-500">{analysisStats.failed}</span>
+                <span className="text-muted-foreground text-red-500">
+                  Failed
+                </span>
+                <span className="font-mono text-red-500">
+                  {analysisStats.failed}
+                </span>
               </div>
             </div>
 
@@ -248,7 +264,9 @@ export default function ControlCenter({
                     variant="destructive"
                     size="sm"
                     className="flex-1 h-7"
-                    onClick={() => handleAnalysisControl(confirmAction.type, resetLogs)}
+                    onClick={() =>
+                      handleAnalysisControl(confirmAction.type, resetLogs)
+                    }
                   >
                     Confirm
                   </Button>
@@ -256,7 +274,10 @@ export default function ControlCenter({
                     variant="ghost"
                     size="sm"
                     className="flex-1 h-7"
-                    onClick={() => { setConfirmAction(null); setResetLogs(false); }}
+                    onClick={() => {
+                      setConfirmAction(null);
+                      setResetLogs(false);
+                    }}
                   >
                     Cancel
                   </Button>
@@ -268,7 +289,7 @@ export default function ControlCenter({
                   <Button
                     variant="default"
                     className="w-full"
-                    onClick={() => handleAnalysisControl('start')}
+                    onClick={() => handleAnalysisControl("start")}
                     disabled={isLoading}
                     size="sm"
                   >
@@ -278,7 +299,7 @@ export default function ControlCenter({
                   <Button
                     variant="outline"
                     className="w-full text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                    onClick={() => handleAnalysisControl('stop')}
+                    onClick={() => handleAnalysisControl("stop")}
                     disabled={isLoading}
                     size="sm"
                   >
@@ -290,7 +311,9 @@ export default function ControlCenter({
                   <Button
                     variant="secondary"
                     className="flex-1"
-                    onClick={() => setConfirmAction({ type: 'restart', isOpen: true })}
+                    onClick={() =>
+                      setConfirmAction({ type: "restart", isOpen: true })
+                    }
                     disabled={isLoading}
                     size="sm"
                   >
@@ -299,7 +322,9 @@ export default function ControlCenter({
                   <Button
                     variant="secondary"
                     className="flex-1 hover:bg-red-100 hover:text-red-700"
-                    onClick={() => setConfirmAction({ type: 'delete', isOpen: true })}
+                    onClick={() =>
+                      setConfirmAction({ type: "delete", isOpen: true })
+                    }
                     disabled={isLoading}
                     size="sm"
                   >
@@ -310,7 +335,7 @@ export default function ControlCenter({
                 <Button
                   variant="ghost"
                   className="w-full h-8 text-xs text-muted-foreground"
-                  onClick={() => window.open('/api/analysis/logs', '_blank')}
+                  onClick={() => window.open("/api/analysis/logs", "_blank")}
                 >
                   Download Logs
                 </Button>

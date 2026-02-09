@@ -51,7 +51,10 @@ export default function CategoryChart({ data, title, limit }: Props) {
       <div className="flex justify-center overflow-y-auto max-h-24 mt-2">
         <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 list-none m-0 p-0">
           {payload.map((entry, index) => (
-            <li key={index} className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <li
+              key={index}
+              className="flex items-center gap-1.5 text-sm font-medium text-foreground"
+            >
               <span
                 className="inline-block shrink-0 w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: entry.color }}
@@ -119,10 +122,7 @@ export default function CategoryChart({ data, title, limit }: Props) {
                 labelStyle={{ color: "hsl(var(--foreground))" }}
                 itemStyle={{ color: "hsl(var(--foreground))" }}
               />
-              <Legend
-                verticalAlign="bottom"
-                content={renderLegend}
-              />
+              <Legend verticalAlign="bottom" content={renderLegend} />
             </PieChart>
           </ResponsiveContainer>
         </div>

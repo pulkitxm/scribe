@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -55,7 +55,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default function DailyStatsTable({ dailyStats }: DailyStatsTableProps) {
+function DailyStatsTable({ dailyStats }: DailyStatsTableProps) {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "date",
     direction: "desc",
@@ -73,26 +73,30 @@ export default function DailyStatsTable({ dailyStats }: DailyStatsTableProps) {
     });
   };
 
-  const sortedStats = [...dailyStats].sort((a, b) => {
-    let aValue: any = a[sortConfig.key];
-    let bValue: any = b[sortConfig.key];
+  const sortedStats = useMemo(
+    () =>
+      [...dailyStats].sort((a, b) => {
+        let aValue: number | string = a[sortConfig.key];
+        let bValue: number | string = b[sortConfig.key];
 
-    if (sortConfig.key === "date") {
-      aValue = parseDateFolder(a.date).getTime();
-      bValue = parseDateFolder(b.date).getTime();
-    }
+        if (sortConfig.key === "date") {
+          aValue = parseDateFolder(a.date).getTime();
+          bValue = parseDateFolder(b.date).getTime();
+        }
 
-    if (aValue < bValue) {
-      return sortConfig.direction === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortConfig.direction === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      }),
+    [dailyStats, sortConfig.key, sortConfig.direction],
+  );
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-auto max-h-[300px]">
       <Table>
         <TableHeader>
           <TableRow>
@@ -147,3 +151,5 @@ export default function DailyStatsTable({ dailyStats }: DailyStatsTableProps) {
     </div>
   );
 }
+
+export default memo(DailyStatsTable);

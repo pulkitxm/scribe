@@ -13,7 +13,7 @@ import { ScreenshotDataSchema } from "@/lib/schemas";
 let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
 let cacheTimestamp: number = 0;
-const CACHE_DURATION = 2000;
+const CACHE_DURATION = 60_000; // 1 minute to reduce disk reads
 
 function getScribeFolder(): string {
   if (cachedFolder) return cachedFolder;
@@ -177,234 +177,278 @@ export function getScreenshotById(date: string, id: string): Screenshot | null {
   };
 }
 
+/**
+ * Apply filter options to a screenshot list (in-memory). Used to avoid
+ * loading all data twice when dashboard needs both filtered and global views.
+ */
+export function applyFilters(
+  screenshots: Screenshot[],
+  filters: FilterOptions,
+): Screenshot[] {
+  if (!filters || Object.keys(filters).length === 0) return screenshots;
+
+  let result = screenshots;
+
+  if (filters.startDate && !filters.dateFolder) {
+    const start = new Date(filters.startDate);
+    result = result.filter((s) => s.timestamp >= start);
+  }
+  if (filters.endDate && !filters.dateFolder) {
+    const end = new Date(filters.endDate);
+    end.setHours(23, 59, 59);
+    result = result.filter((s) => s.timestamp <= end);
+  }
+  if (filters.category) {
+    result = result.filter((s) => s.data.category === filters.category);
+  }
+  if (filters.app) {
+    result = result.filter((s) =>
+      s.data.evidence?.apps_visible?.includes(filters.app!),
+    );
+  }
+  if (filters.minFocusScore !== undefined) {
+    result = result.filter(
+      (s) => s.data.scores.focus_score >= filters.minFocusScore!,
+    );
+  }
+  if (filters.minProductivityScore !== undefined) {
+    result = result.filter(
+      (s) => s.data.scores.productivity_score >= filters.minProductivityScore!,
+    );
+  }
+  if (filters.project) {
+    result = result.filter(
+      (s) => s.data.context.code_context?.repo_or_project === filters.project,
+    );
+  }
+  if (filters.domain) {
+    result = result.filter((s) =>
+      s.data.evidence?.web_domains_visible?.includes(filters.domain!),
+    );
+  }
+  if (filters.language) {
+    result = result.filter(
+      (s) => s.data.context.code_context?.language === filters.language,
+    );
+  }
+  if (filters.workspace) {
+    result = result.filter((s) => s.data.workspace_type === filters.workspace);
+  }
+  if (filters.text) {
+    const query = filters.text.trim();
+    const words = query.split(/\s+/).filter(Boolean);
+    const normalizedQuery = query.toLowerCase().trim();
+
+    const fuseOptions: IFuseOptions<Screenshot> = {
+      keys: [
+        { name: "data.category", weight: 3.0 },
+        { name: "data.summary_tags", weight: 2.5 },
+        { name: "data.short_description", weight: 2.0 },
+        { name: "data.detailed_analysis", weight: 1.8 },
+        { name: "data.summary.one_liner", weight: 2.0 },
+        { name: "data.context.intent_guess", weight: 1.5 },
+        { name: "data.context.topic_or_game_or_media", weight: 1.5 },
+        { name: "data.context.work_context.work_type", weight: 1.3 },
+        { name: "data.context.work_context.project_or_doc", weight: 1.3 },
+        { name: "data.context.code_context.language", weight: 1.2 },
+        { name: "data.context.code_context.repo_or_project", weight: 1.2 },
+        { name: "data.context.learning_context.learning_topic", weight: 1.2 },
+        { name: "data.context.learning_context.source_type", weight: 1.0 },
+        {
+          name: "data.context.communication_context.communication_type",
+          weight: 1.2,
+        },
+        {
+          name: "data.context.communication_context.platform_guess",
+          weight: 1.0,
+        },
+        {
+          name: "data.context.entertainment_context.entertainment_type",
+          weight: 1.0,
+        },
+        {
+          name: "data.context.entertainment_context.platform_guess",
+          weight: 1.0,
+        },
+        { name: "data.evidence.text_snippets", weight: 1.5 },
+        { name: "data.evidence.key_windows_or_panels", weight: 1.3 },
+        { name: "data.evidence.web_domains_visible", weight: 1.0 },
+        { name: "data.evidence.apps_visible", weight: 1.0 },
+        { name: "data.evidence.active_app_guess", weight: 1.2 },
+        { name: "data.actions_observed", weight: 0.8 },
+        { name: "data.workspace_type", weight: 0.7 },
+        { name: "data.system_metadata.active_app", weight: 1.0 },
+        { name: "data.system_metadata.opened_apps", weight: 0.6 },
+      ],
+      findAllMatches: true,
+      useExtendedSearch: true,
+    };
+
+    const exactMatches: Screenshot[] = [];
+    const strongMatches: Screenshot[] = [];
+    const otherScreenshots: Screenshot[] = [];
+
+    for (const s of result) {
+      const categoryLower = s.data.category?.toLowerCase() ?? "";
+      const tagsLower = (s.data.summary_tags || []).map((t) => t.toLowerCase());
+      const shortDescLower = s.data.short_description?.toLowerCase() || "";
+      const intentLower = s.data.context.intent_guess?.toLowerCase() || "";
+      const topicLower =
+        s.data.context.topic_or_game_or_media?.toLowerCase() || "";
+
+      if (
+        categoryLower === normalizedQuery ||
+        tagsLower.includes(normalizedQuery)
+      ) {
+        exactMatches.push(s);
+      } else if (
+        shortDescLower.includes(normalizedQuery) ||
+        intentLower.includes(normalizedQuery) ||
+        topicLower.includes(normalizedQuery)
+      ) {
+        strongMatches.push(s);
+      } else {
+        otherScreenshots.push(s);
+      }
+    }
+
+    const fuse = new Fuse(otherScreenshots, fuseOptions);
+    const fuseQuery = words.length > 1 ? words.join(" | ") : query;
+    const fuseResults = fuse.search(fuseQuery);
+    result = [
+      ...exactMatches,
+      ...strongMatches,
+      ...fuseResults.map((r) => r.item),
+    ];
+  }
+  if (filters.tag) {
+    const query = filters.tag.toLowerCase();
+    result = result.filter((s) =>
+      (s.data.summary_tags || []).some((t) => t.toLowerCase() === query),
+    );
+  }
+  if (filters.maxFocusScore !== undefined) {
+    result = result.filter(
+      (s) => s.data.scores.focus_score <= filters.maxFocusScore!,
+    );
+  }
+  if (filters.maxProductivityScore !== undefined) {
+    result = result.filter(
+      (s) => s.data.scores.productivity_score <= filters.maxProductivityScore!,
+    );
+  }
+  if (filters.maxDistractionScore !== undefined) {
+    result = result.filter(
+      (s) => s.data.scores.distraction_risk <= filters.maxDistractionScore!,
+    );
+  }
+  if (filters.timeOfDay) {
+    result = result.filter((s) => {
+      const hour = s.timestamp.getHours();
+      switch (filters.timeOfDay) {
+        case "morning":
+          return hour >= 5 && hour < 12;
+        case "afternoon":
+          return hour >= 12 && hour < 17;
+        case "evening":
+          return hour >= 17 && hour < 21;
+        case "night":
+          return hour >= 21 || hour < 5;
+        default:
+          return true;
+      }
+    });
+  }
+  if (filters.hasCode) {
+    result = result.filter(
+      (s) =>
+        s.data.context.code_context?.language &&
+        s.data.context.code_context.language !== "",
+    );
+  }
+  if (filters.isMeeting) {
+    result = result.filter(
+      (s) => s.data.context.communication_context?.meeting_indicator === true,
+    );
+  }
+  if (filters.lowBattery) {
+    result = result.filter(
+      (s) =>
+        s.data.system_metadata?.stats.battery.percentage !== undefined &&
+        s.data.system_metadata.stats.battery.percentage < 20,
+    );
+  }
+  if (filters.highCpu) {
+    result = result.filter(
+      (s) =>
+        s.data.system_metadata?.stats.cpu.used !== undefined &&
+        s.data.system_metadata.stats.cpu.used > 80,
+    );
+  }
+  if (filters.hasErrors) {
+    result = result.filter(
+      (s) => s.data.context.code_context?.errors_or_logs_visible === true,
+    );
+  }
+  if (filters.network) {
+    result = result.filter((s) => {
+      const net = s.data.system_metadata?.stats.network;
+      if (!net) return false;
+      const name = net.ssid || (net.connected ? "Unknown Network" : null);
+      return name === filters.network;
+    });
+  }
+
+  return result;
+}
+
 export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
   const dates = getAllDates();
-  let allScreenshots: Screenshot[] = [];
+  let base: Screenshot[] = [];
 
   if (filters?.dateFolder) {
-    allScreenshots = getScreenshotsForDate(filters.dateFolder);
+    base = getScreenshotsForDate(filters.dateFolder);
   } else {
     for (const date of dates) {
-      const screenshots = getScreenshotsForDate(date);
-      allScreenshots = allScreenshots.concat(screenshots);
+      base = base.concat(getScreenshotsForDate(date));
     }
   }
 
-  if (filters) {
-    if (filters.startDate && !filters.dateFolder) {
-      const start = new Date(filters.startDate);
-      allScreenshots = allScreenshots.filter((s) => s.timestamp >= start);
-    }
-    if (filters.endDate && !filters.dateFolder) {
-      const end = new Date(filters.endDate);
-      end.setHours(23, 59, 59);
-      allScreenshots = allScreenshots.filter((s) => s.timestamp <= end);
-    }
-    if (filters.category) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.category === filters.category,
-      );
-    }
-    if (filters.app) {
-      allScreenshots = allScreenshots.filter((s) =>
-        s.data.evidence?.apps_visible?.includes(filters.app!),
-      );
-    }
-    if (filters.minFocusScore !== undefined) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.scores.focus_score >= filters.minFocusScore!,
-      );
-    }
-    if (filters.minProductivityScore !== undefined) {
-      allScreenshots = allScreenshots.filter(
-        (s) =>
-          s.data.scores.productivity_score >= filters.minProductivityScore!,
-      );
-    }
-    if (filters.project) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.context.code_context?.repo_or_project === filters.project,
-      );
-    }
-    if (filters.domain) {
-      allScreenshots = allScreenshots.filter((s) =>
-        s.data.evidence?.web_domains_visible?.includes(filters.domain!),
-      );
-    }
-    if (filters.language) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.context.code_context?.language === filters.language,
-      );
-    }
-    if (filters.workspace) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.workspace_type === filters.workspace,
-      );
-    }
-    if (filters.text) {
-      const query = filters.text.trim();
-      const words = query.split(/\s+/).filter(Boolean);
-      const normalizedQuery = query.toLowerCase().trim();
+  return filters ? applyFilters(base, filters) : base;
+}
 
-      const fuseOptions: IFuseOptions<Screenshot> = {
-        keys: [
-          { name: "data.category", weight: 3.0 },
-          { name: "data.summary_tags", weight: 2.5 },
-          
-          { name: "data.short_description", weight: 2.0 },
-          { name: "data.detailed_analysis", weight: 1.8 },
-          { name: "data.summary.one_liner", weight: 2.0 },
-          
-          { name: "data.context.intent_guess", weight: 1.5 },
-          { name: "data.context.topic_or_game_or_media", weight: 1.5 },
-          { name: "data.context.work_context.work_type", weight: 1.3 },
-          { name: "data.context.work_context.project_or_doc", weight: 1.3 },
-          { name: "data.context.code_context.language", weight: 1.2 },
-          { name: "data.context.code_context.repo_or_project", weight: 1.2 },
-          { name: "data.context.learning_context.learning_topic", weight: 1.2 },
-          { name: "data.context.learning_context.source_type", weight: 1.0 },
-          { name: "data.context.communication_context.communication_type", weight: 1.2 },
-          { name: "data.context.communication_context.platform_guess", weight: 1.0 },
-          { name: "data.context.entertainment_context.entertainment_type", weight: 1.0 },
-          { name: "data.context.entertainment_context.platform_guess", weight: 1.0 },
-          
-          { name: "data.evidence.text_snippets", weight: 1.5 },
-          { name: "data.evidence.key_windows_or_panels", weight: 1.3 },
-          { name: "data.evidence.web_domains_visible", weight: 1.0 },
-          { name: "data.evidence.apps_visible", weight: 1.0 },
-          { name: "data.evidence.active_app_guess", weight: 1.2 },
-          
-          { name: "data.actions_observed", weight: 0.8 },
-          { name: "data.workspace_type", weight: 0.7 },
-          { name: "data.system_metadata.active_app", weight: 1.0 },
-          { name: "data.system_metadata.opened_apps", weight: 0.6 },
-        ],
-        findAllMatches: true,
-        useExtendedSearch: true,
-      };
+export type GalleryCursor = { date: string; id: string };
 
-      const exactMatches: Screenshot[] = [];
-      const strongMatches: Screenshot[] = [];
-      const otherScreenshots: Screenshot[] = [];
+const ITEMS_PER_PAGE = 48;
 
-      for (const s of allScreenshots) {
-        const categoryLower = s.data.category.toLowerCase();
-        const tagsLower = (s.data.summary_tags || []).map((t) =>
-          t.toLowerCase(),
-        );
-        const shortDescLower = s.data.short_description?.toLowerCase() || "";
-        const intentLower = s.data.context.intent_guess?.toLowerCase() || "";
-        const topicLower = s.data.context.topic_or_game_or_media?.toLowerCase() || "";
-
-        if (
-          categoryLower === normalizedQuery ||
-          tagsLower.includes(normalizedQuery)
-        ) {
-          exactMatches.push(s);
-        }
-        else if (
-          shortDescLower.includes(normalizedQuery) ||
-          intentLower.includes(normalizedQuery) ||
-          topicLower.includes(normalizedQuery)
-        ) {
-          strongMatches.push(s);
-        } else {
-          otherScreenshots.push(s);
-        }
-      }
-
-      const fuse = new Fuse(otherScreenshots, fuseOptions);
-
-      const fuseQuery = words.length > 1 ? words.join(" | ") : query;
-      const fuseResults = fuse.search(fuseQuery);
-
-      allScreenshots = [
-        ...exactMatches,
-        ...strongMatches,
-        ...fuseResults.map((r) => r.item),
-      ];
-    }
-    if (filters.tag) {
-      const query = filters.tag.toLowerCase();
-      allScreenshots = allScreenshots.filter((s) =>
-        (s.data.summary_tags || []).some((t) => t.toLowerCase() === query),
-      );
-    }
-    if (filters.maxFocusScore !== undefined) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.scores.focus_score <= filters.maxFocusScore!,
-      );
-    }
-    if (filters.maxProductivityScore !== undefined) {
-      allScreenshots = allScreenshots.filter(
-        (s) =>
-          s.data.scores.productivity_score <= filters.maxProductivityScore!,
-      );
-    }
-    if (filters.maxDistractionScore !== undefined) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.scores.distraction_risk <= filters.maxDistractionScore!,
-      );
-    }
-    if (filters.timeOfDay) {
-      allScreenshots = allScreenshots.filter((s) => {
-        const hour = s.timestamp.getHours();
-        switch (filters.timeOfDay) {
-          case "morning":
-            return hour >= 5 && hour < 12;
-          case "afternoon":
-            return hour >= 12 && hour < 17;
-          case "evening":
-            return hour >= 17 && hour < 21;
-          case "night":
-            return hour >= 21 || hour < 5;
-          default:
-            return true;
-        }
-      });
-    }
-    if (filters.hasCode) {
-      allScreenshots = allScreenshots.filter(
-        (s) =>
-          s.data.context.code_context?.language &&
-          s.data.context.code_context.language !== "",
-      );
-    }
-    if (filters.isMeeting) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.context.communication_context?.meeting_indicator === true,
-      );
-    }
-    if (filters.lowBattery) {
-      allScreenshots = allScreenshots.filter(
-        (s) =>
-          s.data.system_metadata?.stats.battery.percentage !== undefined &&
-          s.data.system_metadata.stats.battery.percentage < 20,
-      );
-    }
-    if (filters.highCpu) {
-      allScreenshots = allScreenshots.filter(
-        (s) =>
-          s.data.system_metadata?.stats.cpu.used !== undefined &&
-          s.data.system_metadata.stats.cpu.used > 80,
-      );
-    }
-    if (filters.hasErrors) {
-      allScreenshots = allScreenshots.filter(
-        (s) => s.data.context.code_context?.errors_or_logs_visible === true,
-      );
-    }
-    if (filters.network) {
-      allScreenshots = allScreenshots.filter((s) => {
-        const net = s.data.system_metadata?.stats.network;
-        if (!net) return false;
-        const name = net.ssid || (net.connected ? "Unknown Network" : null);
-        return name === filters.network;
-      });
-    }
+/**
+ * Return one page of screenshots and cursor for the next page. Uses cached
+ * getAllScreenshots so repeated calls within cache TTL are fast.
+ */
+export function getScreenshotsPage(
+  filters: FilterOptions,
+  limit: number = ITEMS_PER_PAGE,
+  cursor: GalleryCursor | null = null,
+): {
+  screenshots: Screenshot[];
+  nextCursor: GalleryCursor | null;
+  hasMore: boolean;
+} {
+  const all = getAllScreenshots(filters);
+  let startIndex = 0;
+  if (cursor) {
+    const idx = all.findIndex(
+      (s) => s.date === cursor.date && s.id === cursor.id,
+    );
+    startIndex = idx < 0 ? 0 : idx + 1;
   }
-
-  return allScreenshots;
+  const page = all.slice(startIndex, startIndex + limit);
+  const hasMore = startIndex + page.length < all.length;
+  const nextCursor: GalleryCursor | null =
+    page.length === limit && hasMore && page.length > 0
+      ? { date: page[page.length - 1].date, id: page[page.length - 1].id }
+      : null;
+  return { screenshots: page, nextCursor, hasMore };
 }
 
 export function getExtendedStats(screenshots: Screenshot[]) {
