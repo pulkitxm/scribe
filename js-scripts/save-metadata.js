@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { buildTimestamp, buildSystemMetadata } = require('./metadata');
+const { buildTimestamp, buildLocation, buildSystemMetadata } = require('./metadata');
 const { log, cleanObject } = require('./utils');
 
 function validateArgs() {
@@ -28,6 +28,7 @@ function main() {
 
   const metadata = {
     timestamp: buildTimestamp(),
+    location: buildLocation(),
     system_metadata: buildSystemMetadata()
   };
 

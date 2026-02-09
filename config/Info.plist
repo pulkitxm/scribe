@@ -14,5 +14,9 @@
     <string>1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Scribe uses your location to tag screenshots with where they were taken.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Scribe uses your location to tag screenshots with where they were taken.</string>
 </dict>
 </plist>

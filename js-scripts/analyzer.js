@@ -3,7 +3,7 @@ const path = require('path');
 const { preprocessImage, getImageBase64, extractTextWithOCR } = require('./image-processor');
 const { callOllama } = require('./ollama');
 const { parseAndValidateJSON } = require('./validator');
-const { buildTimestamp, buildSystemMetadata, buildVisualization, buildSummary } = require('./metadata');
+const { buildTimestamp, buildLocation, buildSystemMetadata, buildVisualization, buildSummary } = require('./metadata');
 const { log, cleanObject } = require('./utils');
 
 const MAX_RETRIES = 2;
@@ -41,6 +41,7 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
       
       
       resultJSON.timestamp = existingMetadata?.timestamp || buildTimestamp();
+      resultJSON.location = existingMetadata?.location || buildLocation();
       resultJSON.system_metadata = existingMetadata?.system_metadata || buildSystemMetadata();
       
       

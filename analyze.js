@@ -131,7 +131,6 @@ async function processWithConcurrency(items, concurrency, liveMode, scribeFolder
     }
     processed++;
     
-    // In live mode, rescan for new incomplete screenshots
     if (liveMode && processed % 5 === 0) {
       const newIncomplete = findIncompleteScreenshots(scribeFolder);
       const newTotal = newIncomplete.length;

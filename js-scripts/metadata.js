@@ -10,6 +10,28 @@ function buildTimestamp() {
   };
 }
 
+function buildLocation() {
+  const lat = process.env.SCRIBE_LATITUDE;
+  const lon = process.env.SCRIBE_LONGITUDE;
+  if (lat == null || lat === '' || lon == null || lon === '') {
+    return null;
+  }
+  const numLat = parseFloat(lat);
+  const numLon = parseFloat(lon);
+  if (Number.isNaN(numLat) || Number.isNaN(numLon)) {
+    return null;
+  }
+  const location = {
+    latitude: numLat,
+    longitude: numLon
+  };
+  const name = process.env.SCRIBE_LOCATION_NAME || process.env.SCRIBE_LOCATION;
+  if (name && name.trim() !== '') {
+    location.name = name.trim();
+  }
+  return location;
+}
+
 function buildSystemMetadata() {
   let externalDisplays = [];
   try {
@@ -141,6 +163,7 @@ function buildSummary(category, shortDescription) {
 
 module.exports = {
   buildTimestamp,
+  buildLocation,
   buildSystemMetadata,
   buildVisualization,
   buildSummary

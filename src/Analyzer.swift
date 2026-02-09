@@ -163,6 +163,14 @@ struct Analyzer {
         }
         env["SCRIBE_TIME_OF_DAY"] = timeOfDay
         
+        if let location = getCurrentLocation() {
+            env["SCRIBE_LATITUDE"] = String(location.latitude)
+            env["SCRIBE_LONGITUDE"] = String(location.longitude)
+            if let name = location.name, !name.isEmpty {
+                env["SCRIBE_LOCATION_NAME"] = name
+            }
+        }
+        
         nodeProcess.environment = env
         nodeProcess.standardInput = FileHandle.nullDevice
         

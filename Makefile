@@ -30,11 +30,11 @@ help:
 	@echo ""
 
 dev:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli
 
 run-once:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia src/*.swift src/utils/*.swift -o scribe_cli
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli --run-once
 
 analyze-count:
