@@ -70,7 +70,11 @@ export default function RecentScreenshots({
                     {screenshot.data.short_description}
                   </p>
                   <p className="text-[10px] text-white/70">
-                    {screenshot.timestamp.toLocaleTimeString()}
+                    {screenshot.timestamp.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
                   </p>
                 </div>
               </div>

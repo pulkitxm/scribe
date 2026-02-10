@@ -16,6 +16,8 @@ interface LocationsMapClientProps {
   points: LocationPoint[];
 }
 
-export default function LocationsMapClient({ points }: LocationsMapClientProps) {
+export default function LocationsMapClient({
+  points,
+}: LocationsMapClientProps) {
   return <LocationsMap points={points} />;
 }

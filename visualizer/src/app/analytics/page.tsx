@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAllScreenshots, getExtendedStats } from "@/lib/data";
+import {
+  getAllScreenshots,
+  getExtendedStats,
+  getAudioPlaybackStats,
+} from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
   const screenshots = getAllScreenshots();
   const stats = getExtendedStats(screenshots);
+  const audioStats = getAudioPlaybackStats(screenshots);
 
   const getTop = (obj: Record<string, any>) =>
     Object.entries(obj)
@@ -87,6 +92,14 @@ export default async function AnalyticsPage() {
       description: "CPU, RAM & Battery analysis",
       stat: `CPU: ${stats.avgCpu}% | RAM: ${stats.avgRam}%`,
       count: `Battery: ${stats.avgBattery}%`,
+    },
+    {
+      title: "Audio & Music",
+      href: "/analytics/audio",
+      icon: "🎵",
+      description: "Listening habits & music analytics",
+      stat: `${audioStats.nowPlayingHistory.length} tracks played`,
+      count: `${audioStats.stats.totalUniqueApps} audio apps used`,
     },
   ];
 

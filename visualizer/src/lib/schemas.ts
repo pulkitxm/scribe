@@ -9,6 +9,49 @@ export const AudioDeviceSchema = z.object({
 
 export type AudioDevice = z.infer<typeof AudioDeviceSchema>;
 
+export const NowPlayingSchema = z.object({
+  app: z.string(),
+  title: z.string().optional(),
+  artist: z.string().optional(),
+  album: z.string().optional(),
+  duration: z.number().optional(),
+  current_time: z.number().optional(),
+  is_playing: z.boolean(),
+  playback_rate: z.number().optional(),
+  volume: z.number().optional(),
+  genre: z.string().optional(),
+  year: z.number().optional(),
+  track_number: z.number().optional(),
+  album_artist: z.string().optional(),
+  composer: z.string().optional(),
+  rating: z.number().optional(),
+  play_count: z.number().optional(),
+  artwork_url: z.string().optional(),
+});
+
+export type NowPlaying = z.infer<typeof NowPlayingSchema>;
+
+export const AudioOutputDeviceSchema = z.object({
+  name: z.string(),
+  sample_rate: z.number().optional(),
+  bit_depth: z.number().optional(),
+  channels: z.number().optional(),
+  buffer_size: z.number().optional(),
+});
+
+export type AudioOutputDevice = z.infer<typeof AudioOutputDeviceSchema>;
+
+export const AudioPlaybackSchema = z.object({
+  has_active_audio: z.boolean().optional().default(false),
+  active_audio_count: z.number().optional().default(0),
+  system_audio_active: z.boolean().optional().default(false),
+  playing_apps: z.array(z.string()).optional().default([]),
+  now_playing: z.array(NowPlayingSchema).optional().default([]),
+  output_device: AudioOutputDeviceSchema.optional().nullable(),
+});
+
+export type AudioPlayback = z.infer<typeof AudioPlaybackSchema>;
+
 export const VideoDeviceSchema = z.object({
   name: z.string(),
   manufacturer: z.string().optional(),
@@ -27,6 +70,7 @@ export const SystemMetadataSchema = z.object({
     is_muted: z.boolean(),
     inputs: z.array(AudioDeviceSchema),
     outputs: z.array(AudioDeviceSchema),
+    playback: AudioPlaybackSchema.optional(),
   }),
   video: z
     .object({

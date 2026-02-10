@@ -71,6 +71,7 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }
 
@@ -194,7 +195,12 @@ async function GalleryContent({
   if (network) filters.network = network;
   if (location) {
     filters.location = location;
-  } else if (locationLat != null && locationLat !== "" && locationLon != null && locationLon !== "") {
+  } else if (
+    locationLat != null &&
+    locationLat !== "" &&
+    locationLon != null &&
+    locationLon !== ""
+  ) {
     const lat = parseFloat(locationLat);
     const lon = parseFloat(locationLon);
     if (!Number.isNaN(lat) && !Number.isNaN(lon)) {

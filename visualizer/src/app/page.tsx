@@ -294,7 +294,11 @@ async function DashboardContent({
                     {s.data.short_description}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-1">
-                    {new Date(s.timestamp).toLocaleTimeString()}
+                    {new Date(s.timestamp).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
                   </div>
                 </CardContent>
               </Card>

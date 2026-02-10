@@ -19,6 +19,7 @@ help:
 	@echo "  make check-running - Alias for status"
 	@echo "  make dev           - Run the script directly for testing"
 	@echo "  make run-once      - Run once and exit"
+	@echo "  make test-audio    - Test audio playback detection"
 	@echo "  make analyze       - Batch analyze incomplete screenshots"
 	@echo "  make analyze-count - Print number of unanalyzed images"
 	@echo "  make viz-start     - Start the visualizer (pnpm serve via pm2)"
@@ -30,12 +31,19 @@ help:
 	@echo ""
 
 dev:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation src/*.swift src/utils/*.swift -o scribe_cli
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation -framework AppKit src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli
 
 run-once:
-	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation src/*.swift src/utils/*.swift -o scribe_cli
+	@swiftc -framework CoreWLAN -framework CoreAudio -framework AVFoundation -framework CoreMedia -framework CoreLocation -framework AppKit src/*.swift src/utils/*.swift -o scribe_cli
 	@./scribe_cli --run-once
+
+test-audio:
+	@echo "Compiling audio playback test..."
+	@swiftc -framework CoreAudio -framework AVFoundation -framework AppKit test-audio.swift -o test_audio_cli
+	@echo ""
+	@./test_audio_cli
+	@rm -f test_audio_cli
 
 analyze-count:
 	@node analyze.js --count-only $(if $(FOLDER),--folder "$(FOLDER)",)

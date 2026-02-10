@@ -57,7 +57,23 @@ function buildSystemMetadata() {
         try {
           return JSON.parse(process.env.SCRIBE_AUDIO_OUTPUTS || '[]');
         } catch (e) { return []; }
-      })()
+      })(),
+      playback: {
+        has_active_audio: process.env.SCRIBE_AUDIO_PLAYBACK_ACTIVE === 'true',
+        active_audio_count: parseInt(process.env.SCRIBE_AUDIO_PLAYBACK_COUNT || '0', 10),
+        system_audio_active: process.env.SCRIBE_AUDIO_SYSTEM_ACTIVE === 'true',
+        playing_apps: (process.env.SCRIBE_AUDIO_PLAYING_APPS || '').split(',').map(s => s.trim()).filter(Boolean),
+        now_playing: (() => {
+          try {
+            return JSON.parse(process.env.SCRIBE_AUDIO_NOW_PLAYING || '[]');
+          } catch (e) { return []; }
+        })(),
+        output_device: (() => {
+          try {
+            return JSON.parse(process.env.SCRIBE_AUDIO_OUTPUT_DEVICE || 'null');
+          } catch (e) { return null; }
+        })()
+      }
     },
     video: {
       sources: (() => {

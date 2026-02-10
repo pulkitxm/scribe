@@ -74,6 +74,52 @@ struct Analyzer {
         ] }), options: []), let outputsString = String(data: outputsJson, encoding: .utf8) {
             env["SCRIBE_AUDIO_OUTPUTS"] = outputsString
         }
+        
+        let audioPlayback = getAudioPlaybackData()
+        env["SCRIBE_AUDIO_PLAYBACK_ACTIVE"] = String(audioPlayback.hasActiveAudio)
+        env["SCRIBE_AUDIO_PLAYBACK_COUNT"] = String(audioPlayback.activeAudioCount)
+        env["SCRIBE_AUDIO_SYSTEM_ACTIVE"] = String(audioPlayback.systemAudioActive)
+        
+        if !audioPlayback.playingApps.isEmpty {
+            env["SCRIBE_AUDIO_PLAYING_APPS"] = audioPlayback.playingApps.joined(separator: ", ")
+        }
+        
+        if let nowPlayingJson = try? JSONSerialization.data(withJSONObject: audioPlayback.nowPlaying.map({ info -> [String: Any] in
+            var dict: [String: Any] = [
+                "app": info.appName,
+                "title": info.title ?? "",
+                "artist": info.artist ?? "",
+                "album": info.album ?? "",
+                "duration": info.duration ?? 0,
+                "current_time": info.currentTime ?? 0,
+                "is_playing": info.isPlaying,
+                "playback_rate": info.playbackRate ?? 1.0,
+                "volume": info.volume ?? 0
+            ]
+            if let genre = info.genre { dict["genre"] = genre }
+            if let year = info.year { dict["year"] = year }
+            if let trackNumber = info.trackNumber { dict["track_number"] = trackNumber }
+            if let albumArtist = info.albumArtist { dict["album_artist"] = albumArtist }
+            if let composer = info.composer { dict["composer"] = composer }
+            if let rating = info.rating { dict["rating"] = rating }
+            if let playCount = info.playCount { dict["play_count"] = playCount }
+            if let artworkURL = info.artworkURL { dict["artwork_url"] = artworkURL }
+            return dict
+        }), options: []), let nowPlayingString = String(data: nowPlayingJson, encoding: .utf8) {
+            env["SCRIBE_AUDIO_NOW_PLAYING"] = nowPlayingString
+        }
+        
+        if let outputDevice = audioPlayback.outputDevice {
+            if let deviceJson = try? JSONSerialization.data(withJSONObject: [
+                "name": outputDevice.name as Any,
+                "sample_rate": (outputDevice.sampleRate ?? 0) as Any,
+                "bit_depth": (outputDevice.bitDepth ?? 0) as Any,
+                "channels": (outputDevice.channels ?? 0) as Any,
+                "buffer_size": (outputDevice.bufferSize ?? 0) as Any
+            ], options: []), let deviceString = String(data: deviceJson, encoding: .utf8) {
+                env["SCRIBE_AUDIO_OUTPUT_DEVICE"] = deviceString
+            }
+        }
 
         let videoDevices = getVideoDevices()
         if let videoJson = try? JSONSerialization.data(withJSONObject: videoDevices.map({ [

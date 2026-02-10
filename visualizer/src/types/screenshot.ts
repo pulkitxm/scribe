@@ -12,6 +12,9 @@ export type {
   EntertainmentContext,
   SystemMetadata,
   AudioDevice,
+  AudioPlayback,
+  NowPlaying,
+  AudioOutputDevice,
   Location,
 } from "@/lib/schemas";
 

@@ -91,6 +91,7 @@ export default function GalleryInfiniteScroll({
     return d.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   }
 

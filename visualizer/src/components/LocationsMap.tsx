@@ -9,7 +9,10 @@ const DEFAULT_CENTER: [number, number] = [20, 77];
 const DEFAULT_ZOOM = 4;
 
 function createMarkerIcon(point: LocationPoint) {
-  const count = point.count > 1 ? `<span class="locations-marker__badge">${point.count > 99 ? "99+" : point.count}</span>` : "";
+  const count =
+    point.count > 1
+      ? `<span class="locations-marker__badge">${point.count > 99 ? "99+" : point.count}</span>`
+      : "";
   return L.divIcon({
     className: "locations-marker-wrapper",
     html: `
@@ -28,7 +31,10 @@ interface LocationsMapProps {
   className?: string;
 }
 
-export default function LocationsMap({ points, className = "" }: LocationsMapProps) {
+export default function LocationsMap({
+  points,
+  className = "",
+}: LocationsMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -147,7 +153,8 @@ export default function LocationsMap({ points, className = "" }: LocationsMapPro
 }
 
 function escapeHtml(text: string): string {
-  const div = typeof document !== "undefined" ? document.createElement("div") : null;
+  const div =
+    typeof document !== "undefined" ? document.createElement("div") : null;
   if (div) {
     div.textContent = text;
     return div.innerHTML;

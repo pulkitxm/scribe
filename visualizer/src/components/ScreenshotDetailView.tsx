@@ -21,6 +21,13 @@ import {
   Activity,
   FileJson,
   MapPin,
+  Music,
+  Play,
+  User,
+  Disc,
+  Star,
+  Hash,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +70,7 @@ export default function ScreenshotDetailView({
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        hour12: false,
       })
     : new Date(screenshot.timestamp).toLocaleString("en-US", {
         weekday: "short",
@@ -72,6 +80,7 @@ export default function ScreenshotDetailView({
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        hour12: false,
       });
 
   const displayTitle =
@@ -488,6 +497,255 @@ export default function ScreenshotDetailView({
                 </CardContent>
               </Card>
 
+              {data.system_metadata.audio?.playback &&
+                (data.system_metadata.audio.playback.has_active_audio ||
+                  data.system_metadata.audio.playback.now_playing?.length >
+                    0) && (
+                  <Card className="md:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Music className="h-4 w-4" /> Now Playing
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm">
+                        <Badge
+                          variant={
+                            data.system_metadata.audio.playback.has_active_audio
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {data.system_metadata.audio.playback.has_active_audio
+                            ? "🎵 Playing"
+                            : "⏸️ Paused"}
+                        </Badge>
+                        {data.system_metadata.audio.playback.playing_apps &&
+                          data.system_metadata.audio.playback.playing_apps
+                            .length > 0 && (
+                            <span className="text-muted-foreground">
+                              via{" "}
+                              {data.system_metadata.audio.playback.playing_apps.join(
+                                ", ",
+                              )}
+                            </span>
+                          )}
+                      </div>
+
+                      {data.system_metadata.audio.playback.now_playing &&
+                        data.system_metadata.audio.playback.now_playing.map(
+                          (track, i) => (
+                            <div
+                              key={i}
+                              className="flex gap-3 p-3 rounded-lg bg-secondary/30"
+                            >
+                              <div className="flex-shrink-0">
+                                {track.artwork_url ? (
+                                  <img
+                                    src={track.artwork_url}
+                                    alt={track.title || "Album art"}
+                                    className="w-20 h-20 rounded object-cover shadow-md"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      e.currentTarget.nextElementSibling?.classList.remove(
+                                        "hidden",
+                                      );
+                                    }}
+                                  />
+                                ) : null}
+                                <div
+                                  className={`w-20 h-20 rounded bg-primary/10 flex items-center justify-center ${track.artwork_url ? "hidden" : ""}`}
+                                >
+                                  <Music className="h-10 w-10 text-primary" />
+                                </div>
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold text-base truncate">
+                                    {track.title || "Unknown Track"}
+                                  </h3>
+                                  {track.is_playing && (
+                                    <Play className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                  )}
+                                </div>
+
+                                {(track.artist || track.album) && (
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                                    {track.artist && (
+                                      <span className="flex items-center gap-1 truncate">
+                                        <User className="h-3 w-3 flex-shrink-0" />
+                                        {track.artist}
+                                      </span>
+                                    )}
+                                    {track.artist && track.album && (
+                                      <span>•</span>
+                                    )}
+                                    {track.album && (
+                                      <span className="flex items-center gap-1 truncate">
+                                        <Disc className="h-3 w-3 flex-shrink-0" />
+                                        {track.album}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {track.duration && track.current_time && (
+                                  <div className="space-y-1 mb-2">
+                                    <Progress
+                                      value={
+                                        (track.current_time /
+                                          (track.duration > 10000
+                                            ? track.duration / 1000
+                                            : track.duration)) *
+                                        100
+                                      }
+                                      className="h-1.5"
+                                    />
+                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                      <span>
+                                        {formatTime(track.current_time)}
+                                      </span>
+                                      <span>{formatTime(track.duration)}</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {track.app}
+                                  </Badge>
+                                  {track.genre && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {track.genre}
+                                    </Badge>
+                                  )}
+                                  {track.year && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      {track.year}
+                                    </Badge>
+                                  )}
+                                  {track.track_number && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      <Hash className="h-3 w-3 mr-1" />
+                                      {track.track_number}
+                                    </Badge>
+                                  )}
+                                  {track.rating !== undefined &&
+                                    track.rating > 0 && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        <Star className="h-3 w-3 mr-1 fill-yellow-500 text-yellow-500" />
+                                        {track.rating}/100
+                                      </Badge>
+                                    )}
+                                  {track.play_count !== undefined &&
+                                    track.play_count > 0 && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        <Play className="h-3 w-3 mr-1" />
+                                        {track.play_count} plays
+                                      </Badge>
+                                    )}
+                                </div>
+
+                                {(track.composer || track.album_artist) && (
+                                  <div className="text-xs text-muted-foreground mt-2 truncate">
+                                    {track.composer && (
+                                      <span>Composer: {track.composer}</span>
+                                    )}
+                                    {track.composer && track.album_artist && (
+                                      <span> • </span>
+                                    )}
+                                    {track.album_artist &&
+                                      track.album_artist !== track.artist && (
+                                        <span>
+                                          Album Artist: {track.album_artist}
+                                        </span>
+                                      )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ),
+                        )}
+
+                      {data.system_metadata.audio.playback.output_device && (
+                        <div className="pt-3 border-t">
+                          <div className="text-xs text-muted-foreground uppercase mb-2">
+                            Output Device
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">
+                                Device:
+                              </span>{" "}
+                              {
+                                data.system_metadata.audio.playback
+                                  .output_device.name
+                              }
+                            </div>
+                            {data.system_metadata.audio.playback.output_device
+                              .sample_rate && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Sample Rate:
+                                </span>{" "}
+                                {
+                                  data.system_metadata.audio.playback
+                                    .output_device.sample_rate
+                                }{" "}
+                                Hz
+                              </div>
+                            )}
+                            {data.system_metadata.audio.playback.output_device
+                              .channels && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Channels:
+                                </span>{" "}
+                                {
+                                  data.system_metadata.audio.playback
+                                    .output_device.channels
+                                }
+                              </div>
+                            )}
+                            {data.system_metadata.audio.playback.output_device
+                              .buffer_size && (
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Buffer:
+                                </span>{" "}
+                                {
+                                  data.system_metadata.audio.playback
+                                    .output_device.buffer_size
+                                }
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
               {}
               {data.system_metadata.video?.sources &&
                 data.system_metadata.video.sources.length > 0 && (
@@ -772,7 +1030,8 @@ export default function ScreenshotDetailView({
                     className="hover:underline text-foreground decoration-primary underline-offset-4 truncate max-w-[180px] text-right"
                     title={`${data.location.latitude}, ${data.location.longitude}`}
                   >
-                    {data.location.name || `${data.location.latitude.toFixed(4)}, ${data.location.longitude.toFixed(4)}`}
+                    {data.location.name ||
+                      `${data.location.latitude.toFixed(4)}, ${data.location.longitude.toFixed(4)}`}
                   </a>
                 </div>
               )}
@@ -795,8 +1054,10 @@ export default function ScreenshotDetailView({
                 )}
                 <Link
                   href={`/gallery?location=${encodeURIComponent(`${data.location.latitude.toFixed(2)},${data.location.longitude.toFixed(2)}`)}`}
-                 className="text-xs text-muted-foreground font-mono block hover:underline decoration-primary underline-offset-4">
-                  {data.location.latitude.toFixed(2)}, {data.location.longitude.toFixed(2)}
+                  className="text-xs text-muted-foreground font-mono block hover:underline decoration-primary underline-offset-4"
+                >
+                  {data.location.latitude.toFixed(2)},{" "}
+                  {data.location.longitude.toFixed(2)}
                 </Link>
                 <a
                   href={`https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}`}
@@ -954,4 +1215,11 @@ export default function ScreenshotDetailView({
       </div>
     </div>
   );
+}
+
+function formatTime(time: number): string {
+  const seconds = time > 10000 ? time / 1000 : time;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }

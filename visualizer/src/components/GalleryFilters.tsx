@@ -317,7 +317,10 @@ export default function GalleryFilters({
     currentLowBattery === "true" ||
     currentHighCpu === "true" ||
     currentHasErrors === "true" ||
-    (currentLocationLat != null && currentLocationLat !== "" && currentLocationLon != null && currentLocationLon !== "");
+    (currentLocationLat != null &&
+      currentLocationLat !== "" &&
+      currentLocationLon != null &&
+      currentLocationLon !== "");
 
   useEffect(() => {
     if (hasAdvancedFilters) {

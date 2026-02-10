@@ -148,7 +148,6 @@ export default function ControlCenter({
 
       {isOpen && (
         <div className="absolute left-0 top-full mt-2 w-80 rounded-md border border-border bg-popover p-4 shadow-md z-50 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 text-popover-foreground max-h-[80vh] overflow-y-auto">
-          {/* Main Service Control */}
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold leading-none">Scribe Service</h4>
@@ -199,7 +198,6 @@ export default function ControlCenter({
 
           <div className="h-px bg-border my-4" />
 
-          {/* Analysis Control */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold leading-none">AI Analysis</h4>
@@ -246,7 +244,6 @@ export default function ControlCenter({
               </div>
             </div>
 
-            {/* Confirm Action View */}
             {confirmAction?.isOpen ? (
               <div className="bg-muted p-2 rounded text-sm space-y-2">
                 <p className="font-medium">Confirm {confirmAction.type}?</p>

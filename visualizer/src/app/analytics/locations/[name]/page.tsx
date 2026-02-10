@@ -103,9 +103,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
           </p>
         </div>
         <Button variant="outline" asChild className="gap-2 cursor-pointer">
-          <Link
-            href={`/gallery?location=${encodeURIComponent(decodedName)}`}
-          >
+          <Link href={`/gallery?location=${encodeURIComponent(decodedName)}`}>
             <Filter className="h-4 w-4" />
             View in Gallery
           </Link>

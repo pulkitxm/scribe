@@ -9,7 +9,8 @@
     "lint": "eslint",
     "serve": "pnpm build && pnpm start",
     "format": "prettier --write .",
-    "check-format": "prettier --check ."
+    "check-format": "prettier --check .",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -45,9 +46,9 @@
     "yet-another-react-lightbox": "^3.28.0",
     "zod": "^4.3.6"
   },
-"devDependencies": {
-  "@types/leaflet": "^1.9.8",
-  "@tailwindcss/postcss": "^4.1.18",
+  "devDependencies": {
+    "@types/leaflet": "^1.9.8",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

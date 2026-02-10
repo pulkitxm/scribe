@@ -13,7 +13,7 @@ import { ScreenshotDataSchema } from "@/lib/schemas";
 let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
 let cacheTimestamp: number = 0;
-const CACHE_DURATION = 60_000; // 1 minute to reduce disk reads
+const CACHE_DURATION = 60_000;
 
 function getScribeFolder(): string {
   if (cachedFolder) return cachedFolder;
@@ -437,10 +437,7 @@ export interface LocationPoint {
  * representative coordinates and count, for map plotting.
  */
 export function getLocationPoints(screenshots: Screenshot[]): LocationPoint[] {
-  const byKey = new Map<
-    string,
-    { lat: number; lng: number; count: number }
-  >();
+  const byKey = new Map<string, { lat: number; lng: number; count: number }>();
   for (const s of screenshots) {
     const loc = s.data.location;
     if (!loc) continue;
@@ -458,12 +455,14 @@ export function getLocationPoints(screenshots: Screenshot[]): LocationPoint[] {
       });
     }
   }
-  return Array.from(byKey.entries()).map(([locationKey, { lat, lng, count }]) => ({
-    lat,
-    lng,
-    count,
-    locationKey,
-  }));
+  return Array.from(byKey.entries()).map(
+    ([locationKey, { lat, lng, count }]) => ({
+      lat,
+      lng,
+      count,
+      locationKey,
+    }),
+  );
 }
 
 export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
@@ -1552,5 +1551,148 @@ export function getSystemContextStats(screenshots: Screenshot[]) {
     externalDisplayCorrelation,
     idleDistribution: idleDistributionData,
     idleTimeHourly,
+  };
+}
+
+export function getAudioPlaybackStats(screenshots: Screenshot[]) {
+  const hourlyPlaybackStats: Record<
+    number,
+    {
+      activeCount: number;
+      systemActiveCount: number;
+      uniqueApps: Set<string>;
+    }
+  > = {};
+
+  const appPlaybackCount: Record<string, number> = {};
+  const nowPlayingHistory: Array<{
+    timestamp: string;
+    app: string;
+    title?: string;
+    artist?: string;
+    album?: string;
+    duration?: number;
+    currentTime?: number;
+    genre?: string;
+    year?: number;
+    trackNumber?: number;
+    albumArtist?: string;
+    composer?: string;
+    rating?: number;
+    playCount?: number;
+    artworkURL?: string;
+  }> = [];
+
+  let totalPlaybackSessions = 0;
+  const allApps = new Set<string>();
+
+  for (const s of screenshots) {
+    const playback = s.data.system_metadata?.audio?.playback;
+    if (!playback) continue;
+
+    const hour = s.timestamp.getHours();
+
+    if (!hourlyPlaybackStats[hour]) {
+      hourlyPlaybackStats[hour] = {
+        activeCount: 0,
+        systemActiveCount: 0,
+        uniqueApps: new Set(),
+      };
+    }
+
+    if (playback.has_active_audio) {
+      hourlyPlaybackStats[hour].activeCount++;
+      totalPlaybackSessions++;
+    }
+
+    if (playback.system_audio_active) {
+      hourlyPlaybackStats[hour].systemActiveCount++;
+    }
+
+    if (playback.playing_apps) {
+      for (const app of playback.playing_apps) {
+        hourlyPlaybackStats[hour].uniqueApps.add(app);
+        appPlaybackCount[app] = (appPlaybackCount[app] || 0) + 1;
+        allApps.add(app);
+      }
+    }
+
+    if (playback.now_playing && playback.now_playing.length > 0) {
+      for (const track of playback.now_playing) {
+        nowPlayingHistory.push({
+          timestamp: s.data.timestamp?.iso || s.timestamp.toISOString(),
+          app: track.app,
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          duration: track.duration,
+          currentTime: track.current_time,
+          genre: track.genre,
+          year: track.year,
+          trackNumber: track.track_number,
+          albumArtist: track.album_artist,
+          composer: track.composer,
+          rating: track.rating,
+          playCount: track.play_count,
+          artworkURL: track.artwork_url,
+        });
+      }
+    }
+  }
+
+  const hourlyPlayback = Object.entries(hourlyPlaybackStats)
+    .map(([hour, stats]) => ({
+      hour: parseInt(hour),
+      activeCount: stats.activeCount,
+      systemActiveCount: stats.systemActiveCount,
+      uniqueApps: Array.from(stats.uniqueApps),
+    }))
+    .sort((a, b) => a.hour - b.hour);
+
+  const topPlayingApps = Object.entries(appPlaybackCount)
+    .map(([app, count]) => ({
+      app,
+      count,
+      percentage: (count / totalPlaybackSessions) * 100,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const mostActiveHour =
+    hourlyPlayback.length > 0
+      ? hourlyPlayback.reduce((max, curr) =>
+          curr.activeCount > max.activeCount ? curr : max,
+        ).hour
+      : 0;
+
+  const avgPlaybackPerHour =
+    hourlyPlayback.length > 0
+      ? hourlyPlayback.reduce((sum, h) => sum + h.activeCount, 0) /
+        hourlyPlayback.length
+      : 0;
+
+  const playbackPercentage =
+    screenshots.length > 0
+      ? (totalPlaybackSessions / screenshots.length) * 100
+      : 0;
+
+  const sortedNowPlaying = nowPlayingHistory
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
+    .slice(0, 50);
+
+  return {
+    hourlyPlayback,
+    topPlayingApps,
+    nowPlayingHistory: sortedNowPlaying,
+    stats: {
+      totalPlaybackSessions,
+      totalUniqueApps: allApps.size,
+      avgPlaybackPerHour,
+      mostActiveHour,
+      playbackPercentage,
+    },
   };
 }
