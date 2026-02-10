@@ -1,7 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getAllDates, getAllScreenshots, getScreenshotsPage } from "@/lib/data";
+import {
+  getAllDates,
+  getFilterOptions,
+  getScreenshotsPage,
+  screenshotToGalleryCardData,
+} from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FilterOptions, Screenshot } from "@/types/screenshot";
+import { FilterOptions } from "@/types/screenshot";
 import GalleryFilters from "@/components/GalleryFilters";
 import { CategoryLink } from "@/components/SmartLinks";
 import Pagination from "@/components/Pagination";
@@ -233,10 +238,13 @@ async function GalleryContent({
   }
 
   const {
-    screenshots: initialScreenshots,
+    screenshots: initialScreenshotsFull,
     nextCursor,
     hasMore,
   } = getScreenshotsPage(filters, 48, null);
+  const initialScreenshots = initialScreenshotsFull.map(
+    screenshotToGalleryCardData,
+  );
 
   return (
     <GalleryInfiniteScroll
@@ -251,100 +259,20 @@ async function GalleryContent({
 export default async function GalleryPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const dates = getAllDates();
-  const allScreenshots = getAllScreenshots();
-
-  const categories = [...new Set(allScreenshots.map((s) => s.data.category))]
-    .filter(Boolean)
-    .sort();
-  const tags = [
-    ...new Set(allScreenshots.flatMap((s) => s.data.summary_tags || [])),
-  ].sort();
-
-  const apps = [
-    ...new Set(
-      allScreenshots.flatMap((s) => s.data.evidence?.apps_visible || []),
-    ),
-  ]
-    .filter(Boolean)
-    .sort();
-  const projects = [
-    ...new Set(
-      allScreenshots
-        .map((s) => s.data.context.code_context?.repo_or_project)
-        .filter(Boolean),
-    ),
-  ].sort() as string[];
-  const languages = [
-    ...new Set(
-      allScreenshots
-        .map((s) => s.data.context.code_context?.language)
-        .filter(Boolean),
-    ),
-  ].sort() as string[];
-  const workspaces = [
-    ...new Set(
-      allScreenshots.map((s) => s.data.workspace_type).filter(Boolean),
-    ),
-  ].sort();
-  const domains = [
-    ...new Set(
-      allScreenshots.flatMap((s) => s.data.evidence?.web_domains_visible || []),
-    ),
-  ]
-    .filter(Boolean)
-    .sort();
-
-  const audioApps = [
-    ...new Set(
-      allScreenshots.flatMap(
-        (s) =>
-          s.data.system_metadata?.audio?.playback?.now_playing
-            ?.filter((t) => t.title && t.title.trim() !== "")
-            .map((t) => t.app) || [],
-      ),
-    ),
-  ]
-    .filter(Boolean)
-    .sort();
-
-  const artists = [
-    ...new Set(
-      allScreenshots.flatMap(
-        (s) =>
-          s.data.system_metadata?.audio?.playback?.now_playing
-            ?.filter((t) => t.artist && t.artist.trim() !== "")
-            .map((t) => t.artist) || [],
-      ),
-    ),
-  ]
-    .filter(Boolean)
-    .sort() as string[];
-
-  const genres = [
-    ...new Set(
-      allScreenshots.flatMap(
-        (s) =>
-          s.data.system_metadata?.audio?.playback?.now_playing
-            ?.filter((t) => t.genre && t.genre.trim() !== "")
-            .map((t) => t.genre) || [],
-      ),
-    ),
-  ]
-    .filter(Boolean)
-    .sort() as string[];
-
-  const albums = [
-    ...new Set(
-      allScreenshots.flatMap(
-        (s) =>
-          s.data.system_metadata?.audio?.playback?.now_playing
-            ?.filter((t) => t.album && t.album.trim() !== "")
-            .map((t) => t.album) || [],
-      ),
-    ),
-  ]
-    .filter(Boolean)
-    .sort() as string[];
+  const filterOptions = getFilterOptions();
+  const {
+    categories,
+    tags,
+    apps,
+    projects,
+    languages,
+    workspaces,
+    domains,
+    audioApps,
+    artists,
+    genres,
+    albums,
+  } = filterOptions;
 
   const hasHiddenFilter =
     params.domain ||

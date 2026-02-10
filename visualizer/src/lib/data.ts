@@ -7,6 +7,7 @@ import {
   ScreenshotData,
   DailyStats,
   FilterOptions,
+  GalleryCardData,
 } from "@/types/screenshot";
 import { ScreenshotDataSchema } from "@/lib/schemas";
 
@@ -14,6 +15,24 @@ let cachedFolder: string | null = null;
 const folderCache: Map<string, Screenshot[]> = new Map();
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 60_000;
+
+export interface GalleryFilterOptions {
+  categories: string[];
+  tags: string[];
+  apps: string[];
+  projects: string[];
+  languages: string[];
+  workspaces: string[];
+  domains: string[];
+  audioApps: string[];
+  artists: string[];
+  genres: string[];
+  albums: string[];
+}
+let filterOptionsCache: {
+  options: GalleryFilterOptions;
+  timestamp: number;
+} | null = null;
 
 function getScribeFolder(): string {
   if (cachedFolder) return cachedFolder;
@@ -44,6 +63,7 @@ function isCacheValid(): boolean {
 function clearCacheIfStale() {
   if (!isCacheValid()) {
     folderCache.clear();
+    filterOptionsCache = null;
     cacheTimestamp = Date.now();
   }
 }
@@ -177,10 +197,6 @@ export function getScreenshotById(date: string, id: string): Screenshot | null {
   };
 }
 
-/**
- * Apply filter options to a screenshot list (in-memory). Used to avoid
- * loading all data twice when dashboard needs both filtered and global views.
- */
 export function applyFilters(
   screenshots: Screenshot[],
   filters: FilterOptions,
@@ -481,10 +497,6 @@ export interface LocationPoint {
   locationKey: string;
 }
 
-/**
- * Returns one point per unique location (by name or rounded lat,lng) with
- * representative coordinates and count, for map plotting.
- */
 export function getLocationPoints(screenshots: Screenshot[]): LocationPoint[] {
   const byKey = new Map<string, { lat: number; lng: number; count: number }>();
   for (const s of screenshots) {
@@ -529,14 +541,101 @@ export function getAllScreenshots(filters?: FilterOptions): Screenshot[] {
   return filters ? applyFilters(base, filters) : base;
 }
 
+export function getFilterOptions(): GalleryFilterOptions {
+  if (
+    filterOptionsCache &&
+    Date.now() - filterOptionsCache.timestamp < CACHE_DURATION
+  ) {
+    return filterOptionsCache.options;
+  }
+  const all = getAllScreenshots();
+  const options: GalleryFilterOptions = {
+    categories: [...new Set(all.map((s) => s.data.category))]
+      .filter(Boolean)
+      .sort(),
+    tags: [...new Set(all.flatMap((s) => s.data.summary_tags || []))].sort(),
+    apps: [...new Set(all.flatMap((s) => s.data.evidence?.apps_visible || []))]
+      .filter(Boolean)
+      .sort(),
+    projects: [
+      ...new Set(
+        all
+          .map((s) => s.data.context.code_context?.repo_or_project)
+          .filter(Boolean),
+      ),
+    ].sort() as string[],
+    languages: [
+      ...new Set(
+        all.map((s) => s.data.context.code_context?.language).filter(Boolean),
+      ),
+    ].sort() as string[],
+    workspaces: [
+      ...new Set(all.map((s) => s.data.workspace_type).filter(Boolean)),
+    ].sort(),
+    domains: [
+      ...new Set(
+        all.flatMap((s) => s.data.evidence?.web_domains_visible || []),
+      ),
+    ]
+      .filter(Boolean)
+      .sort(),
+    audioApps: [
+      ...new Set(
+        all.flatMap(
+          (s) =>
+            s.data.system_metadata?.audio?.playback?.now_playing
+              ?.filter((t) => t.title && t.title.trim() !== "")
+              .map((t) => t.app) || [],
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort(),
+    artists: [
+      ...new Set(
+        all.flatMap(
+          (s) =>
+            s.data.system_metadata?.audio?.playback?.now_playing
+              ?.filter((t) => t.artist && t.artist.trim() !== "")
+              .map((t) => t.artist) || [],
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort() as string[],
+    genres: [
+      ...new Set(
+        all.flatMap(
+          (s) =>
+            s.data.system_metadata?.audio?.playback?.now_playing
+              ?.filter((t) => t.genre && t.genre.trim() !== "")
+              .map((t) => t.genre) || [],
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort() as string[],
+    albums: [
+      ...new Set(
+        all.flatMap(
+          (s) =>
+            s.data.system_metadata?.audio?.playback?.now_playing
+              ?.filter((t) => t.album && t.album.trim() !== "")
+              .map((t) => t.album) || [],
+        ),
+      ),
+    ]
+      .filter(Boolean)
+      .sort() as string[],
+  };
+  filterOptionsCache = { options, timestamp: Date.now() };
+  return options;
+}
+
 export type GalleryCursor = { date: string; id: string };
 
 const ITEMS_PER_PAGE = 48;
 
-/**
- * Return one page of screenshots and cursor for the next page. Uses cached
- * getAllScreenshots so repeated calls within cache TTL are fast.
- */
 export function getScreenshotsPage(
   filters: FilterOptions,
   limit: number = ITEMS_PER_PAGE,
@@ -561,6 +660,28 @@ export function getScreenshotsPage(
       ? { date: page[page.length - 1].date, id: page[page.length - 1].id }
       : null;
   return { screenshots: page, nextCursor, hasMore };
+}
+
+export function screenshotToGalleryCardData(s: Screenshot): GalleryCardData {
+  const loc = s.data.location;
+  return {
+    id: s.id,
+    date: s.date,
+    timestamp:
+      s.timestamp instanceof Date
+        ? s.timestamp.toISOString()
+        : (s.timestamp as unknown as string),
+    imagePath: s.imagePath,
+    short_description: s.data.short_description || "",
+    category: s.data.category,
+    workspace_type: s.data.workspace_type,
+    active_app_guess: s.data.evidence?.active_app_guess,
+    summary_tags: s.data.summary_tags,
+    location_name: loc ? loc.name?.trim() || "Location" : undefined,
+    location_title: loc
+      ? loc.name?.trim() || `${loc.latitude}, ${loc.longitude}`
+      : undefined,
+  };
 }
 
 export function getExtendedStats(screenshots: Screenshot[]) {

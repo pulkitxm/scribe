@@ -94,3 +94,17 @@ export interface FilterOptions {
   songTitle?: string;
   album?: string;
 }
+
+export interface GalleryCardData {
+  id: string;
+  date: string;
+  timestamp: string;
+  imagePath: string;
+  short_description: string;
+  category?: string;
+  workspace_type?: string;
+  active_app_guess?: string;
+  summary_tags?: string[];
+  location_name?: string;
+  location_title?: string;
+}
