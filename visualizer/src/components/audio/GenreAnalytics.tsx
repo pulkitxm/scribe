@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Music, TrendingUp } from "lucide-react";
@@ -181,21 +182,26 @@ export default function GenreAnalytics({ tracks }: GenreAnalyticsProps) {
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {genreData.map((genre, index) => (
-              <Badge
+              <Link
                 key={genre.genre}
-                variant="secondary"
-                className="text-sm px-3 py-1.5"
-                style={{
-                  backgroundColor:
-                    index < 8
-                      ? `${COLORS[index % COLORS.length]}20`
-                      : undefined,
-                  borderColor:
-                    index < 8 ? COLORS[index % COLORS.length] : undefined,
-                }}
+                href={`/gallery?genre=${encodeURIComponent(genre.genre)}`}
               >
-                {genre.genre} ({genre.count})
-              </Badge>
+                <Badge
+                  variant="secondary"
+                  className="text-sm px-3 py-1.5 cursor-pointer hover:scale-105 transition-transform"
+                  style={{
+                    backgroundColor:
+                      index < 8
+                        ? `${COLORS[index % COLORS.length]}20`
+                        : undefined,
+                    borderColor:
+                      index < 8 ? COLORS[index % COLORS.length] : undefined,
+                    borderWidth: "2px",
+                  }}
+                >
+                  {genre.genre} ({genre.count})
+                </Badge>
+              </Link>
             ))}
           </div>
         </CardContent>

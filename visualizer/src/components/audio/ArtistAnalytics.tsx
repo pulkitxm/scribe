@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, Music, Clock, TrendingUp } from "lucide-react";
@@ -191,9 +192,10 @@ export default function ArtistAnalytics({ tracks }: ArtistAnalyticsProps) {
         <CardContent>
           <div className="space-y-3">
             {top10Artists.map((artist, index) => (
-              <div
+              <Link
                 key={artist.artist}
-                className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                href={`/gallery?artist=${encodeURIComponent(artist.artist)}`}
+                className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 hover:bg-primary/10 hover:border-primary/50 border border-transparent transition-all cursor-pointer"
               >
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
@@ -243,7 +245,7 @@ export default function ArtistAnalytics({ tracks }: ArtistAnalyticsProps) {
                     />
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>

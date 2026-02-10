@@ -87,4 +87,10 @@ export interface FilterOptions {
   network?: string;
   dateFolder?: string;
   location?: string;
+  hasAudio?: boolean;
+  audioApp?: string;
+  artist?: string;
+  genre?: string;
+  songTitle?: string;
+  album?: string;
 }

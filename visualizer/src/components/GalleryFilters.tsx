@@ -38,6 +38,10 @@ interface GalleryFiltersProps {
   languages?: string[];
   workspaces?: string[];
   domains?: string[];
+  audioApps?: string[];
+  artists?: string[];
+  genres?: string[];
+  albums?: string[];
   currentDate?: string;
   currentTag?: string;
   currentCategory?: string;
@@ -61,6 +65,12 @@ interface GalleryFiltersProps {
   currentNetwork?: string;
   currentLocationLat?: string;
   currentLocationLon?: string;
+  currentHasAudio?: string;
+  currentAudioApp?: string;
+  currentArtist?: string;
+  currentGenre?: string;
+  currentSongTitle?: string;
+  currentAlbum?: string;
 }
 
 interface ActiveFilter {
@@ -78,6 +88,10 @@ export default function GalleryFilters({
   languages = [],
   workspaces = [],
   domains = [],
+  audioApps = [],
+  artists = [],
+  genres = [],
+  albums = [],
   currentDate,
   currentTag,
   currentCategory,
@@ -101,6 +115,12 @@ export default function GalleryFilters({
   currentNetwork,
   currentLocationLat,
   currentLocationLon,
+  currentHasAudio,
+  currentAudioApp,
+  currentArtist,
+  currentGenre,
+  currentSongTitle,
+  currentAlbum,
 }: GalleryFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -301,6 +321,26 @@ export default function GalleryFilters({
         label: "Location",
         value: `${currentLocationLat}, ${currentLocationLon}`,
       });
+    if (currentHasAudio === "true")
+      filters.push({ key: "hasAudio", label: "Playing Music", value: "Yes" });
+    if (currentAudioApp)
+      filters.push({
+        key: "audioApp",
+        label: "Audio App",
+        value: currentAudioApp,
+      });
+    if (currentArtist)
+      filters.push({ key: "artist", label: "Artist", value: currentArtist });
+    if (currentGenre)
+      filters.push({ key: "genre", label: "Genre", value: currentGenre });
+    if (currentSongTitle)
+      filters.push({
+        key: "songTitle",
+        label: "Song",
+        value: currentSongTitle,
+      });
+    if (currentAlbum)
+      filters.push({ key: "album", label: "Album", value: currentAlbum });
     return filters;
   };
 
@@ -314,9 +354,15 @@ export default function GalleryFilters({
     currentTimeOfDay ||
     currentHasCode === "true" ||
     currentIsMeeting === "true" ||
+    currentHasAudio === "true" ||
     currentLowBattery === "true" ||
     currentHighCpu === "true" ||
     currentHasErrors === "true" ||
+    currentAudioApp ||
+    currentArtist ||
+    currentGenre ||
+    currentSongTitle ||
+    currentAlbum ||
     (currentLocationLat != null &&
       currentLocationLat !== "" &&
       currentLocationLon != null &&
@@ -635,6 +681,18 @@ export default function GalleryFilters({
             </div>
             <div className="flex items-center space-x-2">
               <Switch
+                id="hasAudio"
+                checked={currentHasAudio === "true"}
+                onCheckedChange={(checked) =>
+                  updateToggleFilter("hasAudio", checked)
+                }
+              />
+              <Label htmlFor="hasAudio" className="text-sm cursor-pointer">
+                🎵 Playing Music
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
                 id="hasErrors"
                 checked={currentHasErrors === "true"}
                 onCheckedChange={(checked) =>
@@ -670,6 +728,94 @@ export default function GalleryFilters({
               </Label>
             </div>
           </div>
+
+          {(audioApps.length > 0 ||
+            artists.length > 0 ||
+            genres.length > 0 ||
+            albums.length > 0) && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                🎵 Music Filters
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-3 bg-muted/30 rounded-lg">
+                {audioApps.length > 0 && (
+                  <Select
+                    value={currentAudioApp || "all"}
+                    onValueChange={(v) => updateFilter("audioApp", v)}
+                  >
+                    <SelectTrigger className="cursor-pointer bg-background/50">
+                      <SelectValue placeholder="Audio App" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All Audio Apps</SelectItem>
+                      {audioApps.map((app) => (
+                        <SelectItem key={app} value={app}>
+                          🎵 {app}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {artists.length > 0 && (
+                  <Select
+                    value={currentArtist || "all"}
+                    onValueChange={(v) => updateFilter("artist", v)}
+                  >
+                    <SelectTrigger className="cursor-pointer bg-background/50">
+                      <SelectValue placeholder="Artist" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All Artists</SelectItem>
+                      {artists.slice(0, 100).map((artist) => (
+                        <SelectItem key={artist} value={artist}>
+                          👤 {artist}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {albums.length > 0 && (
+                  <Select
+                    value={currentAlbum || "all"}
+                    onValueChange={(v) => updateFilter("album", v)}
+                  >
+                    <SelectTrigger className="cursor-pointer bg-background/50">
+                      <SelectValue placeholder="Album" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All Albums</SelectItem>
+                      {albums.slice(0, 100).map((album) => (
+                        <SelectItem key={album} value={album}>
+                          💿 {album}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {genres.length > 0 && (
+                  <Select
+                    value={currentGenre || "all"}
+                    onValueChange={(v) => updateFilter("genre", v)}
+                  >
+                    <SelectTrigger className="cursor-pointer bg-background/50">
+                      <SelectValue placeholder="Genre" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All Genres</SelectItem>
+                      {genres.map((genre) => (
+                        <SelectItem key={genre} value={genre}>
+                          🎸 {genre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
 

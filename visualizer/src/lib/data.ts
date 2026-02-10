@@ -421,6 +421,55 @@ export function applyFilters(
       return name === filters.network;
     });
   }
+  if (filters.hasAudio) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return (
+        playback?.has_active_audio === true &&
+        playback?.now_playing &&
+        playback.now_playing.length > 0 &&
+        playback.now_playing.some((t) => t.title && t.title.trim() !== "")
+      );
+    });
+  }
+  if (filters.audioApp) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return playback?.now_playing?.some((t) => t.app === filters.audioApp);
+    });
+  }
+  if (filters.artist) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return playback?.now_playing?.some((t) =>
+        t.artist?.toLowerCase().includes(filters.artist!.toLowerCase()),
+      );
+    });
+  }
+  if (filters.genre) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return playback?.now_playing?.some(
+        (t) => t.genre?.toLowerCase() === filters.genre!.toLowerCase(),
+      );
+    });
+  }
+  if (filters.songTitle) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return playback?.now_playing?.some((t) =>
+        t.title?.toLowerCase().includes(filters.songTitle!.toLowerCase()),
+      );
+    });
+  }
+  if (filters.album) {
+    result = result.filter((s) => {
+      const playback = s.data.system_metadata?.audio?.playback;
+      return playback?.now_playing?.some((t) =>
+        t.album?.toLowerCase().includes(filters.album!.toLowerCase()),
+      );
+    });
+  }
 
   return result;
 }
@@ -1610,9 +1659,22 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
     }
 
     if (playback.playing_apps) {
-      const communicationApps = ["Chrome", "Safari", "Firefox", "Arc", "Slack", "Discord", "Zoom", "Teams", "FaceTime", "Skype"];
+      const communicationApps = [
+        "Chrome",
+        "Safari",
+        "Firefox",
+        "Arc",
+        "Slack",
+        "Discord",
+        "Zoom",
+        "Teams",
+        "FaceTime",
+        "Skype",
+      ];
       for (const app of playback.playing_apps) {
-        const isCommunicationApp = communicationApps.some(commApp => app.includes(commApp));
+        const isCommunicationApp = communicationApps.some((commApp) =>
+          app.includes(commApp),
+        );
         if (!isCommunicationApp) {
           hourlyPlaybackStats[hour].uniqueApps.add(app);
           appPlaybackCount[app] = (appPlaybackCount[app] || 0) + 1;
@@ -1623,11 +1685,22 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
 
     if (playback.now_playing && playback.now_playing.length > 0) {
       for (const track of playback.now_playing) {
-        // Filter out tracks without proper metadata (likely communication apps)
-        const communicationApps = ["Chrome", "Safari", "Firefox", "Arc", "Slack", "Discord", "Zoom", "Teams", "FaceTime", "Skype"];
-        const isCommunicationApp = communicationApps.some(app => track.app.includes(app));
-        
-        // Only include if it has a title AND is not a communication app
+        const communicationApps = [
+          "Chrome",
+          "Safari",
+          "Firefox",
+          "Arc",
+          "Slack",
+          "Discord",
+          "Zoom",
+          "Teams",
+          "FaceTime",
+          "Skype",
+        ];
+        const isCommunicationApp = communicationApps.some((app) =>
+          track.app.includes(app),
+        );
+
         if (track.title && track.title.trim() !== "" && !isCommunicationApp) {
           nowPlayingHistory.push({
             timestamp: s.data.timestamp?.iso || s.timestamp.toISOString(),
@@ -1688,8 +1761,7 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
       : 0;
 
   const sortedNowPlaying = nowPlayingHistory.sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
 
   return {

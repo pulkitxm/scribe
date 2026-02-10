@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -194,9 +195,18 @@ export default function SongsList({ tracks }: SongsListProps) {
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-base truncate">
-                          {track.title || "Unknown Track"}
-                        </h3>
+                        {track.title ? (
+                          <Link
+                            href={`/gallery?songTitle=${encodeURIComponent(track.title)}`}
+                            className="font-semibold text-base truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                          >
+                            {track.title}
+                          </Link>
+                        ) : (
+                          <h3 className="font-semibold text-base truncate">
+                            Unknown Track
+                          </h3>
+                        )}
                         {track.year && (
                           <Badge
                             variant="outline"
@@ -210,31 +220,51 @@ export default function SongsList({ tracks }: SongsListProps) {
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
                         {track.artist && (
-                          <span className="flex items-center gap-1 truncate">
+                          <Link
+                            href={`/gallery?artist=${encodeURIComponent(track.artist)}`}
+                            className="flex items-center gap-1 truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                          >
                             <User className="h-3 w-3 flex-shrink-0" />
                             {track.artist}
-                          </span>
+                          </Link>
                         )}
                         {track.artist && track.album && (
                           <span className="flex-shrink-0">•</span>
                         )}
                         {track.album && (
-                          <span className="flex items-center gap-1 truncate">
+                          <Link
+                            href={`/gallery?album=${encodeURIComponent(track.album)}`}
+                            className="flex items-center gap-1 truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                          >
                             <Disc className="h-3 w-3 flex-shrink-0" />
                             {track.album}
-                          </span>
+                          </Link>
                         )}
                       </div>
 
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <Badge variant="secondary" className="text-xs">
-                          {track.app}
-                        </Badge>
+                        <Link
+                          href={`/gallery?audioApp=${encodeURIComponent(track.app)}`}
+                        >
+                          <Badge
+                            variant="secondary"
+                            className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                          >
+                            {track.app}
+                          </Badge>
+                        </Link>
 
                         {track.genre && (
-                          <Badge variant="outline" className="text-xs">
-                            {track.genre}
-                          </Badge>
+                          <Link
+                            href={`/gallery?genre=${encodeURIComponent(track.genre)}`}
+                          >
+                            <Badge
+                              variant="outline"
+                              className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                            >
+                              {track.genre}
+                            </Badge>
+                          </Link>
                         )}
 
                         {track.trackNumber && (

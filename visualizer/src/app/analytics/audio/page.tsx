@@ -211,7 +211,6 @@ export default function AudioAnalyticsPage() {
         <ArtistAnalytics tracks={audioStats.nowPlayingHistory} />
       </section>
 
-
       <section className="space-y-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Disc className="h-5 w-5 text-primary" />

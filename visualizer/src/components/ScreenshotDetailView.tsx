@@ -161,7 +161,6 @@ export default function ScreenshotDetailView({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
         <div className="space-y-6">
-          {/* Image Section */}
           <Card>
             <CardContent className="p-0 relative group">
               <div
@@ -196,7 +195,6 @@ export default function ScreenshotDetailView({
             ]}
           />
 
-          {/* AI Analysis Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -218,7 +216,6 @@ export default function ScreenshotDetailView({
             </CardContent>
           </Card>
 
-          {/* Tabs for Details */}
           <Tabs defaultValue="system" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="system">System</TabsTrigger>
@@ -237,10 +234,8 @@ export default function ScreenshotDetailView({
           </Tabs>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
           <div className="sticky top-4 space-y-6">
-            {/* Productivity Scores */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -291,7 +286,6 @@ export default function ScreenshotDetailView({
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -338,7 +332,6 @@ export default function ScreenshotDetailView({
               </CardContent>
             </Card>
 
-            {/* Location Map */}
             {data.location && (
               <Card>
                 <CardHeader>
@@ -369,7 +362,6 @@ export default function ScreenshotDetailView({
               </Card>
             )}
 
-            {/* Tags */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -499,9 +491,7 @@ function SystemMetadataView({ data }: { data: Screenshot["data"] }) {
             )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Signal</span>
-              <span>
-                {data.system_metadata.stats.network.signal_strength}%
-              </span>
+              <span>{data.system_metadata.stats.network.signal_strength}%</span>
             </div>
           </CardContent>
         </Card>
@@ -607,9 +597,18 @@ function SystemMetadataView({ data }: { data: Screenshot["data"] }) {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-base truncate">
-                            {track.title || "Unknown Track"}
-                          </h3>
+                          {track.title ? (
+                            <Link
+                              href={`/gallery?songTitle=${encodeURIComponent(track.title)}`}
+                              className="font-semibold text-base truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                            >
+                              {track.title}
+                            </Link>
+                          ) : (
+                            <h3 className="font-semibold text-base truncate">
+                              Unknown Track
+                            </h3>
+                          )}
                           {track.is_playing && (
                             <Play className="h-4 w-4 text-green-500 flex-shrink-0" />
                           )}
@@ -618,17 +617,23 @@ function SystemMetadataView({ data }: { data: Screenshot["data"] }) {
                         {(track.artist || track.album) && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                             {track.artist && (
-                              <span className="flex items-center gap-1 truncate">
+                              <Link
+                                href={`/gallery?artist=${encodeURIComponent(track.artist)}`}
+                                className="flex items-center gap-1 truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                              >
                                 <User className="h-3 w-3 flex-shrink-0" />
                                 {track.artist}
-                              </span>
+                              </Link>
                             )}
                             {track.artist && track.album && <span>•</span>}
                             {track.album && (
-                              <span className="flex items-center gap-1 truncate">
+                              <Link
+                                href={`/gallery?album=${encodeURIComponent(track.album)}`}
+                                className="flex items-center gap-1 truncate hover:text-primary hover:underline transition-colors cursor-pointer"
+                              >
                                 <Disc className="h-3 w-3 flex-shrink-0" />
                                 {track.album}
-                              </span>
+                              </Link>
                             )}
                           </div>
                         )}
@@ -651,10 +656,69 @@ function SystemMetadataView({ data }: { data: Screenshot["data"] }) {
                         )}
 
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="secondary" className="text-xs">
-                            {track.app}
-                          </Badge>
+                          <Link
+                            href={`/gallery?audioApp=${encodeURIComponent(track.app)}`}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                            >
+                              {track.app}
+                            </Badge>
+                          </Link>
+                          {track.genre && (
+                            <Link
+                              href={`/gallery?genre=${encodeURIComponent(track.genre)}`}
+                            >
+                              <Badge
+                                variant="outline"
+                                className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                              >
+                                {track.genre}
+                              </Badge>
+                            </Link>
+                          )}
+                          {track.year && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {track.year}
+                            </Badge>
+                          )}
+                          {track.track_number && (
+                            <Badge variant="outline" className="text-xs">
+                              <Hash className="h-3 w-3 mr-1" />
+                              {track.track_number}
+                            </Badge>
+                          )}
+                          {track.rating !== undefined && track.rating > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              <Star className="h-3 w-3 mr-1 fill-yellow-500 text-yellow-500" />
+                              {track.rating}/100
+                            </Badge>
+                          )}
+                          {track.play_count !== undefined &&
+                            track.play_count > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Play className="h-3 w-3 mr-1" />
+                                {track.play_count} plays
+                              </Badge>
+                            )}
                         </div>
+
+                        {(track.composer || track.album_artist) && (
+                          <div className="text-xs text-muted-foreground mt-2 truncate">
+                            {track.composer && (
+                              <span>Composer: {track.composer}</span>
+                            )}
+                            {track.composer && track.album_artist && (
+                              <span> • </span>
+                            )}
+                            {track.album_artist &&
+                              track.album_artist !== track.artist && (
+                                <span>Album Artist: {track.album_artist}</span>
+                              )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ),
@@ -754,7 +818,6 @@ function SystemMetadataView({ data }: { data: Screenshot["data"] }) {
 function ContextView({ data }: { data: Screenshot["data"] }) {
   return (
     <div className="space-y-6">
-      {/* Rich Context */}
       {(data.context.learning_context?.learning_topic ||
         data.context.communication_context?.communication_type ||
         data.context.entertainment_context?.entertainment_type) && (
@@ -812,7 +875,6 @@ function ContextView({ data }: { data: Screenshot["data"] }) {
         </Card>
       )}
 
-      {/* Coding Activity */}
       {data.context.code_context?.language && (
         <Card>
           <CardHeader>
@@ -866,7 +928,6 @@ function ContextView({ data }: { data: Screenshot["data"] }) {
         </Card>
       )}
 
-      {/* Visible Apps */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -889,7 +950,6 @@ function ContextView({ data }: { data: Screenshot["data"] }) {
         </CardContent>
       </Card>
 
-      {/* Web Domains */}
       {data.evidence?.web_domains_visible &&
         data.evidence.web_domains_visible.length > 0 && (
           <Card>
@@ -925,7 +985,6 @@ function ContextView({ data }: { data: Screenshot["data"] }) {
 function EvidenceView({ data }: { data: Screenshot["data"] }) {
   return (
     <div className="space-y-6">
-      {/* Actions Observed */}
       {data.actions_observed && data.actions_observed.length > 0 && (
         <Card>
           <CardHeader>
@@ -949,7 +1008,6 @@ function EvidenceView({ data }: { data: Screenshot["data"] }) {
         </Card>
       )}
 
-      {/* Text Snippets */}
       {data.evidence?.text_snippets &&
         data.evidence.text_snippets.length > 0 && (
           <Card>

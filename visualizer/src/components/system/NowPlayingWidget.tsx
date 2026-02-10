@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Music, Play, Pause } from "lucide-react";
@@ -81,19 +82,28 @@ export default function NowPlayingWidget({ track }: NowPlayingWidgetProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-base truncate">
+                <Link
+                  href={`/gallery?songTitle=${encodeURIComponent(track.title)}`}
+                  className="font-semibold text-base truncate hover:text-primary hover:underline transition-colors cursor-pointer block"
+                >
                   {track.title}
-                </h3>
+                </Link>
                 {track.artist && (
-                  <p className="text-sm text-muted-foreground truncate">
+                  <Link
+                    href={`/gallery?artist=${encodeURIComponent(track.artist)}`}
+                    className="text-sm text-muted-foreground truncate hover:text-primary hover:underline transition-colors cursor-pointer block"
+                  >
                     {track.artist}
-                  </p>
+                  </Link>
                 )}
                 {track.album && (
-                  <p className="text-xs text-muted-foreground truncate">
+                  <Link
+                    href={`/gallery?album=${encodeURIComponent(track.album)}`}
+                    className="text-xs text-muted-foreground truncate hover:text-primary hover:underline transition-colors cursor-pointer block"
+                  >
                     {track.album}
                     {track.year && ` (${track.year})`}
-                  </p>
+                  </Link>
                 )}
               </div>
               <div className="flex items-center gap-1">
@@ -121,13 +131,25 @@ export default function NowPlayingWidget({ track }: NowPlayingWidgetProps) {
             )}
 
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <Badge variant="outline" className="text-xs">
-                {track.app}
-              </Badge>
-              {track.genre && (
-                <Badge variant="secondary" className="text-xs">
-                  {track.genre}
+              <Link href={`/gallery?audioApp=${encodeURIComponent(track.app)}`}>
+                <Badge
+                  variant="outline"
+                  className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                >
+                  {track.app}
                 </Badge>
+              </Link>
+              {track.genre && (
+                <Link
+                  href={`/gallery?genre=${encodeURIComponent(track.genre)}`}
+                >
+                  <Badge
+                    variant="secondary"
+                    className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    {track.genre}
+                  </Badge>
+                </Link>
               )}
             </div>
           </div>

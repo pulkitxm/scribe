@@ -48,6 +48,12 @@ interface PageProps {
     location?: string;
     locationLat?: string;
     locationLon?: string;
+    hasAudio?: string;
+    audioApp?: string;
+    artist?: string;
+    genre?: string;
+    songTitle?: string;
+    album?: string;
   }>;
 }
 
@@ -100,6 +106,12 @@ async function GalleryContent({
   location,
   locationLat,
   locationLon,
+  hasAudio,
+  audioApp,
+  artist,
+  genre,
+  songTitle,
+  album,
 }: {
   date?: string;
   tag?: string;
@@ -125,6 +137,12 @@ async function GalleryContent({
   location?: string;
   locationLat?: string;
   locationLon?: string;
+  hasAudio?: string;
+  audioApp?: string;
+  artist?: string;
+  genre?: string;
+  songTitle?: string;
+  album?: string;
 }) {
   const filters: FilterOptions = {};
 
@@ -193,6 +211,12 @@ async function GalleryContent({
   if (highCpu === "true") filters.highCpu = true;
   if (hasErrors === "true") filters.hasErrors = true;
   if (network) filters.network = network;
+  if (hasAudio === "true") filters.hasAudio = true;
+  if (audioApp) filters.audioApp = audioApp;
+  if (artist) filters.artist = artist;
+  if (genre) filters.genre = genre;
+  if (songTitle) filters.songTitle = songTitle;
+  if (album) filters.album = album;
   if (location) {
     filters.location = location;
   } else if (
@@ -270,6 +294,58 @@ export default async function GalleryPage({ searchParams }: PageProps) {
     .filter(Boolean)
     .sort();
 
+  const audioApps = [
+    ...new Set(
+      allScreenshots.flatMap(
+        (s) =>
+          s.data.system_metadata?.audio?.playback?.now_playing
+            ?.filter((t) => t.title && t.title.trim() !== "")
+            .map((t) => t.app) || [],
+      ),
+    ),
+  ]
+    .filter(Boolean)
+    .sort();
+
+  const artists = [
+    ...new Set(
+      allScreenshots.flatMap(
+        (s) =>
+          s.data.system_metadata?.audio?.playback?.now_playing
+            ?.filter((t) => t.artist && t.artist.trim() !== "")
+            .map((t) => t.artist) || [],
+      ),
+    ),
+  ]
+    .filter(Boolean)
+    .sort() as string[];
+
+  const genres = [
+    ...new Set(
+      allScreenshots.flatMap(
+        (s) =>
+          s.data.system_metadata?.audio?.playback?.now_playing
+            ?.filter((t) => t.genre && t.genre.trim() !== "")
+            .map((t) => t.genre) || [],
+      ),
+    ),
+  ]
+    .filter(Boolean)
+    .sort() as string[];
+
+  const albums = [
+    ...new Set(
+      allScreenshots.flatMap(
+        (s) =>
+          s.data.system_metadata?.audio?.playback?.now_playing
+            ?.filter((t) => t.album && t.album.trim() !== "")
+            .map((t) => t.album) || [],
+      ),
+    ),
+  ]
+    .filter(Boolean)
+    .sort() as string[];
+
   const hasHiddenFilter =
     params.domain ||
     params.workspace ||
@@ -310,6 +386,10 @@ export default async function GalleryPage({ searchParams }: PageProps) {
         languages={languages}
         workspaces={workspaces}
         domains={domains}
+        audioApps={audioApps}
+        artists={artists}
+        genres={genres}
+        albums={albums}
         currentDate={params.date}
         currentTag={params.tag}
         currentCategory={params.category}
@@ -333,6 +413,12 @@ export default async function GalleryPage({ searchParams }: PageProps) {
         currentNetwork={params.network}
         currentLocationLat={locationLat}
         currentLocationLon={locationLon}
+        currentHasAudio={params.hasAudio}
+        currentAudioApp={params.audioApp}
+        currentArtist={params.artist}
+        currentGenre={params.genre}
+        currentSongTitle={params.songTitle}
+        currentAlbum={params.album}
       />
 
       <Suspense fallback={<GalleryGridSkeleton />}>
@@ -357,6 +443,12 @@ export default async function GalleryPage({ searchParams }: PageProps) {
           lowBattery={params.lowBattery}
           highCpu={params.highCpu}
           hasErrors={params.hasErrors}
+          hasAudio={params.hasAudio}
+          audioApp={params.audioApp}
+          artist={params.artist}
+          genre={params.genre}
+          songTitle={params.songTitle}
+          album={params.album}
           network={params.network}
           location={params.location}
           locationLat={params.locationLat}
