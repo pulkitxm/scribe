@@ -131,7 +131,7 @@ private func getCurrentMediaInfo() -> PlayingAudioInfo? {
         return spotifyInfo
     }
     
-    let mediaApps = ["VLC", "QuickTime Player", "YouTube", "Safari", "Chrome", "Arc"]
+    let mediaApps = ["VLC", "QuickTime Player", "YouTube Music", "Apple TV", "Tidal"]
     for app in mediaApps {
         if let info = getMediaInfoFromApp(appName: app) {
             return info
@@ -415,6 +415,7 @@ private func getCurrentOutputDeviceDetails() -> AudioDeviceDetails? {
     return AudioDeviceDetails(
         name: name,
         sampleRate: sampleRate > 0 ? sampleRate : nil,
+        bitDepth: nil,
         channels: channels > 0 ? channels : nil,
         bufferSize: bufferSize > 0 ? Int(bufferSize) : nil
     )
@@ -427,10 +428,9 @@ private func getCurrentAudioLevels() -> (left: Double, right: Double)? {
 private func getRunningAudioApps() -> [String] {
     let audioApps = [
         "Music", "Spotify", "VLC", "QuickTime Player", "iTunes",
-        "Safari", "Google Chrome", "Firefox", "Arc", "Brave Browser",
-        "YouTube Music", "Apple TV", "Netflix", "Discord", "Slack",
-        "Zoom", "Microsoft Teams", "FaceTime", "Skype",
-        "Podcasts", "Overcast", "Pocket Casts", "SoundCloud"
+        "YouTube Music", "Apple TV", "Netflix",
+        "Podcasts", "Overcast", "Pocket Casts", "SoundCloud",
+        "Tidal", "Apple Music", "Amazon Music", "Deezer"
     ]
     
     var runningAudioApps: [String] = []
