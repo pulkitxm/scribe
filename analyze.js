@@ -72,7 +72,7 @@ function isIncompleteJSON(jsonPath) {
     const content = fs.readFileSync(jsonPath, 'utf8');
     const json = JSON.parse(content);
 
-    return !json.detailed_analysis || !json.overall_activity_score || !json.category;
+    return !json.detailed_analysis || json.overall_activity_score == null || !json.category;
   } catch (e) {
     return false;
   }
@@ -92,7 +92,7 @@ function findIncompleteScreenshots(dir) {
       } else if (entry.isFile() && entry.name.endsWith('.webp')) {
         const jsonPath = fullPath.replace(/\.webp$/, '.json');
 
-        if (fs.existsSync(jsonPath) && isIncompleteJSON(jsonPath)) {
+        if (!fs.existsSync(jsonPath) || isIncompleteJSON(jsonPath)) {
           incomplete.push({
             imagePath: fullPath,
             jsonPath: jsonPath
@@ -121,7 +121,9 @@ async function processWithConcurrency(items, concurrency, liveMode, scribeFolder
 
   async function processItem(item) {
     try {
-      const existingMetadata = JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));
+      const existingMetadata = fs.existsSync(item.jsonPath)
+        ? JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'))
+        : null;
       await analyzeImageWithAI(item.imagePath, existingMetadata);
       results.success++;
     } catch (err) {
