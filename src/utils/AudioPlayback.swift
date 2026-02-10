@@ -3,6 +3,16 @@ import CoreAudio
 import AVFoundation
 import AppKit
 
+private func logAudioDebug(_ message: String) {
+    let env = ProcessInfo.processInfo.environment["SCRIBE_AUDIO_DEBUG"] ?? ""
+    if env == "1" || env.lowercased() == "true" {
+        let line = "[scribe audio] \(message)\n"
+        if let data = line.data(using: .utf8) {
+            FileHandle.standardError.write(data)
+        }
+    }
+}
+
 public struct PlayingAudioInfo {
     public let appName: String
     public let title: String?
@@ -138,6 +148,14 @@ private func getCurrentMediaInfo() -> PlayingAudioInfo? {
         }
     }
     
+    // Browsers (YouTube, etc.): no track metadata via AppleScript, but we can report app as source when running
+    let browserApps = ["Google Chrome", "Chrome", "Safari", "Firefox", "Arc"]
+    for app in browserApps {
+        if let info = getMediaInfoFromApp(appName: app) {
+            return info
+        }
+    }
+    
     return nil
 }
 
@@ -233,6 +251,81 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
         end tell
         return ""
         """
+    case "Google Chrome", "Chrome":
+        script = """
+        tell application "Google Chrome"
+            if (count of windows) > 0 then
+                try
+                    -- First scan ALL tabs in ALL windows for media sites (YouTube, etc.)
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (title of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    -- Fallback: return the active tab
+                    set tabURL to URL of active tab of first window
+                    set tabTitle to title of active tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
+    case "Safari":
+        script = """
+        tell application "Safari"
+            if (count of windows) > 0 then
+                try
+                    -- First scan ALL tabs in ALL windows for media sites
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (name of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    -- Fallback: return the current tab
+                    set tabURL to URL of current tab of first window
+                    set tabTitle to name of current tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
+    case "Arc":
+        script = """
+        tell application "Arc"
+            if (count of windows) > 0 then
+                try
+                    -- First scan ALL tabs in ALL windows for media sites
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (title of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    -- Fallback: return the active tab
+                    set tabURL to URL of active tab of first window
+                    set tabTitle to title of active tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
     default:
         script = """
         tell application "System Events"
@@ -261,6 +354,60 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
                 let parts = output.components(separatedBy: "|||")
+                
+                // Browser tab title + URL (Chrome, Safari, Arc): "title|||url"
+                let browserAppsWithTabInfo = ["Google Chrome", "Chrome", "Safari", "Arc"]
+                if browserAppsWithTabInfo.contains(appName), parts.count >= 2 {
+                    let rawTitle = parts[0]
+                    let rawURL = parts[1]
+                    logAudioDebug("AudioPlayback [\(appName)] raw title: \(rawTitle.prefix(200))")
+                    logAudioDebug("AudioPlayback [\(appName)] raw url: \(rawURL.prefix(200))")
+                    let urlLower = rawURL.lowercased()
+                    var title: String? = rawTitle.isEmpty ? nil : rawTitle
+                    var artist: String? = nil
+                    
+                    // Detect media site from URL and parse title
+                    if urlLower.contains("youtube.com") || urlLower.contains("youtu.be") {
+                        if let t = title {
+                            let cleaned = t.replacingOccurrences(of: " - YouTube", with: "").trimmingCharacters(in: .whitespaces)
+                            title = cleaned.isEmpty ? nil : cleaned
+                        }
+                        artist = "YouTube"
+                    } else if urlLower.contains("netflix.com") {
+                        artist = "Netflix"
+                    } else if urlLower.contains("twitch.tv") {
+                        if let t = title {
+                            let cleaned = t.replacingOccurrences(of: " - Twitch", with: "").trimmingCharacters(in: .whitespaces)
+                            title = cleaned.isEmpty ? nil : cleaned
+                        }
+                        artist = "Twitch"
+                    } else if urlLower.contains("soundcloud.com") {
+                        artist = "SoundCloud"
+                    } else if urlLower.contains("open.spotify.com") {
+                        artist = "Spotify Web"
+                    }
+                    
+                    logAudioDebug("AudioPlayback [\(appName)] parsed → title=\(title ?? "nil") artist=\(artist ?? "nil") url=\(rawURL.prefix(80))")
+                    return PlayingAudioInfo(
+                        appName: appName,
+                        title: title,
+                        artist: artist,
+                        album: nil,
+                        duration: nil,
+                        currentTime: nil,
+                        isPlaying: true,
+                        playbackRate: nil,
+                        volume: nil,
+                        genre: nil,
+                        year: nil,
+                        trackNumber: nil,
+                        albumArtist: nil,
+                        composer: nil,
+                        rating: nil,
+                        playCount: nil,
+                        artworkURL: nil
+                    )
+                }
                 
                 if parts.count >= 14 && appName == "Music" {
                     return PlayingAudioInfo(
@@ -430,7 +577,8 @@ private func getRunningAudioApps() -> [String] {
         "Music", "Spotify", "VLC", "QuickTime Player", "iTunes",
         "YouTube Music", "Apple TV", "Netflix",
         "Podcasts", "Overcast", "Pocket Casts", "SoundCloud",
-        "Tidal", "Apple Music", "Amazon Music", "Deezer"
+        "Tidal", "Apple Music", "Amazon Music", "Deezer",
+        "Google Chrome", "Chrome", "Safari", "Firefox", "Arc"
     ]
     
     var runningAudioApps: [String] = []

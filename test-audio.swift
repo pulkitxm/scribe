@@ -107,8 +107,14 @@ private func getCurrentMediaInfo() -> PlayingAudioInfo? {
         return spotifyInfo
     }
     
-    let mediaApps = ["VLC", "QuickTime Player", "YouTube", "Safari", "Chrome", "Arc"]
+    let mediaApps = ["VLC", "QuickTime Player", "YouTube Music", "Apple TV", "Tidal"]
     for app in mediaApps {
+        if let info = getMediaInfoFromApp(appName: app) {
+            return info
+        }
+    }
+    let browserApps = ["Google Chrome", "Chrome", "Safari", "Arc"]
+    for app in browserApps {
         if let info = getMediaInfoFromApp(appName: app) {
             return info
         }
@@ -159,6 +165,75 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
         end tell
         return ""
         """
+    case "Google Chrome", "Chrome":
+        script = """
+        tell application "Google Chrome"
+            if (count of windows) > 0 then
+                try
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (title of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    set tabURL to URL of active tab of first window
+                    set tabTitle to title of active tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
+    case "Safari":
+        script = """
+        tell application "Safari"
+            if (count of windows) > 0 then
+                try
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (name of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    set tabURL to URL of current tab of first window
+                    set tabTitle to name of current tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
+    case "Arc":
+        script = """
+        tell application "Arc"
+            if (count of windows) > 0 then
+                try
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            set tURL to URL of t
+                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
+                                return (title of t) & "|||" & tURL
+                            end if
+                        end repeat
+                    end repeat
+                    set tabURL to URL of active tab of first window
+                    set tabTitle to title of active tab of first window
+                    return tabTitle & "|||" & tabURL
+                on error errMsg
+                    return ""
+                end try
+            end if
+        end tell
+        return ""
+        """
     default:
         script = """
         tell application "System Events"
@@ -187,6 +262,51 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
                 let parts = output.components(separatedBy: "|||")
+                
+                // Browser tab title + URL (Chrome, Safari, Arc)
+                let browserAppsWithTabInfo = ["Google Chrome", "Chrome", "Safari", "Arc"]
+                if browserAppsWithTabInfo.contains(appName), parts.count >= 2 {
+                    let rawTitle = String(parts[0].prefix(200))
+                    let rawURL = String(parts[1].prefix(150))
+                    fputs("[test-audio] \(appName) raw title: \(rawTitle)\n", stderr)
+                    fputs("[test-audio] \(appName) raw url: \(rawURL)\n", stderr)
+                    let urlLower = rawURL.lowercased()
+                    var title: String? = parts[0].isEmpty ? nil : parts[0]
+                    var artist: String? = nil
+                    
+                    if urlLower.contains("youtube.com") || urlLower.contains("youtu.be") {
+                        if let t = title {
+                            let cleaned = t.replacingOccurrences(of: " - YouTube", with: "").trimmingCharacters(in: .whitespaces)
+                            title = cleaned.isEmpty ? nil : cleaned
+                        }
+                        artist = "YouTube"
+                    } else if urlLower.contains("netflix.com") {
+                        artist = "Netflix"
+                    } else if urlLower.contains("twitch.tv") {
+                        if let t = title {
+                            let cleaned = t.replacingOccurrences(of: " - Twitch", with: "").trimmingCharacters(in: .whitespaces)
+                            title = cleaned.isEmpty ? nil : cleaned
+                        }
+                        artist = "Twitch"
+                    } else if urlLower.contains("soundcloud.com") {
+                        artist = "SoundCloud"
+                    } else if urlLower.contains("open.spotify.com") {
+                        artist = "Spotify Web"
+                    }
+                    
+                    fputs("[test-audio] \(appName) parsed → title=\(title ?? "nil") artist=\(artist ?? "nil") url=\(rawURL)\n", stderr)
+                    return PlayingAudioInfo(
+                        appName: appName,
+                        title: title,
+                        artist: artist,
+                        album: nil,
+                        duration: nil,
+                        currentTime: nil,
+                        isPlaying: true,
+                        playbackRate: nil,
+                        volume: nil
+                    )
+                }
                 
                 if parts.count >= 7 {
                     return PlayingAudioInfo(
@@ -289,5 +409,34 @@ if audioData.nowPlaying.isEmpty {
     }
 }
 
-print("================================")
+// Exact JSON (same shape as system_metadata.audio.playback)
+var playback: [String: Any] = [
+    "has_active_audio": audioData.hasActiveAudio,
+    "active_audio_count": audioData.activeAudioCount,
+    "system_audio_active": audioData.systemAudioActive,
+    "playing_apps": audioData.playingApps,
+    "now_playing": audioData.nowPlaying.map { info -> [String: Any] in
+        let track: [String: Any] = [
+            "app": info.appName,
+            "title": info.title ?? "",
+            "artist": info.artist ?? "",
+            "album": info.album ?? "",
+            "duration": info.duration ?? 0,
+            "current_time": info.currentTime ?? 0,
+            "is_playing": info.isPlaying,
+            "playback_rate": info.playbackRate ?? 1.0,
+            "volume": info.volume ?? 0
+        ]
+        return track
+    }
+]
+playback["output_device"] = NSNull()
+
+if let data = try? JSONSerialization.data(withJSONObject: ["playback": playback], options: .prettyPrinted),
+   let json = String(data: data, encoding: .utf8) {
+    print("\n--- Exact JSON ---\n")
+    print(json)
+}
+
+print("\n================================")
 print("✅ Audio detection test complete!")
