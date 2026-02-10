@@ -46,11 +46,14 @@ export default function GalleryInfiniteScroll({
 
       if (observer.current) observer.current.disconnect();
 
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore && nextCursor) {
-          setLoadPage((p) => p + 1);
-        }
-      });
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore && nextCursor) {
+            setLoadPage((p) => p + 1);
+          }
+        },
+        { rootMargin: "0px 0px 30% 0px" },
+      );
 
       if (node) observer.current.observe(node);
     },
