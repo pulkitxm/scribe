@@ -1610,32 +1610,43 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
     }
 
     if (playback.playing_apps) {
+      const communicationApps = ["Chrome", "Safari", "Firefox", "Arc", "Slack", "Discord", "Zoom", "Teams", "FaceTime", "Skype"];
       for (const app of playback.playing_apps) {
-        hourlyPlaybackStats[hour].uniqueApps.add(app);
-        appPlaybackCount[app] = (appPlaybackCount[app] || 0) + 1;
-        allApps.add(app);
+        const isCommunicationApp = communicationApps.some(commApp => app.includes(commApp));
+        if (!isCommunicationApp) {
+          hourlyPlaybackStats[hour].uniqueApps.add(app);
+          appPlaybackCount[app] = (appPlaybackCount[app] || 0) + 1;
+          allApps.add(app);
+        }
       }
     }
 
     if (playback.now_playing && playback.now_playing.length > 0) {
       for (const track of playback.now_playing) {
-        nowPlayingHistory.push({
-          timestamp: s.data.timestamp?.iso || s.timestamp.toISOString(),
-          app: track.app,
-          title: track.title,
-          artist: track.artist,
-          album: track.album,
-          duration: track.duration,
-          currentTime: track.current_time,
-          genre: track.genre,
-          year: track.year,
-          trackNumber: track.track_number,
-          albumArtist: track.album_artist,
-          composer: track.composer,
-          rating: track.rating,
-          playCount: track.play_count,
-          artworkURL: track.artwork_url,
-        });
+        // Filter out tracks without proper metadata (likely communication apps)
+        const communicationApps = ["Chrome", "Safari", "Firefox", "Arc", "Slack", "Discord", "Zoom", "Teams", "FaceTime", "Skype"];
+        const isCommunicationApp = communicationApps.some(app => track.app.includes(app));
+        
+        // Only include if it has a title AND is not a communication app
+        if (track.title && track.title.trim() !== "" && !isCommunicationApp) {
+          nowPlayingHistory.push({
+            timestamp: s.data.timestamp?.iso || s.timestamp.toISOString(),
+            app: track.app,
+            title: track.title,
+            artist: track.artist,
+            album: track.album,
+            duration: track.duration,
+            currentTime: track.current_time,
+            genre: track.genre,
+            year: track.year,
+            trackNumber: track.track_number,
+            albumArtist: track.album_artist,
+            composer: track.composer,
+            rating: track.rating,
+            playCount: track.play_count,
+            artworkURL: track.artwork_url,
+          });
+        }
       }
     }
   }
@@ -1676,12 +1687,10 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
       ? (totalPlaybackSessions / screenshots.length) * 100
       : 0;
 
-  const sortedNowPlaying = nowPlayingHistory
-    .sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-    )
-    .slice(0, 50);
+  const sortedNowPlaying = nowPlayingHistory.sort(
+    (a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
 
   return {
     hourlyPlayback,

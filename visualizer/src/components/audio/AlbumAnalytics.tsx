@@ -70,7 +70,7 @@ export default function AlbumAnalytics({ tracks }: AlbumAnalyticsProps) {
       percentage: (stats.count / tracks.filter((t) => t.album).length) * 100,
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
+    .slice(0, 24);
 
   if (topAlbums.length === 0) {
     return (
@@ -94,7 +94,7 @@ export default function AlbumAnalytics({ tracks }: AlbumAnalyticsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {topAlbums.map((album, index) => (
             <div
               key={album.album}

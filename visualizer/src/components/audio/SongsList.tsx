@@ -114,7 +114,7 @@ export default function SongsList({ tracks }: SongsListProps) {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <CardTitle className="text-sm font-medium uppercase text-muted-foreground flex items-center gap-2">
             <Music className="h-4 w-4" />
-            Unique Songs ({filteredTracks.length} unique tracks)
+            Unique Sonas ({filteredTracks.length} unique tracks)
           </CardTitle>
 
           <div className="flex flex-col sm:flex-row gap-2">
@@ -157,7 +157,7 @@ export default function SongsList({ tracks }: SongsListProps) {
       </CardHeader>
 
       <CardContent>
-        <div className="space-y-2 max-h-[800px] overflow-y-auto">
+        <div className="space-y-2">
           {filteredTracks.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
