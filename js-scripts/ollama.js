@@ -33,12 +33,8 @@ Strict rules:
 5) Do not invent filenames, code, chats, or people.
 6) Treat privacy seriously. Do not reveal secrets. If sensitive data is visible, mention it generically (e.g., "personal info visible").
 
-TEXT EXTRACTION RULES:
-- Extract KEY text snippets that help understand the context (15-30 snippets)
-- Focus on: file names, function names, app names, window titles, key UI labels, URLs, error messages
-- Keep snippets SHORT and meaningful (under 50 characters each)
-- Properly escape all quotes and special characters in JSON strings
-- Do NOT extract full code blocks or long text passages (OCR handles that separately)
+Pre-extracted text (priority 1 = largest/biggest text on screen):
+{EXTRACTED_TEXT}
 
 Activity categories:
 Use ONE short label only:
@@ -103,8 +99,7 @@ Return JSON with this structure:
     "apps_visible": string[],
     "active_app_guess": string,
     "key_windows_or_panels": string[],
-    "web_domains_visible": string[],
-    "text_snippets": string[] // Extract 15-30 SHORT key text snippets (file names, function names, UI labels, etc.)
+    "web_domains_visible": string[]
   },
   "context": {
     "intent_guess": string,
@@ -146,11 +141,11 @@ Important:
 - Be direct, brutally honest, and minimal.
 - confidence: 0 to 1, based on how clearly visible the context is.
 - CRITICAL: Ensure ALL strings in JSON are properly escaped (use \\" for quotes, \\\\ for backslashes)
-- CRITICAL: Keep text_snippets SHORT (max 50 chars each) to ensure valid JSON
 - CRITICAL: Return ONLY valid JSON - no markdown, no extra text, no truncated strings
 `.trim();
 
-function callOllama(imageBase64, isRetry = false) {
+function callOllama(imageBase64, opts = {}) {
+  const { isRetry = false, extractedText = '' } = opts;
   return new Promise((resolve, reject) => {
     const retryHint = `PREVIOUS OUTPUT WAS INVALID.
 Return ONLY JSON.
@@ -158,9 +153,12 @@ No markdown.
 No extra text.
 Use a single category label only.`;
 
+    const promptText = (PROMPT.replace('{EXTRACTED_TEXT}', extractedText || '(none)'));
+    const finalPrompt = isRetry ? `${retryHint}\n\n${promptText}` : promptText;
+
     const requestBody = JSON.stringify({
       model: MODEL_NAME,
-      prompt: isRetry ? `${retryHint}\n\n${PROMPT}` : PROMPT,
+      prompt: finalPrompt,
       images: [imageBase64],
       stream: false,
       format: 'json',
@@ -169,7 +167,7 @@ Use a single category label only.`;
         temperature: 0,
         top_p: 0.9,
         num_ctx: 8192,
-        num_predict: 3072  
+        num_predict: 8192  
       }
     });
 

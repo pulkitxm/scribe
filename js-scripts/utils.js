@@ -32,6 +32,18 @@ function safeString(x) {
   return '';
 }
 
+function decodeHtmlEntities(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)));
+}
+
 function safeBool(x) {
   return !!x;
 }
@@ -90,6 +102,7 @@ module.exports = {
   log,
   clamp,
   safeString,
+  decodeHtmlEntities,
   safeBool,
   safeStringArray,
   normalizeLabel,

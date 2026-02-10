@@ -19,7 +19,7 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
 
   
   log.info('Extracting text with OCR...');
-  const ocrText = extractTextWithOCR(processedImagePath);
+  const { raw: ocrText, forPrompt: extractedText, textSnippets } = extractTextWithOCR(processedImagePath);
 
   if (processedImagePath !== imagePath && fs.existsSync(processedImagePath)) {
     try { fs.unlinkSync(processedImagePath); } catch (e) { }
@@ -30,7 +30,7 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       if (attempt > 0) log.warn(`Retry ${attempt}/${MAX_RETRIES}...`);
-      const responseText = await callOllama(imageBase64, attempt > 0);
+      const responseText = await callOllama(imageBase64, { isRetry: attempt > 0, extractedText });
       const resultJSON = parseAndValidateJSON(responseText);
 
       
@@ -51,6 +51,9 @@ async function analyzeImageWithAI(imagePath, existingMetadata = null) {
       
       if (ocrText && ocrText.length > 0) {
         resultJSON.evidence.raw_text_content = ocrText;
+      }
+      if (textSnippets && textSnippets.length > 0) {
+        resultJSON.evidence.text_snippets = textSnippets;
       }
 
       const cleanedJSON = cleanObject(resultJSON);
