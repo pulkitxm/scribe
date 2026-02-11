@@ -1780,23 +1780,13 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
     }
 
     if (playback.playing_apps) {
-      const communicationApps = [
-        "Chrome",
-        "Safari",
-        "Firefox",
-        "Arc",
-        "Slack",
-        "Discord",
-        "Zoom",
-        "Teams",
-        "FaceTime",
-        "Skype",
-      ];
+      // Only count Spotify and YouTube apps
+      const allowedApps = ["Spotify", "YouTube"];
       for (const app of playback.playing_apps) {
-        const isCommunicationApp = communicationApps.some((commApp) =>
-          app.includes(commApp),
+        const isAllowedApp = allowedApps.some((allowed) =>
+          app.includes(allowed),
         );
-        if (!isCommunicationApp) {
+        if (isAllowedApp) {
           hourlyPlaybackStats[hour].uniqueApps.add(app);
           appPlaybackCount[app] = (appPlaybackCount[app] || 0) + 1;
           allApps.add(app);
@@ -1806,23 +1796,13 @@ export function getAudioPlaybackStats(screenshots: Screenshot[]) {
 
     if (playback.now_playing && playback.now_playing.length > 0) {
       for (const track of playback.now_playing) {
-        const communicationApps = [
-          "Chrome",
-          "Safari",
-          "Firefox",
-          "Arc",
-          "Slack",
-          "Discord",
-          "Zoom",
-          "Teams",
-          "FaceTime",
-          "Skype",
-        ];
-        const isCommunicationApp = communicationApps.some((app) =>
+        // Only include Spotify and YouTube tracks
+        const allowedApps = ["Spotify", "YouTube"];
+        const isAllowedApp = allowedApps.some((app) =>
           track.app.includes(app),
         );
 
-        if (track.title && track.title.trim() !== "" && !isCommunicationApp) {
+        if (track.title && track.title.trim() !== "" && isAllowedApp) {
           nowPlayingHistory.push({
             timestamp: s.data.timestamp?.iso || s.timestamp.toISOString(),
             app: track.app,

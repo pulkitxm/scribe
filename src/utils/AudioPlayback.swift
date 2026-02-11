@@ -141,19 +141,96 @@ private func getCurrentMediaInfo() -> PlayingAudioInfo? {
         return spotifyInfo
     }
     
-    let mediaApps = ["VLC", "QuickTime Player", "YouTube Music", "Apple TV", "Tidal"]
-    for app in mediaApps {
-        if let info = getMediaInfoFromApp(appName: app) {
-            return info
-        }
+    if let youtubeInfo = getYouTubeMediaInfo() {
+        return youtubeInfo
     }
     
-    // Browsers (YouTube, etc.): no track metadata via AppleScript, but we can report app as source when running
-    let browserApps = ["Google Chrome", "Chrome", "Safari", "Firefox", "Arc"]
-    for app in browserApps {
-        if let info = getMediaInfoFromApp(appName: app) {
-            return info
+    return nil
+}
+
+private func getYouTubeMediaInfo() -> PlayingAudioInfo? {
+    let script = """
+    tell application "System Events"
+        if exists process "Google Chrome" then
+            tell application "Google Chrome"
+                if (count of windows) > 0 then
+                    try
+                        repeat with w in windows
+                            repeat with t in tabs of w
+                                set tURL to URL of t
+                                if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" then
+                                    set tTitle to title of t
+                                    -- Extract song info from YouTube title (usually "Song - Artist")
+                                    return tTitle & "|||" & tURL
+                                end if
+                            end repeat
+                        end repeat
+                    end try
+                end if
+            end tell
+        end if
+    end tell
+    return ""
+    """
+    
+    do {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", script]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+        task.standardInput = FileHandle.nullDevice
+        
+        try task.run()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0 {
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
+                let parts = output.components(separatedBy: "|||")
+                
+                if parts.count >= 2 {
+                    let title = parts[0]
+                    let url = parts[1]
+                    
+                    var songTitle = title
+                    var artist: String? = nil
+                    
+                    if title.contains(" - ") {
+                        let titleParts = title.components(separatedBy: " - ")
+                        if titleParts.count >= 2 {
+                            songTitle = titleParts[0].trimmingCharacters(in: .whitespaces)
+                            artist = titleParts[1].trimmingCharacters(in: .whitespaces)
+                        }
+                    }
+                    
+                    let appName = url.contains("music.youtube.com") ? "YouTube Music" : "YouTube"
+                    
+                    return PlayingAudioInfo(
+                        appName: appName,
+                        title: songTitle,
+                        artist: artist,
+                        album: nil,
+                        duration: nil,
+                        currentTime: nil,
+                        isPlaying: true,
+                        playbackRate: nil,
+                        volume: nil,
+                        genre: nil,
+                        year: nil,
+                        trackNumber: nil,
+                        albumArtist: nil,
+                        composer: nil,
+                        rating: nil,
+                        playCount: nil,
+                        artworkURL: nil
+                    )
+                }
+            }
         }
+    } catch {
     }
     
     return nil
@@ -168,7 +245,9 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
         tell application "System Events"
             if exists process "Music" then
                 tell application "Music"
-                    if player state is playing then
+                    try
+                        set pState to player state
+                        if pState is playing or pState is paused then
                         set trackName to name of current track
                         set trackArtist to artist of current track
                         set trackAlbum to album of current track
@@ -218,8 +297,16 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
                             set trackPlayCount to 0
                         end try
                         
-                        return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & trackVolume & "|||playing|||" & trackGenre & "|||" & trackYear & "|||" & trackNumber & "|||" & trackAlbumArtist & "|||" & trackComposer & "|||" & trackRating & "|||" & trackPlayCount
-                    end if
+                        set playingStatus to "playing"
+                        if pState is paused then
+                            set playingStatus to "paused"
+                        end if
+                        
+                        return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & trackVolume & "|||" & playingStatus & "|||" & trackGenre & "|||" & trackYear & "|||" & trackNumber & "|||" & trackAlbumArtist & "|||" & trackComposer & "|||" & trackRating & "|||" & trackPlayCount
+                        end if
+                    on error
+                        return ""
+                    end try
                 end tell
             end if
         end tell
@@ -230,98 +317,33 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
         tell application "System Events"
             if exists process "Spotify" then
                 tell application "Spotify"
-                    if player state is playing then
-                        set trackName to name of current track
-                        set trackArtist to artist of current track
-                        set trackAlbum to album of current track
-                        set trackDuration to duration of current track
-                        set trackPosition to player position
-                        set trackVolume to sound volume
-                        
-                        try
-                            set trackArtwork to artwork url of current track
-                        on error
-                            set trackArtwork to ""
-                        end try
-                        
-                        return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & trackVolume & "|||playing|||" & trackArtwork
-                    end if
+                    try
+                        set pState to player state
+                        if pState is playing or pState is paused then
+                            set trackName to name of current track
+                            set trackArtist to artist of current track
+                            set trackAlbum to album of current track
+                            set trackDuration to duration of current track
+                            set trackPosition to player position
+                            set trackVolume to sound volume
+                            
+                            set playingStatus to "playing"
+                            if pState is paused then
+                                set playingStatus to "paused"
+                            end if
+                            
+                            try
+                                set trackArtwork to artwork url of current track
+                            on error
+                                set trackArtwork to ""
+                            end try
+                            
+                            return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & trackVolume & "|||" & playingStatus & "|||" & trackArtwork
+                        end if
+                    on error
+                        return ""
+                    end try
                 end tell
-            end if
-        end tell
-        return ""
-        """
-    case "Google Chrome", "Chrome":
-        script = """
-        tell application "Google Chrome"
-            if (count of windows) > 0 then
-                try
-                    -- First scan ALL tabs in ALL windows for media sites (YouTube, etc.)
-                    repeat with w in windows
-                        repeat with t in tabs of w
-                            set tURL to URL of t
-                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
-                                return (title of t) & "|||" & tURL
-                            end if
-                        end repeat
-                    end repeat
-                    -- Fallback: return the active tab
-                    set tabURL to URL of active tab of first window
-                    set tabTitle to title of active tab of first window
-                    return tabTitle & "|||" & tabURL
-                on error errMsg
-                    return ""
-                end try
-            end if
-        end tell
-        return ""
-        """
-    case "Safari":
-        script = """
-        tell application "Safari"
-            if (count of windows) > 0 then
-                try
-                    -- First scan ALL tabs in ALL windows for media sites
-                    repeat with w in windows
-                        repeat with t in tabs of w
-                            set tURL to URL of t
-                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
-                                return (name of t) & "|||" & tURL
-                            end if
-                        end repeat
-                    end repeat
-                    -- Fallback: return the current tab
-                    set tabURL to URL of current tab of first window
-                    set tabTitle to name of current tab of first window
-                    return tabTitle & "|||" & tabURL
-                on error errMsg
-                    return ""
-                end try
-            end if
-        end tell
-        return ""
-        """
-    case "Arc":
-        script = """
-        tell application "Arc"
-            if (count of windows) > 0 then
-                try
-                    -- First scan ALL tabs in ALL windows for media sites
-                    repeat with w in windows
-                        repeat with t in tabs of w
-                            set tURL to URL of t
-                            if tURL contains "youtube.com/watch" or tURL contains "youtu.be/" or tURL contains "music.youtube.com" or tURL contains "netflix.com/watch" or tURL contains "twitch.tv/" or tURL contains "soundcloud.com" or tURL contains "open.spotify.com" then
-                                return (title of t) & "|||" & tURL
-                            end if
-                        end repeat
-                    end repeat
-                    -- Fallback: return the active tab
-                    set tabURL to URL of active tab of first window
-                    set tabTitle to title of active tab of first window
-                    return tabTitle & "|||" & tabURL
-                on error errMsg
-                    return ""
-                end try
             end if
         end tell
         return ""
@@ -355,7 +377,6 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
                 let parts = output.components(separatedBy: "|||")
                 
-                // Browser tab title + URL (Chrome, Safari, Arc): "title|||url"
                 let browserAppsWithTabInfo = ["Google Chrome", "Chrome", "Safari", "Arc"]
                 if browserAppsWithTabInfo.contains(appName), parts.count >= 2 {
                     let rawTitle = parts[0]
@@ -366,7 +387,6 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
                     var title: String? = rawTitle.isEmpty ? nil : rawTitle
                     var artist: String? = nil
                     
-                    // Detect media site from URL and parse title
                     if urlLower.contains("youtube.com") || urlLower.contains("youtu.be") {
                         if let t = title {
                             let cleaned = t.replacingOccurrences(of: " - YouTube", with: "").trimmingCharacters(in: .whitespaces)
@@ -574,11 +594,8 @@ private func getCurrentAudioLevels() -> (left: Double, right: Double)? {
 
 private func getRunningAudioApps() -> [String] {
     let audioApps = [
-        "Music", "Spotify", "VLC", "QuickTime Player", "iTunes",
-        "YouTube Music", "Apple TV", "Netflix",
-        "Podcasts", "Overcast", "Pocket Casts", "SoundCloud",
-        "Tidal", "Apple Music", "Amazon Music", "Deezer",
-        "Google Chrome", "Chrome", "Safari", "Firefox", "Arc"
+        "Spotify",
+        "YouTube Music"
     ]
     
     var runningAudioApps: [String] = []

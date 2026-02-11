@@ -263,7 +263,6 @@ private func getMediaInfoFromApp(appName: String) -> PlayingAudioInfo? {
             if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
                 let parts = output.components(separatedBy: "|||")
                 
-                // Browser tab title + URL (Chrome, Safari, Arc)
                 let browserAppsWithTabInfo = ["Google Chrome", "Chrome", "Safari", "Arc"]
                 if browserAppsWithTabInfo.contains(appName), parts.count >= 2 {
                     let rawTitle = String(parts[0].prefix(200))
@@ -409,7 +408,6 @@ if audioData.nowPlaying.isEmpty {
     }
 }
 
-// Exact JSON (same shape as system_metadata.audio.playback)
 var playback: [String: Any] = [
     "has_active_audio": audioData.hasActiveAudio,
     "active_audio_count": audioData.activeAudioCount,
